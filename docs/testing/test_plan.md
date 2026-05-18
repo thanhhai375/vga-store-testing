@@ -1,7 +1,7 @@
 # Kế Hoạch Kiểm Thử (Test Plan) - VGA Store
 
 ## 1. Mục tiêu kiểm thử
-Mục tiêu của đợt kiểm thử này là đảm bảo chất lượng và độ ổn định của hệ thống thương mại điện tử VGA Store trước khi đưa vào sử dụng thực tế. Đợt kiểm thử tập trung xác minh các luồng nghiệp vụ cốt lõi (Mua hàng, Giỏ hàng, Xác thực người dùng) hoạt động chính xác dựa trên cấu trúc API (Postman Collection) và logic giao diện thực tế. Đồng thời, quá trình kiểm thử sẽ giúp phát hiện sớm các khiếm khuyết (Defects) liên quan đến giao diện hiển thị (UI), logic nghiệp vụ (Functional) và độ chính xác của API Backend.
+Mục tiêu của đợt kiểm thử này là đảm bảo chất lượng và độ ổn định của hệ thống thương mại điện tử VGA Store trước khi đưa vào sử dụng thực tế. Đợt kiểm thử tập trung xác minh các luồng nghiệp vụ cốt lõi (Mua hàng, Giỏ hàng, Xác thực người dùng) hoạt động chính xác theo tài liệu đặc tả hệ thống. Đồng thời, quá trình kiểm thử sẽ giúp phát hiện sớm các khiếm khuyết (Defects) liên quan đến giao diện hiển thị (UI), logic nghiệp vụ (Functional) và độ chính xác của API Backend.
 
 ## 2. Phạm vi kiểm thử (Scope)
 ### 2.1. In-scope (Các chức năng SẼ kiểm thử)
@@ -24,10 +24,10 @@ Mục tiêu của đợt kiểm thử này là đảm bảo chất lượng và 
 
 ### 3.2. Môi trường Khách (Client/Frontend)
 - Trình duyệt (Browser): Google Chrome (phiên bản mới nhất), Microsoft Edge.
-- Độ phân giải màn hình: 1920x1080 (PC/Laptop).
 
----
-*(Phần dưới này dành cho Task 2 - KCPM-8)*
-## 4. Chiến lược kiểm thử (Test Strategy)
-## 5. Tiêu chí kiểm thử (Criteria)
-## 6. Đánh giá rủi ro (Risks)
+
+
+
+
+
+
