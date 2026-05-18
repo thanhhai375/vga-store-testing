@@ -1,0 +1,80 @@
+@import url("https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700;900&display=swap");
+
+:root {
+  --bg-color: #000000;
+  --bg-secondary: #0d0d0d;
+  --text-primary: #ffffff;
+  --text-secondary: #888888;
+  --accent-color: #ff0029;
+  --accent-hover: #cc0022;
+  --font-main: "Roboto", sans-serif;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: var(--font-main);
+}
+
+body {
+  background-color: var(--bg-color);
+  color: var(--text-primary);
+  line-height: 1.6;
+  overflow-x: hidden;
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+  transition: all 0.3s ease;
+}
+
+button {
+  font-family: var(--font-main);
+}
+
+.container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+.app-wrapper {
+  min-height: 100vh;
+  background-color: var(--bg-color);
+  color: var(--text-primary);
+}
+
+.text-center {
+  text-align: center;
+}
+
+/* ===== SCROLLBAR ===== */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: #0d0d0d; }
+::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--accent-color); }
+
+/* ===== ANIMATIONS ===== */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(30px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes float {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+  100% { transform: translateY(0px); }
+}
+
+@keyframes glowPulse {
+  0% { box-shadow: 0 0 5px var(--accent-color); }
+  50% { box-shadow: 0 0 20px var(--accent-color); }
+  100% { box-shadow: 0 0 5px var(--accent-color); }
+}
+
+/* ===== FIX SWEETALERT2 POPUP ===== */
+.swal2-container {
+  z-index: 99999 !important;
+}

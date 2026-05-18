@@ -1,0 +1,565 @@
+/* ===== SHOP PAGE OVERALL ===== */
+.shop-page {
+  background-color: #f5f7fa;
+  /* Nền xám nhạt cao cấp */
+  color: #111;
+  /* Đổi màu chữ toàn trang sang màu đen/tối */
+  min-height: 100vh;
+}
+
+/* =========================================
+   SHOP HERO BANNER - PHONG CÁCH ROG CÁ TÍNH
+   ========================================= */
+.shop-hero {
+  margin-top: 60px;
+  padding: 80px 0 70px;
+  background-color: #000;
+  /* ĐỂ ĐỔI ẢNH: Thay tên file bên dưới, ảnh để ở thư mục public/images/ */
+  background-image: url('/images/shop-banner.jpg');
+  background-size: 70%;
+  background-position: center right;
+  position: relative;
+  overflow: hidden;
+  border-bottom: 2px solid var(--accent-color);
+}
+
+/* Lớp phủ Gradient đen: Tối thui ở bên trái để nổi chữ và trong suốt dần sang phải để thấy ảnh */
+.shop-hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to right, rgba(0, 0, 0, 0.95) 0%, rgba(0, 0, 0, 0.7) 45%, rgba(0, 0, 0, 0) 100%);
+  z-index: 1;
+}
+
+.shop-hero-inner {
+  position: relative;
+  z-index: 2;
+}
+
+.shop-hero-text {
+  max-width: 600px;
+  animation: slideInLeft 0.8s ease-out forwards;
+}
+
+.shop-hero-badge {
+  display: inline-block;
+  background: var(--accent-color);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 3px;
+  padding: 6px 20px;
+  text-transform: uppercase;
+  margin-bottom: 20px;
+  /* Tuyệt chiêu CSS: Cắt vát góc dưới bên phải y hệt thiết kế Asus ROG */
+  clip-path: polygon(0 0, 100% 0, 85% 100%, 0% 100%);
+}
+
+.shop-hero-title {
+  font-size: 52px;
+  font-weight: 900;
+  color: #fff;
+  text-transform: uppercase;
+  line-height: 1.05;
+  letter-spacing: 2px;
+  margin-bottom: 20px;
+}
+
+/* Chữ "LINH KIỆN PC": To, đỏ đặc, rõ ràng - KHÔNG rỗng lõi */
+.shop-hero-title span {
+  display: block;
+  font-size: 64px;
+  font-weight: 900;
+  color: var(--accent-color);
+  letter-spacing: 4px;
+  text-shadow: 0 0 30px rgba(216, 40, 46, 0.5);
+  -webkit-text-stroke: 0;
+}
+
+.shop-hero-desc {
+  font-size: 15px;
+  color: #bbb;
+  border-left: 3px solid var(--accent-color);
+  padding-left: 15px;
+  margin-top: 8px;
+}
+
+/* Hiệu ứng trượt chữ mượt mà khi load trang */
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-50px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* ===== LAYOUT ====== */
+.shop-layout {
+  display: flex;
+  gap: 30px;
+  align-items: flex-start;
+  padding-top: 40px;
+}
+
+/* ===== SIDEBAR ====== */
+/* Đã gộp xuống ACCORDION */
+
+.sidebar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.sidebar-main-title {
+  font-size: 16px;
+  font-weight: 900;
+  color: #111;
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+.sidebar-reset-btn {
+  background: transparent;
+  border: none;
+  font-size: 11px;
+  color: var(--accent-color);
+  cursor: pointer;
+  text-transform: uppercase;
+  font-weight: 700;
+  transition: opacity 0.3s;
+}
+
+.sidebar-reset-btn:hover {
+  opacity: 0.8;
+}
+
+/* ===== SIDEBAR ACCORDION ===== */
+.shop-sidebar {
+  width: 250px;
+  flex-shrink: 0;
+  position: sticky;
+  top: 90px;
+  /* Cố định khi cuộn */
+  max-height: calc(100vh - 120px);
+  overflow-y: auto;
+  padding-right: 12px;
+}
+
+/* Custom Scrollbar cho Sidebar */
+.shop-sidebar::-webkit-scrollbar {
+  width: 4px;
+}
+
+.shop-sidebar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.shop-sidebar::-webkit-scrollbar-thumb {
+  background: #ccc;
+  border-radius: 4px;
+}
+
+.shop-sidebar::-webkit-scrollbar-thumb:hover {
+  background: var(--accent-color);
+}
+
+.sidebar-section {
+  margin-bottom: 10px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.sidebar-title {
+  font-size: 13px;
+  font-weight: 800;
+  color: #111;
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+/* Ẩn dấu mũi tên mặc định của details */
+details.sidebar-section summary::-webkit-details-marker {
+  display: none;
+}
+
+details.sidebar-section summary {
+  list-style: none;
+  /* Dành cho Firefox */
+  padding: 16px 0;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  user-select: none;
+}
+
+/* Icon cộng/trừ bên phải */
+details.sidebar-section summary::after {
+  content: "+";
+  font-size: 18px;
+  color: #555;
+  transition: all 0.2s;
+  font-weight: 400;
+}
+
+details.sidebar-section[open] summary::after {
+  content: "−";
+  color: var(--accent-color);
+}
+
+details.sidebar-section[open] .sidebar-title {
+  color: var(--accent-color);
+}
+
+.sidebar-content {
+  padding-bottom: 16px;
+  animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.filter-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+  font-size: 14px;
+  color: #555;
+  cursor: pointer;
+  transition: color 0.3s;
+}
+
+.filter-checkbox:hover {
+  color: #111;
+}
+
+.filter-checkbox span {
+  position: relative;
+  top: 1px;
+}
+
+.filter-checkbox input[type="checkbox"],
+.filter-checkbox input[type="radio"] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--accent-color);
+  cursor: pointer;
+}
+
+.empty-text {
+  font-size: 13px;
+  color: #777;
+  font-style: italic;
+}
+
+/* ===== SHOP MAIN ====== */
+.shop-main {
+  flex: 1;
+  min-width: 0;
+}
+
+/* ===== TOOLBAR ===== */
+.shop-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 30px;
+  flex-wrap: wrap;
+}
+
+.toolbar-left {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.toolbar-right {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
+.search-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.search-icon {
+  position: absolute;
+  left: 12px;
+  width: 16px;
+  height: 16px;
+  color: #555;
+  pointer-events: none;
+}
+
+.styled-input {
+  background: #fff;
+  border: 1px solid #ddd;
+  color: #111;
+  font-size: 14px;
+  outline: none;
+  border-radius: 4px;
+  transition: all 0.3s ease;
+}
+
+.search-input {
+  padding: 12px 16px 12px 42px;
+  width: 280px;
+}
+
+.search-input:focus,
+.sort-select:focus,
+.styled-input:hover {
+  border-color: #aaa;
+  background: #fff;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
+}
+
+.search-input::placeholder {
+  color: #888;
+}
+
+.sort-select {
+  font-size: 13px;
+  font-weight: 600;
+  padding: 12px 16px;
+  cursor: pointer;
+}
+
+.sort-select option {
+  background: #fff;
+  color: #111;
+}
+
+.result-count {
+  font-size: 13px;
+  color: #666;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* ===== PRODUCT GRID ===== */
+.shop-product-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+  padding-bottom: 80px;
+}
+
+@media (max-width: 1200px) {
+  .shop-product-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 900px) {
+  .shop-layout {
+    flex-direction: column;
+  }
+
+  .shop-sidebar {
+    width: 100%;
+    position: relative;
+    top: 0;
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    border-bottom: 1px solid #222;
+    padding-bottom: 20px;
+    margin-bottom: 20px;
+  }
+
+  .sidebar-section {
+    border: none;
+    margin: 0;
+    padding: 0;
+  }
+}
+
+@media (max-width: 600px) {
+  .shop-product-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .search-input {
+    width: 200px;
+  }
+
+  .shop-hero-title {
+    font-size: 30px;
+  }
+
+  .shop-sidebar {
+    flex-direction: column;
+  }
+}
+
+/* ===== LOADING STATE ===== */
+.shop-loading {
+  text-align: center;
+  padding: 100px 0;
+  color: #555;
+}
+
+.loading-dots {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.loading-dots span {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--accent-color);
+  animation: dotBounce 1.2s ease-in-out infinite;
+}
+
+.loading-dots span:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.loading-dots span:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes dotBounce {
+
+  0%,
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+
+  50% {
+    transform: translateY(-10px);
+    opacity: 0.3;
+  }
+}
+
+/* ===== EMPTY STATE ===== */
+.shop-empty {
+  text-align: center;
+  padding: 100px 20px;
+  color: #555;
+}
+
+.shop-empty svg {
+  width: 64px;
+  height: 64px;
+  color: #ccc;
+  margin-bottom: 20px;
+}
+
+.shop-empty h3 {
+  font-size: 22px;
+  font-weight: 900;
+  color: #111;
+  margin-bottom: 10px;
+  text-transform: uppercase;
+}
+
+.shop-empty p {
+  margin-bottom: 30px;
+}
+
+.btn-reset-filter {
+  background: var(--accent-color);
+  color: #fff;
+  border: none;
+  padding: 12px 28px;
+  font-weight: 900;
+  font-size: 13px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.btn-reset-filter:hover {
+  background: var(--accent-hover);
+}
+
+/* ===== LOAD MORE BUTTON ===== */
+.shop-load-more {
+  text-align: center;
+  padding: 40px 0 100px;
+}
+
+.load-more-info {
+  font-size: 13px;
+  color: #666;
+  margin-bottom: 24px;
+  font-weight: 400;
+}
+
+.load-more-info strong {
+  color: #111;
+  font-weight: 700;
+}
+
+.glass-btn {
+  background: #fff;
+  border: 1px solid #ccc;
+  color: #111;
+  padding: 16px 40px;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  border-radius: 4px;
+  transition: all 0.3s ease;
+}
+
+.glass-btn::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 0, 41, 0.1);
+  transform: translateX(-100%);
+  transition: 0.5s;
+}
+
+.glass-btn:hover {
+  border-color: var(--accent-color);
+  color: var(--accent-color);
+  background: #fff;
+}
+
+.glass-btn:hover::before {
+  transform: translateX(100%);
+}
+
+.btn-loading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}

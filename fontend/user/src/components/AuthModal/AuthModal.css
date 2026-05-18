@@ -1,0 +1,351 @@
+/* ================================================================
+   AUTH MODAL — BẢN FIX CHUẨN (KHÔNG BỊ TRÔI, CẮT MÀN HÌNH)
+   ================================================================ */
+
+.auth-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(15, 23, 42, 0.7);
+  /* Lớp nền tối mờ */
+  backdrop-filter: blur(4px);
+  z-index: 999999;
+  display: flex;
+  align-items: center;
+  /* Luôn canh giữa chính xác */
+  justify-content: center;
+}
+
+.auth-modal {
+  background: #ffffff;
+  width: calc(100% - 32px);
+  /* Cách lề 2 bên một chút nếu dùng đt */
+  max-width: 440px;
+  border-radius: 16px;
+  box-shadow: 0 24px 50px rgba(0, 0, 0, 0.2);
+  position: relative;
+
+  /* ĐIỂM QUYẾT ĐỊNH: Không cho Modal cao hơn 85% màn hình */
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  /* Cắt phần thừa để không bị mất bo góc */
+
+  animation: authSlideUp 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.auth-close-btn {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 32px;
+  height: 32px;
+  background: #f1f5f9;
+  border: none;
+  border-radius: 50%;
+  color: #64748b;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  z-index: 10;
+}
+
+.auth-close-btn:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+/* ── Tabs (Header cố định) ── */
+.auth-header {
+  background: #f8fafc;
+  padding: 24px 36px 0;
+  border-bottom: 1px solid #e2e8f0;
+  flex-shrink: 0;
+  /* Giữ header không bị thu nhỏ khi cuộn */
+}
+
+.auth-tabs {
+  display: flex;
+  gap: 32px;
+}
+
+.auth-tab {
+  background: none;
+  border: none;
+  padding: 0 0 16px 0;
+  font-family: 'Inter', sans-serif;
+  font-size: 15px;
+  font-weight: 800;
+  color: #94a3b8;
+  cursor: pointer;
+  position: relative;
+  transition: color 0.2s;
+}
+
+.auth-tab:hover {
+  color: #0f172a;
+}
+
+.auth-tab.active {
+  color: #d8282e;
+}
+
+.auth-tab.active::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background: #d8282e;
+  border-radius: 3px 3px 0 0;
+}
+
+/* ── Form Body (Nội dung tự cuộn) ── */
+.auth-body {
+  padding: 32px 36px;
+  overflow-y: auto;
+  /* Tự động tạo thanh cuộn nếu màn hình ngắn */
+  flex-grow: 1;
+}
+
+/* Làm đẹp thanh cuộn */
+.auth-body::-webkit-scrollbar {
+  width: 6px;
+}
+
+.auth-body::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.auth-body::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 10px;
+}
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.auth-input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.auth-input-group label {
+  font-size: 13px;
+  font-weight: 700;
+  color: #475569;
+}
+
+.auth-input-group input {
+  width: 100%;
+  padding: 14px 16px;
+  background: #f8fafc;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  font-size: 14px;
+  color: #0f172a;
+  outline: none;
+  font-family: inherit;
+  transition: all 0.2s;
+  box-sizing: border-box;
+}
+
+.auth-input-group input:focus {
+  background: #fff;
+  border-color: #d8282e;
+  box-shadow: 0 0 0 3px rgba(216, 40, 46, 0.1);
+}
+
+.auth-input-group input::placeholder {
+  color: #94a3b8;
+}
+
+/* Password Box */
+.password-wrapper {
+  position: relative;
+}
+
+.toggle-password {
+  position: absolute;
+  top: 50%;
+  right: 12px;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  transition: color 0.2s;
+}
+
+.toggle-password svg {
+  width: 20px;
+  height: 20px;
+}
+
+.toggle-password:hover {
+  color: #475569;
+}
+
+/* Options */
+.auth-options {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+  margin-top: -4px;
+}
+
+.auth-remember {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  color: #475569;
+  font-weight: 500;
+}
+
+.auth-remember input[type="checkbox"] {
+  accent-color: #d8282e;
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+
+.auth-forgot {
+  color: #2563eb;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.auth-forgot:hover {
+  text-decoration: underline;
+}
+
+/* Submit Btn */
+.auth-submit-btn {
+  background: #d8282e;
+  color: #fff;
+  border: none;
+  padding: 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  transition: all 0.3s;
+  margin-top: 4px;
+}
+
+.auth-submit-btn:hover {
+  background: #b91c1c;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(216, 40, 46, 0.25);
+}
+
+/* Divider */
+.auth-divider {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  margin: 24px 0;
+  color: #94a3b8;
+  font-size: 13px;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+  content: '';
+  flex: 1;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.auth-divider span {
+  padding: 0 16px;
+}
+
+/* Social Buttons */
+.auth-social {
+  display: flex;
+  gap: 16px;
+}
+
+.social-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 12px;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #334155;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.social-btn:hover {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+}
+
+/* Animations */
+@keyframes authFadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes authSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px) scale(0.95);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Responsive cho điện thoại */
+@media (max-width: 480px) {
+  .auth-overlay {
+    padding: 0;
+    align-items: flex-end;
+  }
+
+  .auth-modal {
+    border-radius: 16px 16px 0 0;
+    max-height: 90vh;
+    width: 100%;
+  }
+
+  .auth-body {
+    padding: 24px;
+  }
+
+  .auth-header {
+    padding: 20px 24px 0;
+  }
+}

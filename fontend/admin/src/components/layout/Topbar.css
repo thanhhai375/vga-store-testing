@@ -1,0 +1,226 @@
+.topbar {
+  position: fixed;
+  top: 0;
+  left: var(--sidebar-width);
+  right: 0;
+  height: var(--topbar-height);
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 32px;
+  z-index: 90;
+}
+
+.topbar-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.topbar-notification {
+  position: relative;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  transition: background 0.2s;
+}
+.topbar-notification:hover {
+  background: var(--bg-hover);
+}
+.notification-badge {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  background: var(--danger);
+  color: white;
+  font-size: 10px;
+  font-weight: bold;
+  height: 16px;
+  min-width: 16px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 4px;
+  border: 2px solid var(--bg-secondary);
+}
+
+.topbar-time {
+  font-size: 12.5px;
+  color: var(--text-muted);
+}
+
+.topbar-user {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.topbar-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--primary), var(--secondary));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 14px;
+  color: #fff;
+  flex-shrink: 0;
+}
+
+.topbar-username {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.topbar-role {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+/* 🌟 BỔ SUNG CSS CHO DROPDOWN THÔNG BÁO */
+.topbar-notification-container {
+  position: relative;
+}
+
+.notification-backdrop {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  z-index: 99;
+}
+
+.notification-dropdown {
+  position: absolute;
+  top: 45px;
+  right: -10px;
+  width: 320px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+  border: 1px solid #e5e7eb;
+  z-index: 100;
+  overflow: hidden;
+  animation: slideDown 0.2s ease-out forwards;
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.notification-header {
+  padding: 12px 16px;
+  border-bottom: 1px solid #e5e7eb;
+  background: #f9fafb;
+}
+
+.notification-header h4 {
+  margin: 0;
+  font-size: 14px;
+  color: #111827;
+}
+
+.notification-list {
+  max-height: 350px;
+  overflow-y: auto;
+}
+
+.notification-item {
+  display: flex;
+  padding: 12px 16px;
+  gap: 12px;
+  border-bottom: 1px solid #f3f4f6;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.notification-item:hover {
+  background: #f3f4f6;
+}
+
+.notification-icon {
+  font-size: 20px;
+}
+
+.notification-content p {
+  margin: 0;
+  font-size: 13px;
+  color: #374151;
+  line-height: 1.4;
+}
+
+.notification-content strong {
+  color: #111827;
+}
+
+.notification-time {
+  display: block;
+  font-size: 11px;
+  color: #6b7280;
+  margin-top: 4px;
+}
+
+.notification-empty {
+  padding: 20px;
+  text-align: center;
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.notification-footer {
+  padding: 12px;
+  text-align: center;
+  font-size: 13px;
+  color: #2563eb;
+  font-weight: 500;
+  cursor: pointer;
+  border-top: 1px solid #e5e7eb;
+  background: #f9fafb;
+}
+
+.notification-footer:hover {
+  text-decoration: underline;
+}
+
+.notification-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  border-bottom: 1px solid #e5e7eb;
+  background: #f9fafb;
+}
+
+.notif-payment {
+  background: #fef2f2;
+  border-left: 3px solid #ef4444;
+}
+
+.notif-payment:hover {
+  background: #fee2e2;
+}
+
+.notification-badge--pulse {
+  animation: notif-pulse 2s ease-in-out infinite;
+}
+
+@keyframes notif-pulse {
+  0%, 100% { transform: scale(1); }
+  50%       { transform: scale(1.25); }
+}

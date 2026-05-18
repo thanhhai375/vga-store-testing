@@ -1,0 +1,84 @@
+/* =========================================
+   TRONG FILE: src/components/ui/HelpChoose.css
+   ========================================= */
+
+.help-choose-section {
+  background-color: #ffffff;
+  padding: 60px 0 80px 0;
+}
+
+.help-header {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.help-header h2 {
+  font-size: 36px;
+  font-weight: 900;
+  color: #000;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+
+.help-header p {
+  font-size: 15px;
+  color: #333;
+}
+
+/* Khung lưới 4 cột */
+.help-filter-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 15px;
+  max-width: 1400px;
+  margin: 0 auto 40px auto;
+  padding: 0 20px;
+}
+
+/* Định dạng ô chọn (Xóa viền xấu của trình duyệt) */
+select.help-select-box {
+  border: 1px solid #ddd;
+  padding: 15px 20px;
+  cursor: pointer;
+  background-color: #fff;
+  transition: border 0.3s;
+  appearance: none;
+  /* Ẩn mũi tên mặc định */
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  /* Vẽ mũi tên mới đẹp hơn */
+  background-image: url('data:image/svg+xml;utf8,<svg fill="%23666" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/></svg>');
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  font-size: 13px;
+  font-weight: 600;
+  color: #000;
+  text-transform: uppercase;
+}
+
+select.help-select-box:hover,
+select.help-select-box:focus {
+  outline: none;
+  border-color: #000;
+}
+
+/* Nút bấm đỏ */
+.help-action {
+  text-align: center;
+}
+
+.btn-red-action {
+  background-color: #d8282e;
+  color: #fff;
+  border: none;
+  padding: 15px 30px;
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+  text-transform: uppercase;
+  transition: background 0.3s;
+}
+
+.btn-red-action:hover {
+  background-color: #b01b20;
+}

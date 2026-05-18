@@ -1,0 +1,151 @@
+# VGA STORE BACKEND (SPRING BOOT)
+
+## 📌 1. Giới thiệu
+
+Dự án backend cho website bán VGA, sử dụng Spring Boot.
+
+---
+
+## 📊 2. ERD (Tóm tắt)
+
+* USERS (1) —— (N) ORDERS
+
+* ORDERS (1) —— (N) ORDER_ITEMS
+
+* PRODUCTS (1) —— (N) ORDER_ITEMS
+
+* USERS (1) —— (1) CART
+
+* CART (1) —— (N) CART_ITEMS
+
+* PRODUCTS (1) —— (N) CART_ITEMS
+
+---
+
+## 🧠 3. Giải thích
+
+* ORDER_ITEMS: lưu chi tiết đơn hàng (product, quantity, price)
+* CART_ITEMS: lưu sản phẩm trong giỏ hàng
+
+---
+
+## 🗄️ 4. Lược đồ quan hệ (Relational Schema)
+
+### USERS
+
+* USERS(
+  id PRIMARY KEY,
+  username,
+  password,
+  email,
+  role
+)
+
+### PRODUCTS
+
+* PRODUCTS(
+  id PRIMARY KEY,
+  name,
+  brand_id,
+  price,
+  stock,
+  description,
+  img_url,
+  FOREIGN KEY (brand_id) REFERENCES BRANDS(id)
+)
+
+### BRAND
+* BRANDS(
+  id PRIMARY KEY,
+  name
+)
+
+### ORDERS
+
+* ORDERS(
+  id PRIMARY KEY,
+  user_id,
+  total_price,
+  status,
+  FOREIGN KEY (user_id) REFERENCES USERS(id)
+)
+
+### ORDER_ITEMS
+
+* ORDER_ITEMS(
+  id PRIMARY KEY,
+  order_id,
+  product_id,
+  quantity,
+  price,
+  FOREIGN KEY (order_id) REFERENCES ORDERS(id),
+  FOREIGN KEY (product_id) REFERENCES PRODUCTS(id)
+)
+
+### CART
+
+* CART(
+  id PRIMARY KEY,
+  user_id,
+  FOREIGN KEY (user_id) REFERENCES USERS(id)
+)
+
+### CART_ITEMS
+
+* CART_ITEMS(
+  id PRIMARY KEY,
+  cart_id,
+  product_id,
+  quantity,
+  FOREIGN KEY (cart_id) REFERENCES CART(id),
+  FOREIGN KEY (product_id) REFERENCES PRODUCTS(id)
+)
+
+---
+
+## 🏗️ 5. Cấu trúc project
+
+```
+src/main/java/com/vgashop
+│
+├── controller
+│   ├── AuthController.java
+│   ├── ProductController.java
+│   ├── CartController.java
+│   ├── OrderController.java
+│
+├── service
+│   ├── AuthService.java
+│   ├── ProductService.java
+│   ├── CartService.java
+│   ├── OrderService.java
+│
+├── repository
+│   ├── UserRepository.java
+│   ├── ProductRepository.java
+│   ├── CartRepository.java
+│   ├── OrderRepository.java
+│
+├── entity
+│   ├── User.java
+│   ├── Product.java
+│   ├── Cart.java
+│   ├── CartItem.java
+│   ├── Order.java
+│   ├── OrderItem.java
+│
+└── config
+    └── SecurityConfig.java
+```
+
+---
+
+## 👨‍💻 6. Phân chia công việc
+
+### Người 1:
+
+* User + Auth + Product
+
+### Người 2:
+
+* Cart + Order

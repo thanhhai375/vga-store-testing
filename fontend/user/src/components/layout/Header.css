@@ -1,0 +1,367 @@
+/* =============================================
+   HEADER - Professional Gaming Style
+   ============================================= */
+.header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 60px;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  transition: background 0.4s, border-color 0.4s;
+}
+
+.header.scrolled {
+  background: rgba(0, 0, 0, 0.97);
+  border-bottom: 1px solid rgba(255, 0, 41, 0.25);
+}
+
+.header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+/* ===== LOGO ===== */
+.logo-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  flex-shrink: 0;
+}
+
+.logo-icon {
+  width: 40px;
+  height: 40px;
+  transition: filter 0.3s;
+  filter: drop-shadow(0 0 6px rgba(255, 0, 41, 0.6));
+}
+
+.logo-brand:hover .logo-icon {
+  filter: drop-shadow(0 0 12px rgba(255, 0, 41, 1));
+}
+
+.logo-text-block {
+  display: flex;
+  flex-direction: column;
+  line-height: 1;
+  gap: 1px;
+}
+
+.logo-line1 {
+  font-size: 18px;
+  font-weight: 900;
+  color: var(--accent-color);
+  letter-spacing: 3px;
+  text-transform: uppercase;
+}
+
+/* ===== LOGO ===== */
+.logo-brand {
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+  flex-shrink: 0;
+}
+
+.header-logo-img {
+  height: 130px;
+  /* Chỉnh độ to nhỏ của logo ở đây */
+  margin-left: -60px;
+  margin-top: 10px;
+  width: auto;
+  object-fit: contain;
+  transition: filter 0.3s, transform 0.3s;
+  /* Phủ một lớp sáng nhẹ xung quanh để logo nổi bật trên nền đen */
+  filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.15));
+}
+
+.logo-brand:hover .header-logo-img {
+  transform: scale(1.05);
+  /* Phóng to nhẹ khi di chuột */
+  /* Đổi sang phát sáng xanh - đỏ giống màu logo của bạn */
+  filter: drop-shadow(0 0 10px rgba(0, 162, 255, 0.5));
+}
+
+/* ===== NAV ===== */
+.nav-links {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.nav-item {
+  position: relative;
+  font-size: 12px;
+  font-weight: 800;
+  color: rgba(255, 255, 255, 0.65);
+  text-transform: uppercase;
+  text-decoration: none;
+  padding: 8px 16px;
+  letter-spacing: 1.5px;
+  transition: color 0.3s;
+}
+
+.nav-item::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 16px;
+  right: 16px;
+  height: 2px;
+  background: var(--accent-color);
+  transform: scaleX(0);
+  transition: transform 0.3s ease;
+}
+
+.nav-item:hover {
+  color: #fff;
+}
+
+.nav-item.active {
+  color: #fff;
+}
+
+.nav-item.active::after,
+.nav-item:hover::after {
+  transform: scaleX(1);
+}
+
+/* ===== ACTIONS ===== */
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.nav-action-item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.65);
+  cursor: pointer;
+  transition: color 0.3s, background 0.3s;
+  border-radius: 4px;
+}
+
+.nav-action-item:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.cart-icon {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  color: rgba(255, 255, 255, 0.65);
+  cursor: pointer;
+  transition: color 0.3s, background 0.3s;
+  border-radius: 4px;
+}
+
+.cart-icon:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.cart-badge {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  background: var(--accent-color);
+  color: #fff;
+  border-radius: 50%;
+  width: 15px;
+  height: 15px;
+  font-size: 9px;
+  font-weight: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 6px var(--accent-color);
+}
+
+/* ================================================================
+   NÂNG CẤP MENU NGƯỜI DÙNG (DROPDOWN) CHUẨN DOANH NGHIỆP
+   ================================================================ */
+
+.user-logged-in-wrapper {
+  position: relative;
+  display: inline-block;
+  margin-left: 8px;
+}
+
+.user-avatar-trigger {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.user-avatar-trigger:hover {
+  border-color: #d8282e;
+  transform: scale(1.05);
+}
+
+.user-avatar-img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+/* Khung Menu Dropdown */
+.user-dropdown-menu {
+  position: absolute;
+  top: 140%;
+  right: 0;
+  width: 240px;
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+  border: 1px solid #eaeaea;
+  padding: 8px 0;
+  z-index: 1000;
+  animation: dropdownSlideUp 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  transform-origin: top right;
+}
+
+/* Tạo cái mũi tên nhỏ trỏ lên Avatar */
+.user-dropdown-menu::before {
+  content: '';
+  position: absolute;
+  top: -6px;
+  right: 12px;
+  width: 12px;
+  height: 12px;
+  background: #ffffff;
+  transform: rotate(45deg);
+  border-left: 1px solid #eaeaea;
+  border-top: 1px solid #eaeaea;
+}
+
+/* Phần thông tin người dùng */
+.dropdown-user-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 20px;
+}
+
+.dropdown-user-header img {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.dropdown-user-info {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.dropdown-user-info .user-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: #111;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dropdown-user-info .user-email {
+  font-size: 12px;
+  color: #64748b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Đường kẻ phân cách */
+.dropdown-divider {
+  height: 1px;
+  background-color: #f1f5f9;
+  margin: 8px 0;
+}
+
+/* Các link bên trong Menu */
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 20px;
+  color: #475569;
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: none;
+  transition: all 0.2s;
+  background: none;
+  width: 100%;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+}
+
+.dropdown-item svg {
+  width: 18px;
+  height: 18px;
+  color: #94a3b8;
+  transition: color 0.2s;
+}
+
+.dropdown-item:hover {
+  background-color: #f8fafc;
+  color: #111;
+}
+
+.dropdown-item:hover svg {
+  color: #d8282e;
+}
+
+/* Nút Đăng xuất */
+.logout-btn {
+  color: #ef4444;
+}
+
+.logout-btn:hover {
+  background-color: #fef2f2;
+  color: #dc2626;
+}
+
+.logout-btn:hover svg {
+  color: #dc2626;
+}
+
+@keyframes dropdownSlideUp {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}

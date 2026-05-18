@@ -1,0 +1,274 @@
+/* ============================================================
+   PRODUCT CARD — Premium Professional Style
+   ============================================================ */
+.product-card {
+  position: relative;
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 0;
+  border: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  text-decoration: none;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+  max-width: 320px;
+  margin: 0 auto;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
+}
+
+.product-card:hover {
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.1);
+  border-color: var(--accent-color);
+  transform: translateY(-8px);
+}
+
+/* NHÃN HOT DEAL DẠNG PILL */
+.card-badge-hot {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  background: var(--accent-color);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 950;
+  padding: 4px 12px;
+  border-radius: 4px;
+  z-index: 10;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+/* NÚT WISHLIST TIM */
+.btn-wishlist {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid var(--border-color);
+  cursor: pointer;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  backdrop-filter: blur(4px);
+  color: #94a3b8;
+}
+
+.btn-wishlist:hover {
+  transform: scale(1.15);
+  border-color: var(--accent-color);
+  color: var(--accent-color);
+}
+
+.btn-wishlist.wishlisted {
+  background: var(--accent-color);
+  color: #fff;
+  border-color: var(--accent-color);
+}
+
+/* KHUNG ẢNH */
+.card-image-wrapper {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f8fafc;
+  overflow: hidden;
+  border-bottom: 1px solid var(--border-color);
+}
+
+/* HÌNH ẢNH */
+.card-image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  padding: 20px;
+  transition: transform 0.6s ease;
+}
+
+.product-card:hover .card-image {
+  transform: scale(1.12);
+}
+
+/* THÔNG TIN SẢN PHẨM */
+.card-info {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  padding: 20px;
+}
+
+.card-name {
+  font-size: 15px;
+  font-weight: 700;
+  color: black;
+  line-height: 1.5;
+  margin-bottom: 12px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  min-height: 45px;
+}
+
+.product-card:hover .card-name {
+  color: var(--accent-color);
+}
+
+/* KHU VỰC GIÁ CẢ */
+.card-price-area {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.old-price {
+  font-size: 13px;
+  color: var(--text-secondary);
+  text-decoration: line-through;
+  font-weight: 500;
+}
+
+.new-price-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.new-price {
+  font-size: 19px;
+  font-weight: 950;
+  color: var(--accent-color);
+  letter-spacing: -0.5px;
+}
+
+/* ĐÁNH GIÁ SAO */
+.card-rating {
+  margin-top: 14px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+}
+
+.stars {
+  color: #f59e0b;
+}
+
+.review-count {
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+/* NÚT MUA */
+.btn-quick-add {
+  margin-top: 20px;
+  background: var(--text-primary);
+  color: #fff;
+  border: none;
+  width: 100%;
+  padding: 12px;
+  border-radius: 8px;
+  font-weight: 800;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.btn-quick-add:hover {
+  background: var(--accent-color);
+  box-shadow: 0 4px 15px rgba(220, 38, 38, 0.3);
+}
+
+/* POPUP THÊM GIỎ HÀNG (đã style chuyên nghiệp hơn) */
+.custom-popup-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(15, 23, 42, 0.6);
+  z-index: 999999;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  backdrop-filter: blur(4px);
+}
+
+.custom-popup-content {
+  background: #ffffff;
+  padding: 40px;
+  border-radius: 16px;
+  text-align: center;
+  width: 400px;
+  max-width: 90%;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  position: relative;
+}
+
+.popup-icon-success {
+  width: 64px;
+  height: 64px;
+  background: #f0fdf4;
+  border-radius: 50%;
+  color: #16a34a;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 0 auto 24px auto;
+}
+
+.popup-title {
+  font-size: 20px;
+  font-weight: 900;
+  color: #1e293b;
+  margin-bottom: 30px;
+}
+
+.popup-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.popup-btn-continue {
+  background: var(--text-primary);
+  color: white;
+  border: none;
+  padding: 14px;
+  border-radius: 8px;
+  font-weight: 800;
+  cursor: pointer;
+  width: 100%;
+  transition: all 0.2s;
+}
+
+.popup-btn-continue:hover {
+  background: #000;
+}
+
+.popup-btn-close {
+  background: #f1f5f9;
+  color: #475569;
+  border: none;
+  padding: 10px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.popup-btn-close:hover {
+  background: #e2e8f0;
+}

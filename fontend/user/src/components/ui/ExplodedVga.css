@@ -1,0 +1,215 @@
+/* ExplodedVga — clean, no overlapping labels */
+
+.evga-section {
+  background: #000;
+  padding-bottom: 80px;
+}
+
+/* ── Top bar ── */
+.evga-top {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 40px;
+  flex-wrap: wrap;
+  padding-top: 80px !important;
+  padding-bottom: 44px;
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.8s ease, transform 0.8s ease;
+}
+
+.evga-top.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.evga-top-left {
+  max-width: 520px;
+}
+
+.evga-eyebrow {
+  display: block;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 4px;
+  color: var(--accent-color);
+  text-transform: uppercase;
+  margin-bottom: 12px;
+}
+
+.evga-title {
+  font-size: 48px;
+  font-weight: 900;
+  color: #fff;
+  text-transform: uppercase;
+  line-height: 1.05;
+  letter-spacing: -1px;
+  margin-bottom: 16px;
+}
+
+.evga-title span {
+  color: transparent;
+  -webkit-text-stroke: 2px var(--accent-color);
+}
+
+.evga-desc {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.45);
+  line-height: 1.8;
+}
+
+/* ── Toggle tabs ── */
+.evga-tabs {
+  display: flex;
+  border: 1px solid #2a2a2a;
+  flex-shrink: 0;
+  align-self: flex-end;
+}
+
+.evga-tab {
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.45);
+  font-family: var(--font-main);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  padding: 13px 26px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.evga-tab:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.evga-tab.active {
+  background: var(--accent-color);
+  color: #fff;
+}
+
+/* ── Image (full-width, no container) ── */
+.evga-img-wrap {
+  width: 100%;
+  max-width: 1300px;
+  margin: 0 auto;
+  opacity: 0;
+  transform: scale(0.98);
+  transition: opacity 1s ease 0.2s, transform 1s ease 0.2s;
+}
+
+.evga-img-wrap.visible {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.evga-img {
+  width: 100%;
+  height: auto;
+  display: block;
+  /* preserve black background, show image clean */
+  max-height: 700px;
+  object-fit: contain;
+  animation: imgSwitch 0.4s ease;
+}
+
+@keyframes imgSwitch {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+/* ── Spec bar ── */
+.evga-specbar {
+  display: flex;
+  gap: 0;
+  margin-top: 50px;
+  border-top: 1px solid #1a1a1a;
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity 0.8s ease 0.5s, transform 0.8s ease 0.5s;
+}
+
+.evga-specbar.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.evga-spec {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 24px 28px;
+  border-right: 1px solid #1a1a1a;
+  flex: 1;
+  transition: background 0.3s;
+}
+
+.evga-spec:last-child {
+  border-right: none;
+}
+
+.evga-spec:hover {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.evga-spec-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--sc);
+  box-shadow: 0 0 10px var(--sc);
+  flex-shrink: 0;
+}
+
+.evga-spec-stat {
+  font-size: 14px;
+  font-weight: 900;
+  color: var(--sc);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-bottom: 3px;
+}
+
+.evga-spec-label {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.4);
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+/* Responsive */
+@media (max-width: 1100px) {
+  .evga-specbar {
+    flex-wrap: wrap;
+  }
+
+  .evga-spec {
+    flex: 1 1 calc(50% - 1px);
+  }
+
+  .evga-title {
+    font-size: 36px;
+  }
+}
+
+@media (max-width: 700px) {
+  .evga-title {
+    font-size: 28px;
+  }
+
+  .evga-spec {
+    padding: 16px;
+  }
+
+  .evga-spec-stat {
+    font-size: 12px;
+  }
+}
