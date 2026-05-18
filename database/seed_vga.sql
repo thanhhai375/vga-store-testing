@@ -2,8 +2,6 @@
 -- PostgreSQL database dump
 --
 
-\restrict DltUA55CxCS9YsnyXgVnkOORyEPEUuaJFHX94EuOxWuCD1x5OgJ6UI9FWyCFF0z
-
 -- Dumped from database version 17.7
 -- Dumped by pg_dump version 17.7
 
@@ -326,6 +324,3 @@ SELECT pg_catalog.setval('public.warranties_id_seq', 1, false);
 --
 -- PostgreSQL database dump complete
 --
-
-\unrestrict DltUA55CxCS9YsnyXgVnkOORyEPEUuaJFHX94EuOxWuCD1x5OgJ6UI9FWyCFF0z
-
