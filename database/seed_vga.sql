@@ -146,12 +146,7 @@ INSERT INTO public.products (deleted, price, stock, brand_id, category_id, creat
 
 
 
---
--- Data for Name: coupons; Type: TABLE DATA; Schema: public; Owner: postgres
---
-
-INSERT INTO public.coupons (id, code, discount_percent, valid_until) VALUES (1, 'WELCOME10', 10, '2026-12-31 23:59:59');
-INSERT INTO public.coupons (id, code, discount_percent, valid_until) VALUES (2, 'SIEUHOTTUANNAY', 5, '2026-05-01 23:59:59');
+-- [ĐÃ XÓA] coupons: bảng này không có Entity trong Spring Boot nên không được tạo tự động.
 
 
 --
@@ -241,11 +236,7 @@ SELECT pg_catalog.setval('public.carts_id_seq', 1, false);
 SELECT pg_catalog.setval('public.categories_id_seq', 5, true);
 
 
---
--- Name: coupons_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
---
-
-SELECT pg_catalog.setval('public.coupons_id_seq', 2, true);
+-- [ĐÃ XÓA] coupons_id_seq: không còn dùng.
 
 
 --
@@ -304,11 +295,7 @@ SELECT pg_catalog.setval('public.user_addresses_id_seq', 1, true);
 SELECT pg_catalog.setval('public.users_id_seq', 4, true);
 
 
---
--- Name: warranties_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
---
-
-SELECT pg_catalog.setval('public.warranties_id_seq', 1, false);
+-- [ĐÃ XÓA] warranties_id_seq: bảng warranties không có Entity trong Spring Boot nên không được tạo tự động.
 
 
 --
