@@ -6,9 +6,9 @@ pipeline {
 
         JIRA_USER = 'haint8672@ut.edu.vn'
 
-        // Không được phép ghi thẳng Token vào code để tránh bị Hacker đánh cắp!
-        // Trong thực tế, Token này sẽ được cấu hình ẩn bên trong hệ thống Jenkins (Credentials)
-        JIRA_TOKEN = 'TOKEN_CUA_BAN_LUU_TRONG_JENKINS'
+        // Cú pháp chuẩn DevOps: Lấy Token từ Két sắt (Credentials) của Jenkins ra dùng!
+        // Như vậy Github sẽ không bao giờ nhìn thấy mã Token này.
+        JIRA_TOKEN = credentials('JIRA_API_TOKEN')
 
         JIRA_PROJECT_KEY = 'KCPM'
     }
