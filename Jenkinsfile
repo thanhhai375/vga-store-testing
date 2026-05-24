@@ -6,8 +6,6 @@ pipeline {
 
         JIRA_USER = 'haint8672@ut.edu.vn'
 
-        // Cú pháp chuẩn DevOps: Lấy Token từ Két sắt (Credentials) của Jenkins ra dùng!
-        // Như vậy Github sẽ không bao giờ nhìn thấy mã Token này.
         JIRA_TOKEN = credentials('JIRA_API_TOKEN')
 
         JIRA_PROJECT_KEY = 'KCPM'
