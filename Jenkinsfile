@@ -25,7 +25,7 @@ pipeline {
                     // Cài công cụ Newman của Postman
                     sh 'npm install -g newman'
                     // Chạy file collection
-                    sh 'newman run postman/vga-store-api.postman_collection.json'
+                    sh 'newman run postman/vga-store-api.postman_collection.json || { echo "LỖI TẠI BƯỚC TEST API (POSTMAN)" > ../error_reason.txt; exit 1; }'
                 }
             }
         }
@@ -37,7 +37,7 @@ pipeline {
                     // Jenkins tự cài thư viện automation
                     sh 'npm install'
                     // Jenkins gõ lệnh chạy trình duyệt ẩn tự động test UI
-                    sh 'npx cypress run'
+                    sh 'npx cypress run || { echo "LỖI TẠI BƯỚC TEST GIAO DIỆN (CYPRESS)" > ../error_reason.txt; exit 1; }'
                 }
             }
         }
@@ -59,8 +59,14 @@ pipeline {
                 // Lấy thông tin người commit cuối cùng bằng lệnh Git
                 def culprit = sh(script: "git log -1 --pretty=format:'%an <%ae>'", returnStdout: true).trim()
 
-                def bugSummary = "[Auto-Log] Automation Test Failed at Jenkins Build #${BUILD_NUMBER}"
-                def bugDescription = "Jenkins Pipeline reported an error. Please check Cypress or Postman logs for details.\\n\\nCommit author causing this error: **${culprit}**"
+                // Đọc xem lỗi phát sinh ở khâu nào
+                def errorReason = "Lỗi hệ thống hoặc lỗi Cài đặt môi trường"
+                if (fileExists('error_reason.txt')) {
+                    errorReason = readFile('error_reason.txt').trim()
+                }
+
+                def bugSummary = "[Bug Tự Động] Hệ thống phát hiện ${errorReason}"
+                def bugDescription = "Hệ thống CI/CD Jenkins vừa quét và phát hiện lỗi mới.\\n\\n**1. Khu vực xảy ra lỗi:** ${errorReason}\\n\\n**2. Thủ phạm tình nghi (Người code cuối cùng):** ${culprit}\\n\\n**3. Cách xem chi tiết mã lỗi:** Vui lòng bấm vào đường link này để xem Nhật ký chạy test của Jenkins: [Xem Console Output](${env.BUILD_URL}console)"
 
                 // Tạo nội dung ticket gửi lên Jira (Định dạng JSON)
                 def payload = """
