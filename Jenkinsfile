@@ -17,10 +17,28 @@ pipeline {
             }
         }
 
+        // BƯỚC 1: DỌN DẸP VÀ BẬT SERVER LÊN TRƯỚC
+        stage('Deploy to Server (Docker)') {
+            steps {
+                echo '🚀 Đang tiến hành Deploy lên Server thực tế...'
+
+                sh 'docker-compose down'
+
+                // Build lại code mới và khởi chạy ứng dụng
+                sh 'docker-compose up -d --build backend admin-frontend user-frontend'
+
+                echo '✅ Triển khai thành công! Đang đợi Backend (Spring Boot) khởi động hoàn tất...'
+
+                // Dừng 15 giây để đảm bảo Backend đã cắm vào DB và mở port 8080 thành công
+                sleep(time: 15, unit: 'SECONDS')
+            }
+        }
+
+        // BƯỚC 2: SAU KHI SERVER CHẠY THÌ MỚI BẮN TEST API
         stage('Run API Tests (Newman/Postman)') {
             steps {
                 dir('automation') {
-                    echo 'Đang chạy API Test tự động...'
+                    echo 'Đang chạy API Test tự động vào Backend vừa dựng...'
                     sh 'npm install -g newman'
                     sh 'newman run postman/vga-store-api.postman_collection.json || { echo "LỖI TẠI BƯỚC TEST API (POSTMAN)" > ../error_reason.txt; exit 1; }'
                 }
@@ -45,20 +63,6 @@ pipeline {
             }
         }
         */
-
-        stage('Deploy to Server (Docker)') {
-            steps {
-                echo '🚀 Đang tiến hành Deploy lên Server thực tế...'
-
-                // Dọn dẹp sạch sẽ các container và network cũ bị trùng tên
-                sh 'docker-compose down'
-
-                // Build lại code mới và khởi chạy ứng dụng
-                sh 'docker-compose up -d --build backend admin-frontend user-frontend'
-
-                echo '✅ Triển khai thành công! Ứng dụng đã sẵn sàng cho khách hàng.'
-            }
-        }
     }
 
     post {
