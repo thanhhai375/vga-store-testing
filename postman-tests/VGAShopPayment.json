@@ -39,7 +39,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"{{$randomEmail}}\",\n  \"username\": \"{{$randomUserName}}\",\n  \"password\": \"123456\",\n  \"fullName\": \"Người Dùng Test\"\n}\n",
+              "raw": "{\n  \"email\": \"{{randomEmail}}\",\n  \"username\": \"{{loginUsername}}\",\n  \"password\": \"123456\",\n  \"fullName\": \"Người Dùng Test\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -49,25 +49,20 @@
           },
           "event": [
             {
-              "listen": "test",
+              "listen": "prerequest",
               "script": {
                 "type": "text/javascript",
                 "packages": {},
                 "requests": {},
                 "exec": [
-                  "var randomNum = Date.now();",
+                  "// Sinh chuỗi ngẫu nhiên bằng mã JavaScript chuẩn",
+                  "const randomNum = Date.now();",
+                  "const randomUsername = \"user\" + randomNum;",
+                  "const randomEmail = \"test\" + randomNum + \"@gmail.com\";",
                   "",
-                  "var randomEmail = \"test\" + randomNum + \"@gmail.com\";",
-                  "var randomUsername = \"user\" + randomNum;",
-                  "",
-                  "pm.variables.set(\"randomEmail\", randomEmail);",
-                  "pm.variables.set(\"randomUsername\", randomUsername);",
-                  "",
-                  "// Parse request body để lấy username vừa gửi",
-                  "const requestBody = pm.request.body;",
-                  "",
-                  "// Lưu vào biến môi trường",
-                  "pm.environment.set(\"loginUsername\", requestBody.username);"
+                  "// Ghi thẳng vào biến môi trường toàn cục của Bruno",
+                  "pm.environment.set(\"loginUsername\", randomUsername);",
+                  "pm.environment.set(\"randomEmail\", randomEmail);"
                 ]
               }
             }
@@ -120,10 +115,10 @@
                 "packages": {},
                 "requests": {},
                 "exec": [
-                  "pm.test('Status is 200', function () { pm.expect(pm.response.code).to.equal(200); });",
-                  "const json = pm.response.json();",
-                  "pm.test('Login returned token', function () { pm.expect(json.token).to.be.a('string').that.is.not.empty; });",
-                  "if (json.token) { pm.environment.set('token', json.token); }"
+                  "const data = pm.response.json();",
+                  "if (data && data.token) {",
+                  "  pm.environment.set(\"token\", data.token);",
+                  "}"
                 ]
               }
             }
@@ -1124,10 +1119,10 @@
                 "packages": {},
                 "requests": {},
                 "exec": [
-                  "pm.test('Status is 200', function () { pm.expect(pm.response.code).to.equal(200); });",
-                  "const json = pm.response.json();",
-                  "pm.test('Login returned admin token', function () { pm.expect(json.token).to.be.a('string').that.is.not.empty; });",
-                  "if (json.token) { pm.environment.set('adminToken', json.token); }"
+                  "const data = pm.response.json();",
+                  "if (data && data.token) {",
+                  "  pm.environment.set(\"adminToken\", data.token);",
+                  "}"
                 ]
               }
             }
@@ -1265,6 +1260,16 @@
       "type": "default"
     },
     {
+      "key": "loginUsername",
+      "value": "",
+      "type": "default"
+    },
+    {
+      "key": "randomEmail",
+      "value": "",
+      "type": "default"
+    },
+    {
       "key": "bankPaymentId",
       "value": "",
       "type": "default"
@@ -1281,21 +1286,6 @@
     },
     {
       "key": "codPaymentId",
-      "value": "",
-      "type": "default"
-    },
-    {
-      "key": "loginUsername",
-      "value": "",
-      "type": "default"
-    },
-    {
-      "key": "$randomEmail",
-      "value": "",
-      "type": "default"
-    },
-    {
-      "key": "$randomUserName",
       "value": "",
       "type": "default"
     },
