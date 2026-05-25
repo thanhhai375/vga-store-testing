@@ -48,6 +48,8 @@ pipeline {
                             --volumes-from vga_jenkins \\
                             -w $(pwd) \\
                             postman/newman run "$test_file" \\
+                            --env-var "baseUrl=http://backend:8080" \\
+                            --env-var "baseurl=http://backend:8080" \\
                         || { echo "❌ ỐI! LỖI TẠI FILE $test_file" > ../error_reason.txt; exit 1; }
                     done
                     '''
