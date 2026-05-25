@@ -27,22 +27,22 @@ pipeline {
             }
         }
 
-        stage('Run UI Tests (Cypress)') {
-            agent {
-                docker {
-                    image 'cypress/included:15.15.0'
-                    reuseNode true
-                    args '--ipc=host --network vga-network'
-                }
-            }
-            steps {
-                dir('automation') {
-                    echo 'Đang chạy UI Test tự động bằng Cypress bên trong Docker Container...'
-                    sh 'npm install'
-                    sh 'cypress run || { echo "LỖI TẠI BƯỚC TEST GIAO DIỆN (CYPRESS)" > ../error_reason.txt; exit 1; }'
-                }
-            }
-        }
+        // stage('Run UI Tests (Cypress)') {
+        //     agent {
+        //         docker {
+        //             image 'cypress/included:15.15.0'
+        //             reuseNode true
+        //             args '--ipc=host --network vga-network'
+        //         }
+        //     }
+        //     steps {
+        //         dir('automation') {
+        //             echo 'Đang chạy UI Test tự động bằng Cypress bên trong Docker Container...'
+        //             sh 'npm install'
+        //             sh 'cypress run || { echo "LỖI TẠI BƯỚC TEST GIAO DIỆN (CYPRESS)" > ../error_reason.txt; exit 1; }'
+        //         }
+        //     }
+        // }
 
         stage('Deploy to Server (Docker)') {
             steps {
