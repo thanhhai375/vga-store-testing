@@ -16,16 +16,14 @@ pipeline {
                 echo 'Đang lấy code mới nhất từ Github...'
             }
         }
-
-        // BƯỚC 1: DỌN DẸP VÀ BẬT SERVER LÊN TRƯỚC
+// BƯỚC 1: BẬT SERVER LÊN TRƯỚC
         stage('Deploy to Server (Docker)') {
             steps {
                 echo '🚀 Đang tiến hành Deploy lên Server thực tế...'
 
-                sh 'docker-compose down'
-
-                // Build lại code mới và khởi chạy ứng dụng
-                sh 'docker-compose up -d --build backend admin-frontend user-frontend'
+                // CỰC KỲ QUAN TRỌNG: Dùng cờ -p để ép Jenkins đè code mới vào đúng nhóm vga-store-testing.
+                // Cơ chế tự động của Docker sẽ tái tạo (Recreate) các container app mà không làm chết Jenkins.
+                sh 'docker-compose -p vga-store-testing up -d --build db backend admin-frontend user-frontend'
 
                 echo '✅ Triển khai thành công! Đang đợi Backend (Spring Boot) khởi động hoàn tất...'
 
