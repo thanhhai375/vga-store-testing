@@ -1,0 +1,23 @@
+TC_ID,Module,Test_Case,Precondition,Test_Steps,Test_Data,Expected_Result,Priority,Status
+TC_ADMIN_01,Admin Auth,Đăng nhập Admin thành công,Tài khoản admin tồn tại,1. Mở trang admin 2. Nhập tài khoản hợp lệ 3. Nhấn đăng nhập,admin/admin123,Chuyển đến dashboard quản trị,High,Not Run
+TC_ADMIN_02,Admin Auth,Đăng nhập Admin sai mật khẩu,Tài khoản admin tồn tại,1. Nhập sai mật khẩu 2. Nhấn đăng nhập,admin/wrongpass,Hiển thị thông báo sai tài khoản hoặc mật khẩu,High,Not Run
+TC_ADMIN_03,Admin Permission,User thường truy cập trang admin,Người dùng đã đăng nhập tài khoản user,1. Truy cập URL /admin,role=user,Hệ thống từ chối truy cập và chuyển về trang chủ,High,Not Run
+TC_ADMIN_04,Admin Permission,Admin truy cập danh sách sản phẩm,Admin đã đăng nhập,1. Mở menu quản lý sản phẩm,role=admin,Hiển thị danh sách VGA,Medium,Not Run
+TC_ADMIN_05,Admin Permission,Phiên đăng nhập admin hết hạn,Admin đã đăng nhập,1. Chờ session hết hạn 2. Refresh trang,expired_token,Yêu cầu đăng nhập lại,Medium,Not Run
+TC_ADMIN_06,VGA Create,Thêm sản phẩm VGA thành công,Admin đã đăng nhập,1. Mở form thêm VGA 2. Nhập đầy đủ thông tin 3. Lưu,RTX 5070; stock=10,Sản phẩm mới được thêm vào danh sách,High,Not Run
+TC_ADMIN_07,VGA Create,Thêm VGA thiếu tên sản phẩm,Admin đã đăng nhập,1. Để trống tên sản phẩm 2. Lưu,name=null,Hiển thị lỗi bắt buộc nhập tên sản phẩm,High,Not Run
+TC_ADMIN_08,VGA Create,Thêm VGA với giá âm,Admin đã đăng nhập,1. Nhập giá âm 2. Lưu,price=-100,Hiển thị lỗi giá không hợp lệ,High,Not Run
+TC_ADMIN_09,VGA Create,Thêm VGA với tồn kho âm,Admin đã đăng nhập,1. Nhập stock âm 2. Lưu,stock=-5,Hiển thị lỗi tồn kho không hợp lệ,Medium,Not Run
+TC_ADMIN_10,VGA Create,Thêm VGA trùng mã sản phẩm,Đã tồn tại mã VGA,1. Nhập mã sản phẩm đã tồn tại 2. Lưu,SKU=RTX4090,Hệ thống báo mã sản phẩm đã tồn tại,Medium,Not Run
+TC_ADMIN_11,VGA Update,Sửa thông tin VGA thành công,Đã có sản phẩm VGA,1. Chọn sản phẩm 2. Cập nhật giá 3. Lưu,price=25990000,Thông tin sản phẩm được cập nhật,High,Not Run
+TC_ADMIN_12,VGA Update,Sửa VGA với giá trị rỗng,Đã có sản phẩm VGA,1. Xóa tên sản phẩm 2. Lưu,name='',Hiển thị lỗi dữ liệu bắt buộc,Medium,Not Run
+TC_ADMIN_13,VGA Update,Sửa VGA với giá quá lớn,Đã có sản phẩm VGA,1. Nhập giá vượt giới hạn 2. Lưu,price=999999999999,Hệ thống báo lỗi giá không hợp lệ,Low,Not Run
+TC_ADMIN_14,VGA Delete,Xóa VGA thành công,Đã có sản phẩm VGA,1. Chọn sản phẩm 2. Nhấn xóa 3. Xác nhận,productId hợp lệ,Sản phẩm bị xóa khỏi danh sách,High,Not Run
+TC_ADMIN_15,VGA Delete,Hủy thao tác xóa VGA,Đã mở popup xác nhận xóa,1. Nhấn hủy tại popup,Cancel delete,Sản phẩm vẫn còn trong danh sách,Low,Not Run
+TC_ADMIN_16,VGA Delete,Xóa VGA không tồn tại,Sản phẩm đã bị xóa trước đó,1. Gửi request xóa lại,productId invalid,Hệ thống báo không tìm thấy sản phẩm,Medium,Not Run
+TC_ADMIN_17,Order Status,Cập nhật đơn hàng sang Đang xử lý,Đơn hàng ở trạng thái Chờ xác nhận,1. Mở chi tiết đơn 2. Chọn Đang xử lý 3. Lưu,status=Processing,Trạng thái đơn được cập nhật,High,Not Run
+TC_ADMIN_18,Order Status,Cập nhật đơn hàng sang Đã giao,Đơn hàng ở trạng thái Đang giao,1. Chọn trạng thái Đã giao 2. Lưu,status=Delivered,Đơn hàng hiển thị trạng thái Đã giao,High,Not Run
+TC_ADMIN_19,Order Status,Cập nhật trạng thái không hợp lệ,Admin đã đăng nhập,1. Gửi trạng thái không tồn tại,status=Unknown,Hệ thống báo lỗi trạng thái không hợp lệ,Medium,Not Run
+TC_ADMIN_20,Order Status,User thường cập nhật trạng thái đơn hàng,Người dùng thường đã đăng nhập,1. Gửi request cập nhật trạng thái,role=user,Hệ thống từ chối thao tác,High,Not Run
+TC_ADMIN_21,Order Status,Cập nhật đơn đã hủy,Đơn hàng ở trạng thái Cancelled,1. Chuyển sang Delivered,Cancelled -> Delivered,Hệ thống không cho phép cập nhật,Medium,Not Run
+TC_ADMIN_22,Order Status,Làm mới danh sách sau cập nhật trạng thái,Đơn hàng đã được cập nhật,1. Refresh trang quản lý đơn,status=Processing,Danh sách hiển thị trạng thái mới nhất,Low,Not Run
