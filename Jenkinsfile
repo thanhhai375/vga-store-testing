@@ -16,18 +16,18 @@ pipeline {
                 echo 'Đang lấy code mới nhất từ Github...'
             }
         }
-       // BƯỚC 1: DỌN DẸP VÀ BẬT SERVER LÊN TRƯỚC
+      // BƯỚC 1: DỌN DẸP VÀ BẬT SERVER LÊN TRƯỚC
         stage('Deploy to Server (Docker)') {
             steps {
                 echo '🚀 Đang tiến hành Deploy lên Server thực tế...'
 
-                // Đồng bộ cờ -p cho cả lệnh down và up
-                sh 'docker-compose -p vga-store-testing down'
+                // "BẮN TỈA": Chỉ tắt và dọn dẹp các app, TUYỆT ĐỐI để Jenkins được sống
+                sh 'docker-compose -p vga-store-testing rm -f -s db backend admin-frontend user-frontend'
 
-                sh 'docker-compose -p vga-store-testing up -d --build backend admin-frontend user-frontend'
+                // Khởi tạo lại App
+                sh 'docker-compose -p vga-store-testing up -d --build db backend admin-frontend user-frontend'
 
                 echo '✅ Triển khai thành công! Đang đợi Backend (Spring Boot) khởi động hoàn tất...'
-
                 sleep(time: 15, unit: 'SECONDS')
             }
         }
