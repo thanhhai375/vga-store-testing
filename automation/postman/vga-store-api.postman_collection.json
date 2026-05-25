@@ -41,10 +41,10 @@
 							"raw": "{\n    \"username\": \"taikhoansai\",\n    \"password\": \"123456\"\n}"
 						},
 						"url": {
-							"raw": "http://localhost:8080/api/auth/login",
+							"raw": "http://backend:8080/api/auth/login",
 							"protocol": "http",
 							"host": [
-								"localhost"
+								"backend"
 							],
 							"port": "8080",
 							"path": [
