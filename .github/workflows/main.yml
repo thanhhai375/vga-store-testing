@@ -30,7 +30,7 @@ jobs:
       - name: Run API Tests
         run: |
           # Chạy tất cả file trong thư mục
-          newman run postman-tests/payment.json -e postman-tests/payment_environment.json --reporters cli,junit --reporter-junit-export junit-report.xml
+          newman run postman-tests/VGAShopPayment.json -e postman-tests/payment_environment.json --reporters cli,junit --reporter-junit-export junit-report.xml
         
       - name: Publish Test Report
         uses: mikepenz/action-junit-report@v4 # Đã nâng lên v4
