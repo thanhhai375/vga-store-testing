@@ -2,7 +2,7 @@ name: API Testing CI
 
 on:
   push:
-    branches: [ master, develop ]
+    branches: [ master, develop, KCPM-12 ]
 
 jobs:
   test:
