@@ -1,0 +1,1510 @@
+{
+  "info": {
+    "_postman_id": "cf688808-a257-4a87-83e2-1e2d787bf864",
+    "name": "VGAShop Payment",
+    "description": "Postman collection for payment flow testing only, matching the current backend endpoints.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "54984213",
+    "_collection_link": "https://go.postman.co/collection/54984213-cf688808-a257-4a87-83e2-1e2d787bf864?source=collection_link"
+  },
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Đăng ký",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "const randomNum = Date.now();",
+                  "const randomUsername = \"user\" + randomNum;",
+                  "const randomEmail = \"test\" + randomNum + \"@gmail.com\";",
+                  "",
+                  "pm.environment.set(\"loginUsername\", randomUsername);",
+                  "pm.environment.set(\"randomEmail\", randomEmail);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {\r",
+                  "    pm.response.to.have.status(200);\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Response has token\", function () {\r",
+                  "    var jsonData = pm.response.json();\r",
+                  "    pm.expect(jsonData.token).to.not.be.undefined;\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Registration successful\", function () {\r",
+                  "    var jsonData = pm.response.json();\r",
+                  "    pm.expect(jsonData.message).to.eql(\"Registration successful\");\r",
+                  "});\r",
+                  "\r",
+                  "var jsonData = pm.response.json();\r",
+                  "pm.environment.set(\"token\", jsonData.token);\r",
+                  "pm.environment.set(\"userId\", jsonData.userId);\r",
+                  "var jsonData = pm.response.json();\r",
+                  "\r",
+                  "pm.environment.set(\"loginUsername\", jsonData.username);\r",
+                  "pm.environment.set(\"token\", jsonData.token);\r",
+                  "pm.environment.set(\"userId\", jsonData.userId);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "default"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{randomEmail}}\",\n  \"username\": \"{{loginUsername}}\",\n  \"password\": \"123456\",\n  \"fullName\": \"Nguoi Dung Test\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:8080/api/auth/register",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "api",
+                "auth",
+                "register"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// Kiểm tra nếu đăng nhập thành công",
+                  "if (pm.response.code === 200) {",
+                  "    const loginData = pm.response.json();",
+                  "    ",
+                  "    // Kiểm tra nếu dữ liệu trả về có token",
+                  "    // Lưu ý: Sử dụng optional chaining (?.) để tránh lỗi nếu path không tồn tại",
+                  "    const token = loginData.token || loginData.data?.token;",
+                  "",
+                  "    if (token) {",
+                  "        pm.environment.set(\"token\", token);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "const randomNum = Date.now();\r",
+                  "const randomUsername = \"user\" + randomNum;\r",
+                  "const randomEmail = \"test\" + randomNum + \"@gmail.com\";\r",
+                  "\r",
+                  "pm.environment.set(\"loginUsername\", randomUsername);\r",
+                  "pm.environment.set(\"randomEmail\", randomEmail);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "default"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{loginUsername}}\",\n  \"password\": \"123456\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:8080/api/auth/login",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Payment_COD",
+      "item": [
+        {
+          "name": "Đặt hàng",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// Phân tích dữ liệu JSON trả về từ Server",
+                  "var jsonData = pm.response.json();",
+                  "",
+                  "// Kiểm tra xem trong response có trường \"orderId\" không",
+                  "if (jsonData && jsonData.orderId) {",
+                  "    // Tự động lưu giá trị \"orderId\" vào biến Environment có tên là \"orderId\"",
+                  "    pm.environment.set(\"orderId\", jsonData.orderId);",
+                  "    console.log(\"Đã tự động cập nhật orderId: \" + jsonData.orderId);",
+                  "}"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                },
+                {
+                  "key": "undefined",
+                  "type": "any"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "default"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"Nguyễn Văn C\",\n  \"phone\": \"0901234567\",\n  \"shippingAddress\": \"123 Đường ABC, TP.HCM\",\n  \"note\": \"sad\",\n  \"address\": \"hcm\",\n  \"items\": [\n    {\n      \"productId\": 1, \n      \"quantity\": 1\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/orders",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "orders"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Payment - COD",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200 || pm.response.code === 201) {",
+                  "    const resBody = pm.response.json();",
+                  "    let paymentId = null;",
+                  "",
+                  "    // Trường hợp 1: ID nằm trong resBody.data",
+                  "    if (resBody && resBody.data) {",
+                  "        paymentId = resBody.data.paymentId || resBody.data.id;",
+                  "    } ",
+                  "    // Trường hợp 2: ID nằm ngay lớp ngoài cùng của resBody",
+                  "    else if (resBody) {",
+                  "        paymentId = resBody.paymentId || resBody.id;",
+                  "    }",
+                  "",
+                  "    // Nếu tìm thấy ID thì tiến hành lưu vào biến môi trường",
+                  "    if (paymentId) {",
+                  "        pm.environment.set(\"codPaymentId\", paymentId);",
+                  "        console.log(\"🎯 Đã lưu tự động codPaymentId thành công:\", paymentId);",
+                  "    } else {",
+                  "        console.error(\"❌ Không tìm thấy thuộc tính 'id' hoặc 'paymentId' trong Response!\");",
+                  "        console.log(\"Cục JSON thực tế nhận được là:\", JSON.stringify(resBody));",
+                  "    }",
+                  "} else {",
+                  "    console.error(\"❌ API trả về lỗi, Status code là:\", pm.response.code);",
+                  "}"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                },
+                {
+                  "key": "undefined",
+                  "type": "any"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "default"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "default"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"paymentMethod\": \"COD\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/payments/orders/{{orderId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "payments",
+                "orders",
+                "{{orderId}}"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Payment_Bank_Transfer",
+      "item": [
+        {
+          "name": "Đặt hàng",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// Phân tích dữ liệu JSON trả về từ Server",
+                  "var jsonData = pm.response.json();",
+                  "",
+                  "// Kiểm tra xem trong response có trường \"id\" không",
+                  "if (jsonData && jsonData.orderId) {",
+                  "    // Tự động lưu giá trị \"id\" vào biến Environment có tên là \"orderId\"",
+                  "    pm.environment.set(\"orderId\", jsonData.orderId);",
+                  "    console.log(\"Đã tự động cập nhật orderId: \" + jsonData.orderId);",
+                  "}"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                },
+                {
+                  "key": "undefined",
+                  "type": "any"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "default"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"Nguyễn Văn C\",\n  \"phone\": \"0901234567\",\n  \"shippingAddress\": \"123 ABC\",\n  \"note\": \"sad\",\n  \"address\": \"hcm\",\n  \"items\": [{ \"productId\": 10, \"quantity\": 1 }]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/orders",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "orders"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Payment - BANK_TRANSFER",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {},
+                "exec": [
+                  "if (pm.response.code === 200 || pm.response.code === 201) {",
+                  "    const responseData = pm.response.json();",
+                  "    ",
+                  "    // Khai báo 2 biến tạm để hứng dữ liệu",
+                  "    let pId = null;",
+                  "    let tCode = null;",
+                  "",
+                  "    if (responseData) {",
+                  "        // Trường hợp 1: Dữ liệu bọc trong object 'data'",
+                  "        if (responseData.data) {",
+                  "            pId = responseData.data.paymentId || responseData.data.id;",
+                  "            tCode = responseData.data.transactionCode || responseData.data.vnp_TxnRef || responseData.data.orderId;",
+                  "        } ",
+                  "        // Trường hợp 2: Dữ liệu nằm tuột ra lớp ngoài cùng",
+                  "        else {",
+                  "            pId = responseData.paymentId || responseData.id;",
+                  "            tCode = responseData.transactionCode || responseData.orderId;",
+                  "        }",
+                  "    }",
+                  "",
+                  "    // Tiến hành lưu vào biến môi trường nếu tìm thấy dữ liệu hợp lệ",
+                  "    if (pId) {",
+                  "        pm.environment.set(\"bankPaymentId\", pId);",
+                  "        console.log(\"🎯 [SUCCESS] Đã lưu bankPaymentId:\", pId);",
+                  "    } else {",
+                  "        console.error(\"❌ [ERROR] Không trích xuất được ID thanh toán (id/paymentId) từ Response.\");",
+                  "    }",
+                  "",
+                  "    if (tCode) {",
+                  "        pm.environment.set(\"bankTransactionCode\", tCode);",
+                  "        console.log(\"🎯 [SUCCESS] Đã lưu bankTransactionCode:\", tCode);",
+                  "    } else {",
+                  "        console.warn(\"⚠️ [WARN] Không tìm thấy mã giao dịch (transactionCode) trong Response.\");",
+                  "    }",
+                  "",
+                  "    // In toàn bộ cục JSON ra Console để bạn dễ theo dõi cấu trúc thực tế",
+                  "    console.log(\"Dữ liệu Response thực tế nhận được:\", JSON.stringify(responseData));",
+                  "",
+                  "} else {",
+                  "    console.error(\"❌ [ERROR] API trả về lỗi! Status code hiện tại là:\", pm.response.code);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "undefined",
+                  "type": "any"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "default"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "default"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"paymentMethod\": \"BANK_TRANSFER\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/payments/orders/{{orderId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "payments",
+                "orders",
+                "{{orderId}}"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Payment_VNPAY",
+      "item": [
+        {
+          "name": "Đặt hàng",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// Phân tích dữ liệu JSON trả về từ Server",
+                  "var jsonData = pm.response.json();",
+                  "",
+                  "// Kiểm tra xem trong response có trường \"id\" không",
+                  "if (jsonData && jsonData.orderId) {",
+                  "    // Tự động lưu giá trị \"id\" vào biến Environment có tên là \"orderId\"",
+                  "    pm.environment.set(\"orderId\", jsonData.orderId);",
+                  "    console.log(\"Đã tự động cập nhật orderId: \" + jsonData.orderId);",
+                  "}"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                },
+                {
+                  "key": "undefined",
+                  "type": "any"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "default"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"Nguyễn Văn C\",\n  \"phone\": \"0901234567\",\n  \"shippingAddress\": \"123 ABC\",\n  \"note\": \"sad\",\n  \"address\": \"hcm\",\n  \"items\": [{ \"productId\": 10, \"quantity\": 1 }]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/orders",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "orders"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Payment - VNPAY",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.expect(pm.response.code).to.equal(200); });",
+                  "const json = pm.response.json();",
+                  "pm.test('Response success', function () { pm.expect(json.success).to.be.true; });",
+                  "pm.test('Payment method is VNPAY', function () { pm.expect(json.data.paymentMethod).to.eql('VNPAY'); });",
+                  "pm.test('Payment URL is provided', function () { pm.expect(json.data.paymentUrl).to.be.a('string').that.is.not.empty; });",
+                  "if (json.data) { pm.environment.set('vnpayPaymentId', json.data.paymentId); pm.environment.set('vnpayTransactionCode', json.data.transactionCode); pm.environment.set('vnpayPaymentUrl', json.data.paymentUrl); }"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                },
+                {
+                  "key": "undefined",
+                  "type": "any"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "default"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "default"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"paymentMethod\": \"VNPAY\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/payments/orders/{{orderId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "payments",
+                "orders",
+                "{{orderId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "VNPay Callback - Invalid Signature",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.expect(pm.response.code).to.equal(200); });",
+                  "const json = pm.response.json();",
+                  "pm.test('Invalid VNPay signature', function () { pm.expect(json.success).to.be.false; pm.expect(json.message).to.include('Invalid VNPay signature'); });"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                },
+                {
+                  "key": "undefined",
+                  "type": "any"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/payments/vnpay/callback?vnp_ResponseCode=00&vnp_TxnRef=INVALID&vnp_SecureHash=BADHASH?vnp_ResponseCode=00&vnp_TxnRef=INVALID&vnp_SecureHash=BADHASH",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "payments",
+                "vnpay",
+                "callback"
+              ],
+              "query": [
+                {
+                  "key": "vnp_ResponseCode",
+                  "value": "00"
+                },
+                {
+                  "key": "vnp_TxnRef",
+                  "value": "INVALID"
+                },
+                {
+                  "key": "vnp_SecureHash",
+                  "value": "BADHASH?vnp_ResponseCode=00"
+                },
+                {
+                  "key": "vnp_TxnRef",
+                  "value": "INVALID"
+                },
+                {
+                  "key": "vnp_SecureHash",
+                  "value": "BADHASH"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "VNPay Callback - Success",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "CryptoJS = require(\"crypto-js\");",
+                  "const params = {",
+                  "  vnp_Version: '2.1.0',",
+                  "  vnp_Command: 'pay',",
+                  "  vnp_TmnCode: pm.environment.get('vnp_TmnCode') || 'TMNCODE',",
+                  "  vnp_Amount: '100000',",
+                  "  vnp_CurrCode: 'VND',",
+                  "  vnp_TxnRef: pm.environment.get('vnpayTransactionCode') || 'TXN123',",
+                  "  vnp_OrderInfo: 'Payment for order',",
+                  "  vnp_OrderType: 'other',",
+                  "  vnp_Locale: 'vn',",
+                  "  vnp_ReturnUrl: pm.environment.get('vnpReturnUrl') || 'http://localhost:8080',",
+                  "  vnp_IpAddr: '127.0.0.1'",
+                  "};",
+                  "const keys = Object.keys(params).sort();",
+                  "const hashData = keys.map(k => k + '=' + params[k]).join('&');",
+                  "const secret = pm.environment.get('vnpayHashSecret') || 'SECRET';",
+                  "const hash = CryptoJS.HmacSHA512(hashData, secret).toString();",
+                  "const query = keys.map(k => encodeURIComponent(k) + '=' + encodeURIComponent(params[k])).join('&') + '&vnp_SecureHash=' + hash;",
+                  "pm.environment.set('vnpSuccessQuery', query);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.expect(pm.response.code).to.equal(200); });",
+                  "const json = pm.response.json();",
+                  "pm.test('Payment successful response', function () { pm.expect(json.success).to.be.true; })",
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                },
+                {
+                  "key": "undefined",
+                  "type": "any"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/payments/vnpay/callback",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "payments",
+                "vnpay",
+                "callback"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Payment_MOMO",
+      "item": [
+        {
+          "name": "Đặt hàng",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// Phân tích dữ liệu JSON trả về từ Server",
+                  "var jsonData = pm.response.json();",
+                  "",
+                  "// Kiểm tra xem trong response có trường \"id\" không",
+                  "if (jsonData && jsonData.orderId) {",
+                  "    // Tự động lưu giá trị \"id\" vào biến Environment có tên là \"orderId\"",
+                  "    pm.environment.set(\"orderId\", jsonData.orderId);",
+                  "    console.log(\"Đã tự động cập nhật orderId: \" + jsonData.orderId);",
+                  "}"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                },
+                {
+                  "key": "undefined",
+                  "type": "any"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "default"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"Nguyễn Văn C\",\n  \"phone\": \"0901234567\",\n  \"shippingAddress\": \"123 ABC\",\n  \"note\": \"sad\",\n  \"address\": \"hcm\",\n  \"items\": [{ \"productId\": 10, \"quantity\": 1 }]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/orders",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "orders"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Payment - MOMO",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.expect(pm.response.code).to.equal(200); });",
+                  "const json = pm.response.json();",
+                  "pm.test('Response success', function () { pm.expect(json.success).to.be.true; });",
+                  "pm.test('Payment method is MOMO', function () { pm.expect(json.data.paymentMethod).to.eql('MOMO'); });",
+                  "pm.test('Payment URL is provided', function () { pm.expect(json.data.paymentUrl).to.be.a('string').that.is.not.empty; });",
+                  "if (json.data) { pm.environment.set('momoPaymentId', json.data.paymentId); pm.environment.set('momoTransactionCode', json.data.transactionCode); pm.environment.set('momoPaymentUrl', json.data.paymentUrl); }"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                },
+                {
+                  "key": "undefined",
+                  "type": "any"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "default"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "default"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"paymentMethod\": \"MOMO\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/payments/orders/{{orderId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "payments",
+                "orders",
+                "{{orderId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "MoMo Callback - Invalid Signature",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.expect(pm.response.code).to.equal(200); });",
+                  "const json = pm.response.json();",
+                  "pm.test('Invalid MoMo signature', function () { pm.expect(json.success).to.be.false; pm.expect(json.message).to.include('Invalid MoMo signature'); });"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                },
+                {
+                  "key": "undefined",
+                  "type": "any"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "default"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"orderId\": \"INVALID\",\n  \"resultCode\": \"0\",\n  \"signature\": \"BADSIG\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/payments/momo/callback",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "payments",
+                "momo",
+                "callback"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "MoMo Callback - Success",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "CryptoJS = require(\"crypto-js\");",
+                  "const payload = {",
+                  "  accessKey: pm.environment.get('momoAccessKey') || 'ACCESSKEY',",
+                  "  amount: '1000',",
+                  "  extraData: '',",
+                  "  message: 'Success',",
+                  "  orderId: pm.environment.get('momoTransactionCode') || 'TXN123',",
+                  "  orderInfo: 'Payment for order',",
+                  "  orderType: 'momo_wallet',",
+                  "  partnerCode: pm.environment.get('momoPartnerCode') || 'PARTNERCODE',",
+                  "  payType: 'qr',",
+                  "  requestId: pm.environment.get('momoTransactionCode') || 'TXN123',",
+                  "  responseTime: new Date().toISOString().slice(0, 19).replace('T', ' '),",
+                  "  resultCode: '0',",
+                  "  transId: '123456'",
+                  "};",
+                  "// 1. Tạo thời gian phản hồi giả lập (vì chưa có response thực tế)",
+                  "payload.responseTime = Date.now().toString(); ",
+                  "",
+                  "// 2. Sửa payload.res.getResponseTime() thành payload.responseTime",
+                  "const raw = 'accessKey=' + payload.accessKey + ",
+                  "            '&amount=' + payload.amount + ",
+                  "            '&extraData=' + payload.extraData + ",
+                  "            '&message=' + payload.message + ",
+                  "            '&orderId=' + payload.orderId + ",
+                  "            '&orderInfo=' + payload.orderInfo + ",
+                  "            '&orderType=' + payload.orderType + ",
+                  "            '&partnerCode=' + payload.partnerCode + ",
+                  "            '&payType=' + payload.payType + ",
+                  "            '&requestId=' + payload.requestId + ",
+                  "            '&responseTime=' + payload.responseTime + ",
+                  "            '&resultCode=' + payload.resultCode + ",
+                  "            '&transId=' + payload.transId;",
+                  "",
+                  "const secret = pm.environment.get('momoSecretKey') || 'MOMOSECRET';",
+                  "const signature = CryptoJS.HmacSHA256(raw, secret).toString();",
+                  "payload.signature = signature;",
+                  "",
+                  "// 3. Cập nhật lại Body của request trong Bruno với dữ liệu mới bao gồm cả signature",
+                  "pm.request.body.update({",
+                  "  mode: \"raw\",",
+                  "  raw: JSON.stringify(payload)",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.expect(pm.response.code).to.equal(200); });",
+                  "const json = pm.response.json();",
+                  "pm.test('Payment successful response', function () { pm.expect(json.success).to.be.true;})",
+                  "",
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                },
+                {
+                  "key": "undefined",
+                  "type": "any"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "default"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{{momoCallbackBody}}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/payments/momo/callback",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "payments",
+                "momo",
+                "callback"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Payment",
+      "item": [
+        {
+          "name": "Get My Payments",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.expect(pm.response.code).to.equal(200); });",
+                  "const json = pm.response.json();",
+                  "pm.test('Success true', function () { pm.expect(json.success).to.be.true; });",
+                  "pm.test('Returned page structure', function () { pm.expect(json.data.content).to.be.an('array'); });"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                },
+                {
+                  "key": "undefined",
+                  "type": "any"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "default"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/payments?page=0&size=10&sortBy=createdAt&direction=desc",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "payments"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "10"
+                },
+                {
+                  "key": "sortBy",
+                  "value": "createdAt"
+                },
+                {
+                  "key": "direction",
+                  "value": "desc"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Admin",
+      "item": [
+        {
+          "name": "Login (Admin)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const loginData = pm.response.json();",
+                  "    ",
+                  "    // Kiểm tra nếu loginData tồn tại và có trường token",
+                  "    if (loginData && loginData.token) {",
+                  "        // Lưu adminToken vào biến môi trường của Postman",
+                  "        pm.environment.set(\"adminToken\", loginData.token);",
+                  "        console.log(\"Đã lưu adminToken thành công vào Postman Environment!\");",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "default"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"hai123\",\n  \"password\": \"hai123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "update product_stock",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                },
+                {
+                  "key": "undefined",
+                  "type": "any"
+                }
+              ]
+            },
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/products/10/stock?stock=10",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "products",
+                "10",
+                "stock"
+              ],
+              "query": [
+                {
+                  "key": "stock",
+                  "value": "10"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Mark COD Payment as Success",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.expect(pm.response.code).to.equal(200); });",
+                  "const json = pm.response.json();",
+                  "pm.test('Payment marked as SUCCESS', function () { pm.expect(json.success).to.be.true; pm.expect(json.data.paymentStatus).to.eql('SUCCESS'); });",
+                  "pm.test('Paid at timestamp set', function () { pm.expect(json.data.paidAt).to.exist; });"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                },
+                {
+                  "key": "undefined",
+                  "type": "any"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}",
+                "type": "default"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/payments/admin/{{codPaymentId}}/status?status=SUCCESS",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "payments",
+                "admin",
+                "{{codPaymentId}}",
+                "status"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "SUCCESS"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Mark Bank Transfer as Success",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.expect(pm.response.code).to.equal(200); });",
+                  "const json = pm.response.json();",
+                  "pm.test('Payment marked as SUCCESS', function () { pm.expect(json.success).to.be.true; pm.expect(json.data.paymentStatus).to.eql('SUCCESS'); });",
+                  "pm.test('Paid at timestamp set', function () { pm.expect(json.data.paidAt).to.exist; });"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                },
+                {
+                  "key": "undefined",
+                  "type": "any"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}",
+                "type": "default"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/payments/admin/{{bankPaymentId}}/status?status=SUCCESS&transactionCode={{bankTransactionCode}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "payments",
+                "admin",
+                "{{bankPaymentId}}",
+                "status"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "SUCCESS"
+                },
+                {
+                  "key": "transactionCode",
+                  "value": "{{bankTransactionCode}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "",
+      "type": "default"
+    },
+    {
+      "key": "loginUsername",
+      "value": "",
+      "type": "default"
+    },
+    {
+      "key": "randomEmail",
+      "value": "",
+      "type": "default"
+    },
+    {
+      "key": "bankPaymentId",
+      "value": "",
+      "type": "default"
+    },
+    {
+      "key": "bankTransactionCode",
+      "value": "",
+      "type": "default"
+    },
+    {
+      "key": "adminToken",
+      "value": "",
+      "type": "default"
+    },
+    {
+      "key": "codPaymentId",
+      "value": "",
+      "type": "default"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "default"
+    },
+    {
+      "key": "orderId",
+      "value": "",
+      "type": "default"
+    },
+    {
+      "key": "momoCallbackBody",
+      "value": "",
+      "type": "default"
+    },
+    {
+      "key": "activeProductId",
+      "value": "",
+      "type": "default"
+    }
+  ]
+}
