@@ -7,6 +7,11 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      checks: write 
+    # ------------------
     steps:
       - uses: actions/checkout@v4 # Đã nâng lên v4
 
