@@ -60,7 +60,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\r\n  \"email\": \"testuser@example.com\",\r\n  \"username\": \"{{$randomUserName}}\",\r\n  \"password\": \"123456\",\r\n  \"fullName\": \"Người Dùng Test\"\r\n}\r\n"
+              "raw": "{\r\n  \"email\": \"{{$randomEmail}}\",\r\n  \"username\": \"{{$randomUserName}}\",\r\n  \"password\": \"123456\",\r\n  \"fullName\": \"Người Dùng Test\"\r\n}\r\n"
             },
             "url": {
               "raw": "{{baseUrl}}/auth/register",
@@ -179,7 +179,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"fullName\": \"Nguyễn Văn C\",\n  \"phone\": \"0901234567\",\n  \"shippingAddress\": \"123 ABC\",\n  \"note\": \"sad\",\n  \"address\": \"hcm\",\n  \"items\": [{ \"productId\": 8, \"quantity\": 1 }]\n}"
+              "raw": "{\n  \"fullName\": \"Nguyễn Văn C\",\n  \"phone\": \"0901234567\",\n  \"shippingAddress\": \"123 ABC\",\n  \"note\": \"sad\",\n  \"address\": \"hcm\",\n  \"items\": [{ \"productId\": 10, \"quantity\": 1 }]\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/orders",
@@ -315,7 +315,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"fullName\": \"Nguyễn Văn C\",\n  \"phone\": \"0901234567\",\n  \"shippingAddress\": \"123 ABC\",\n  \"note\": \"sad\",\n  \"address\": \"hcm\",\n  \"items\": [{ \"productId\": 8, \"quantity\": 1 }]\n}"
+              "raw": "{\n  \"fullName\": \"Nguyễn Văn C\",\n  \"phone\": \"0901234567\",\n  \"shippingAddress\": \"123 ABC\",\n  \"note\": \"sad\",\n  \"address\": \"hcm\",\n  \"items\": [{ \"productId\": 10, \"quantity\": 1 }]\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/orders",
@@ -451,7 +451,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"fullName\": \"Nguyễn Văn C\",\n  \"phone\": \"0901234567\",\n  \"shippingAddress\": \"123 ABC\",\n  \"note\": \"sad\",\n  \"address\": \"hcm\",\n  \"items\": [{ \"productId\": 8, \"quantity\": 1 }]\n}"
+              "raw": "{\n  \"fullName\": \"Nguyễn Văn C\",\n  \"phone\": \"0901234567\",\n  \"shippingAddress\": \"123 ABC\",\n  \"note\": \"sad\",\n  \"address\": \"hcm\",\n  \"items\": [{ \"productId\": 10, \"quantity\": 1 }]\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/orders",
@@ -717,7 +717,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"fullName\": \"Nguyễn Văn C\",\n  \"phone\": \"0901234567\",\n  \"shippingAddress\": \"123 ABC\",\n  \"note\": \"sad\",\n  \"address\": \"hcm\",\n  \"items\": [{ \"productId\": 8, \"quantity\": 1 }]\n}"
+              "raw": "{\n  \"fullName\": \"Nguyễn Văn C\",\n  \"phone\": \"0901234567\",\n  \"shippingAddress\": \"123 ABC\",\n  \"note\": \"sad\",\n  \"address\": \"hcm\",\n  \"items\": [{ \"productId\": 10, \"quantity\": 1 }]\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/orders",
