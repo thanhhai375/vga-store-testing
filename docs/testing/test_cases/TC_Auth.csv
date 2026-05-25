@@ -1,0 +1,44 @@
+TC_ID,Module,Test_Case,Precondition,Test_Steps,Test_Data,Expected_Result,Priority,Status
+AUTH_008,Auth,Đăng nhập với email sai định dạng,Chưa đăng nhập,"1. Mở màn hình login
+2. Nhập email sai định dạng
+3. Nhập password hợp lệ
+4. Nhấn Đăng nhập","email: user@domain; password: 12345678","Hiển thị lỗi 'Email không đúng định dạng'",High,Not Run
+AUTH_009,Auth,Đăng nhập với mật khẩu để trống,Chưa đăng nhập,"1. Mở login
+2. Nhập email hợp lệ
+3. Để trống password
+4. Nhấn Đăng nhập","email: user@test.com; password: ","Hiển thị lỗi trường mật khẩu bắt buộc",High,Not Run
+AUTH_010,Auth,Đăng ký mật khẩu quá ngắn,Chưa có tài khoản với email này,"1. Mở đăng ký
+2. Nhập email hợp lệ
+3. Nhập password 5 ký tự
+4. Nhập confirm password giống password
+5. Nhấn Đăng ký","email: newuser@test.com; password: 12345; confirm_password: 12345","Hiển thị lỗi mật khẩu phải ít nhất 6 ký tự",High,Not Run
+AUTH_011,Auth,Đăng ký với mật khẩu và xác nhận không khớp,Chưa có tài khoản với email này,"1. Mở đăng ký
+2. Nhập email hợp lệ
+3. Nhập password 12345678
+4. Nhập confirm password 12345679
+5. Nhấn Đăng ký","email: newuser2@test.com; password: 12345678; confirm_password: 12345679","Hiển thị lỗi 'Mật khẩu xác nhận không khớp'",High,Not Run
+AUTH_012,Auth,Đăng ký với email dài vượt quá giới hạn,Chưa có tài khoản với email này,"1. Mở đăng ký
+2. Nhập email dài > 254 ký tự
+3. Nhập password hợp lệ
+4. Nhấn Đăng ký","email: <255-char-email>; password: 12345678","Hiển thị lỗi giới hạn độ dài email",Medium,Not Run
+AUTH_013,Auth,Quên mật khẩu với email chưa đăng ký,Không có tài khoản với email này,"1. Mở Forgot Password
+2. Nhập email chưa tồn tại
+3. Nhấn gửi","email: notfound@test.com","Hiển thị thông báo email không tồn tại hoặc hướng dẫn đăng ký",Medium,Not Run
+AUTH_014,Auth,Quên mật khẩu với email sai định dạng,Không quan trọng tài khoản,"1. Mở Forgot Password
+2. Nhập email sai định dạng
+3. Nhấn gửi","email: user@domain","Hiển thị lỗi 'Email không đúng định dạng'",High,Not Run
+AUTH_015,Auth,Reset mật khẩu với token không hợp lệ,Người dùng nhận link reset nhưng token sai,"1. Mở link reset password
+2. Nhập password mới
+3. Xác nhận
+4. Nhấn submit","reset_token: invalidtoken; new_password: 12345678","Hiển thị lỗi token không hợp lệ hoặc link đã hết hạn",High,Not Run
+USER_005,User,Cập nhật profile với số điện thoại sai định dạng,Người dùng đã đăng nhập,"1. Vào trang Profile
+2. Sửa số điện thoại thành 12345abc
+3. Nhấn Save","name: Nguyễn A; phone: 12345abc","Hiển thị lỗi 'Số điện thoại không hợp lệ'",Medium,Not Run
+USER_006,User,Cập nhật profile với tên để trống,Người dùng đã đăng nhập,"1. Vào Profile
+2. Xóa tên
+3. Nhấn Save","name: ; phone: 0900000000","Hiển thị lỗi trường tên bắt buộc",Medium,Not Run
+USER_007,User,Cập nhật profile với địa chỉ quá dài,Người dùng đã đăng nhập,"1. Vào Profile
+2. Nhập địa chỉ > 200 ký tự
+3. Nhấn Save","address: <201-char-string>","Hiển thị lỗi giới hạn độ dài địa chỉ",Medium,Not Run
+USER_008,User,Xem profile với token hợp lệ,Người dùng đã đăng nhập,"1. Vào trang Profile
+2. Tải lại trang","token hợp lệ","Hiển thị thông tin profile hiện tại chính xác",Medium,Not Run
