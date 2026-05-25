@@ -1,0 +1,30 @@
+name: API Testing CI
+
+on:
+  push:
+    branches: [ master, develop ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4 # Đã nâng lên v4
+
+      - name: Install Node.js
+        uses: actions/setup-node@v4 # Đã nâng lên v4
+        with:
+          node-version: '18'
+
+      - name: Install Newman
+        run: npm install -g newman
+
+      - name: Run API Tests
+        run: |
+          # Chạy tất cả file trong thư mục
+          newman run postman-tests/*.json -e postman-tests/shared-environment.json --reporters cli,junit --reporter-junit-export junit-report.xml
+        
+      - name: Publish Test Report
+        uses: mikepenz/action-junit-report@v4 # Đã nâng lên v4
+        if: always()
+        with:
+          report_paths: 'junit-report.xml'
