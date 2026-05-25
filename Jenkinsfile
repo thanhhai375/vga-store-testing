@@ -31,17 +31,17 @@ pipeline {
                 sleep(time: 15, unit: 'SECONDS')
             }
         }
-
+// BƯỚC 2: SAU KHI SERVER CHẠY THÌ MỚI BẮN TEST API
         stage('Run API Tests (Newman/Postman)') {
             steps {
                 dir('automation') {
-                    echo 'Đang chạy API Test tự động bằng Docker Newman chung mạng với Backend...'
-                    // Gọi image postman/newman và gắn nó vào chung lồng mạng vga-store-testing_vga-network
+                    echo 'Đang chạy API Test bằng Docker Newman (Dùng volumes-from để chia sẻ file từ Jenkins)...'
                     sh '''
                     docker run --rm \\
                         --network vga-store-testing_vga-network \\
-                        -v $(pwd)/postman:/etc/newman \\
-                        postman/newman run /etc/newman/vga-store-api.postman_collection.json \\
+                        --volumes-from vga_jenkins \\
+                        -w $(pwd) \\
+                        postman/newman run postman/vga-store-api.postman_collection.json \\
                     || { echo "LỖI TẠI BƯỚC TEST API (POSTMAN)" > ../error_reason.txt; exit 1; }
                     '''
                 }
