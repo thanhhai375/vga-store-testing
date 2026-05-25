@@ -1,3 +1,34 @@
+# name: API Testing CI
+
+# on:
+#   push:
+#     branches: [ master, develop, KCPM-12 ]
+
+# jobs:
+#   test:
+#     runs-on: ubuntu-latest
+#     steps:
+#       - uses: actions/checkout@v4 # Đã nâng lên v4
+
+#       - name: Install Node.js
+#         uses: actions/setup-node@v4 # Đã nâng lên v4
+#         with:
+#           node-version: '18'
+
+#       - name: Install Newman
+#         run: npm install -g newman
+
+#       - name: Run API Tests
+#         run: |
+#           # Chạy tất cả file trong thư mục
+#           newman run postman-tests/*.json -e postman-tests/payment_environment.json --reporters cli,junit --reporter-junit-export junit-report.xml
+        
+#       - name: Publish Test Report
+#         uses: mikepenz/action-junit-report@v4 # Đã nâng lên v4
+#         if: always()
+#         with:
+#           report_paths: 'junit-report.xml'
+
 name: API Testing CI
 
 on:
@@ -8,10 +39,10 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4 # Đã nâng lên v4
+      - uses: actions/checkout@v4
 
       - name: Install Node.js
-        uses: actions/setup-node@v4 # Đã nâng lên v4
+        uses: actions/setup-node@v4
         with:
           node-version: '18'
 
@@ -20,11 +51,30 @@ jobs:
 
       - name: Run API Tests
         run: |
-          # Chạy tất cả file trong thư mục
           newman run postman-tests/*.json -e postman-tests/payment_environment.json --reporters cli,junit --reporter-junit-export junit-report.xml
-        
+
       - name: Publish Test Report
-        uses: mikepenz/action-junit-report@v4 # Đã nâng lên v4
+        uses: mikepenz/action-junit-report@v4
         if: always()
         with:
           report_paths: 'junit-report.xml'
+
+      # BƯỚC MỚI: Tự động tạo Bug trên Jira khi test thất bại
+      - name: Create Jira Bug on Failure
+        if: failure()
+        env:
+          JIRA_BASE_URL: ${{ secrets.JIRA_BASE_URL }}
+          JIRA_USER_EMAIL: ${{ secrets.JIRA_USER_EMAIL }}
+          JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
+        run: |
+          curl -X POST -u "${JIRA_USER_EMAIL}:${JIRA_API_TOKEN}" \
+          -H "Content-Type: application/json" \
+          -d '{
+            "fields": {
+              "project": {"key": "KCPM"},
+              "summary": "API Test Failed: ${{ github.workflow }}",
+              "description": "Các bài test API đã thất bại trong quá trình CI. Vui lòng kiểm tra log tại đây: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}",
+              "issuetype": {"name": "Bug"}
+            }
+          }' \
+          "${JIRA_BASE_URL}/rest/api/2/issue"
