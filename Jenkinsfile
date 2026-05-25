@@ -16,15 +16,18 @@ pipeline {
                 echo 'Đang lấy code mới nhất từ Github...'
             }
         }
+       // BƯỚC 1: DỌN DẸP VÀ BẬT SERVER LÊN TRƯỚC
         stage('Deploy to Server (Docker)') {
             steps {
                 echo '🚀 Đang tiến hành Deploy lên Server thực tế...'
 
-                sh 'docker-compose -p vga-store-testing up -d --build db backend admin-frontend user-frontend'
+                // Đồng bộ cờ -p cho cả lệnh down và up
+                sh 'docker-compose -p vga-store-testing down'
+
+                sh 'docker-compose -p vga-store-testing up -d --build backend admin-frontend user-frontend'
 
                 echo '✅ Triển khai thành công! Đang đợi Backend (Spring Boot) khởi động hoàn tất...'
 
-                // Dừng 15 giây để đảm bảo Backend đã cắm vào DB và mở port 8080 thành công
                 sleep(time: 15, unit: 'SECONDS')
             }
         }
