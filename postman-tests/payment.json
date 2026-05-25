@@ -74,7 +74,9 @@
                   "    // Tự động lưu giá trị \"id\" vào biến Environment có tên là \"orderId\"\r",
                   "    pm.environment.set(\"orderId\", jsonData.orderId);\r",
                   "    console.log(\"Đã tự động cập nhật orderId: \" + jsonData.orderId);\r",
-                  "}"
+                  "}\r",
+                  "\r",
+                  ""
                 ],
                 "type": "text/javascript",
                 "packages": {},
@@ -113,7 +115,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"fullName\": \"Nguyễn Văn C\",\n  \"phone\": \"0901234567\",\n  \"shippingAddress\": \"123 ABC\",\n  \"note\": \"sad\",\n  \"address\": \"hcm\",\n  \"items\": [{ \"productId\": 7, \"quantity\": 1 }]\n}"
+              "raw": "{\n  \"fullName\": \"Nguyễn Văn C\",\n  \"phone\": \"0901234567\",\n  \"shippingAddress\": \"123 ABC\",\n  \"note\": \"sad\",\n  \"address\": \"hcm\",\n  \"items\": [{ \"productId\": 8, \"quantity\": 1 }]\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/orders",
@@ -170,14 +172,14 @@
               "raw": "{\n  \"paymentMethod\": \"COD\"\n}"
             },
             "url": {
-              "raw": "{{baseUrl}}/payments/orders/{{orderIdCOD}}",
+              "raw": "{{baseUrl}}/payments/orders/{{orderId}}",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
                 "payments",
                 "orders",
-                "{{orderIdCOD}}"
+                "{{orderId}}"
               ]
             }
           },
