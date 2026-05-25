@@ -35,14 +35,21 @@ pipeline {
         stage('Run API Tests (Newman/Postman)') {
             steps {
                 dir('automation') {
-                    echo 'Đang chạy API Test bằng Docker Newman (Dùng volumes-from để chia sẻ file từ Jenkins)...'
+                    echo 'Đang chạy API Test tự động cho TỪNG FILE RIÊNG LẺ...'
                     sh '''
-                    docker run --rm \\
-                        --network vga-store-testing_vga-network \\
-                        --volumes-from vga_jenkins \\
-                        -w $(pwd) \\
-                        postman/newman run postman/vga-store-api.postman_collection.json \\
-                    || { echo "LỖI TẠI BƯỚC TEST API (POSTMAN)" > ../error_reason.txt; exit 1; }
+                    # Quét tất cả các file có đuôi .json trong thư mục postman
+                    for test_file in postman/*.json; do
+                        echo "=================================================="
+                        echo "▶️ ĐANG CHẠY KỊCH BẢN: $test_file"
+                        echo "=================================================="
+
+                        docker run --rm \\
+                            --network vga-store-testing_vga-network \\
+                            --volumes-from vga_jenkins \\
+                            -w $(pwd) \\
+                            postman/newman run "$test_file" \\
+                        || { echo "❌ ỐI! LỖI TẠI FILE $test_file" > ../error_reason.txt; exit 1; }
+                    done
                     '''
                 }
             }
