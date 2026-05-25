@@ -9,7 +9,9 @@ pipeline {
         JIRA_TOKEN = credentials('JIRA_API_TOKEN')
         JIRA_PROJECT_KEY = 'KCPM'
     }
-
+options {
+        disableConcurrentBuilds()
+    }
     stages {
         stage('Checkout') {
             steps {
