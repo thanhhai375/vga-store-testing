@@ -41,14 +41,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # 1. Khởi động Docker Containers
-      - name: Start Backend with Docker
-        run: docker compose up -d
-
-      # 2. Chờ server khởi động xong (Rất quan trọng!)
-      - name: Wait for server to be ready
-        run: sleep 20 
-
       - name: Install Node.js
         uses: actions/setup-node@v4
         with:
