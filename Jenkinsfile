@@ -20,8 +20,6 @@ pipeline {
             steps {
                 echo '🚀 Đang tiến hành Deploy lên Server thực tế...'
 
-                // CỰC KỲ QUAN TRỌNG: Dùng cờ -p để ép Jenkins đè code mới vào đúng nhóm vga-store-testing.
-                // Cơ chế tự động của Docker sẽ tái tạo (Recreate) các container app mà không làm chết Jenkins.
                 sh 'docker-compose -p vga-store-testing up -d --build db backend admin-frontend user-frontend'
 
                 echo '✅ Triển khai thành công! Đang đợi Backend (Spring Boot) khởi động hoàn tất...'
