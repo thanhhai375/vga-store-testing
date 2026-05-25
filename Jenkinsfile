@@ -59,6 +59,13 @@ pipeline {
                 // Lấy thông tin người commit cuối cùng bằng lệnh Git
                 def culprit = sh(script: "git log -1 --pretty=format:'%an <%ae>'", returnStdout: true).trim()
 
+                // Lấy tên nhánh (Branch) hiện tại đang bị lỗi
+                def branchName = sh(script: "git rev-parse --abbrev-ref HEAD", returnStdout: true).trim()
+                if (branchName == "HEAD") {
+                    // Xử lý trường hợp Jenkins chạy ở chế độ Detached HEAD
+                    branchName = env.GIT_BRANCH ?: "Unknown Branch"
+                }
+
                 // Đọc xem lỗi phát sinh ở khâu nào
                 def errorReason = "Lỗi hệ thống hoặc lỗi Cài đặt môi trường"
                 if (fileExists('error_reason.txt')) {
@@ -66,7 +73,7 @@ pipeline {
                 }
 
                 def bugSummary = "[Bug Tự Động] Hệ thống phát hiện ${errorReason}"
-                def bugDescription = "Hệ thống CI/CD Jenkins vừa quét và phát hiện lỗi mới.\\n\\n**1. Khu vực xảy ra lỗi:** ${errorReason}\\n\\n**2. Thủ phạm tình nghi (Người code cuối cùng):** ${culprit}\\n\\n**3. Cách xem chi tiết mã lỗi:** Vui lòng bấm vào đường link này để xem Nhật ký chạy test của Jenkins: [Xem Console Output](${env.BUILD_URL}console)"
+                def bugDescription = "Hệ thống CI/CD Jenkins vừa quét và phát hiện lỗi mới.\\n\\n**1. Nhánh bị lỗi (Branch):** ${branchName}\\n\\n**2. Khu vực xảy ra lỗi:** ${errorReason}\\n\\n**3. Thủ phạm tình nghi (Người code):** ${culprit}\\n\\n**4. Cách xem chi tiết mã lỗi:** Vui lòng bấm vào đường link này để xem Nhật ký chạy test của Jenkins: [Xem Console Output](${env.BUILD_URL}console)"
 
                 // Tạo nội dung ticket gửi lên Jira (Định dạng JSON)
                 def payload = """
