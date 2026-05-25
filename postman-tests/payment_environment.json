@@ -4,7 +4,7 @@
 	"values": [
 		{
 			"key": "baseUrl",
-			"value": "http://localhost:8080",
+			"value": "http://localhost:8080/api",
 			"enabled": true
 		},
 		{
@@ -39,7 +39,7 @@
 		},
 		{
 			"key": "vnpReturnUrl",
-			"value": "http://localhost:8080/payment/pending",
+			"value": "http://localhost:8080/api/payment/pending",
 			"enabled": true
 		},
 		{
