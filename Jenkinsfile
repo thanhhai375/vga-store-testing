@@ -27,27 +27,35 @@ pipeline {
             }
         }
 
-        // stage('Run UI Tests (Cypress)') {
-        //     agent {
-        //         docker {
-        //             image 'cypress/included:15.15.0'
-        //             reuseNode true
-        //             args '--ipc=host --network vga-network'
-        //         }
-        //     }
-        //     steps {
-        //         dir('automation') {
-        //             echo 'Đang chạy UI Test tự động bằng Cypress bên trong Docker Container...'
-        //             sh 'npm install'
-        //             sh 'cypress run || { echo "LỖI TẠI BƯỚC TEST GIAO DIỆN (CYPRESS)" > ../error_reason.txt; exit 1; }'
-        //         }
-        //     }
-        // }
+        /* // TẠM THỜI TẮT UI TEST THEO YÊU CẦU ĐỂ FIX SAU
+        stage('Run UI Tests (Cypress)') {
+            agent {
+                docker {
+                    image 'cypress/included:15.15.0'
+                    reuseNode true
+                    args '--ipc=host --network vga-network'
+                }
+            }
+            steps {
+                dir('automation') {
+                    echo 'Đang chạy UI Test tự động bằng Cypress bên trong Docker Container...'
+                    sh 'npm install'
+                    sh 'cypress run || { echo "LỖI TẠI BƯỚC TEST GIAO DIỆN (CYPRESS)" > ../error_reason.txt; exit 1; }'
+                }
+            }
+        }
+        */
 
         stage('Deploy to Server (Docker)') {
             steps {
                 echo '🚀 Đang tiến hành Deploy lên Server thực tế...'
+
+                // Dọn dẹp sạch sẽ các container và network cũ bị trùng tên
+                sh 'docker-compose down'
+
+                // Build lại code mới và khởi chạy ứng dụng
                 sh 'docker-compose up -d --build backend admin-frontend user-frontend'
+
                 echo '✅ Triển khai thành công! Ứng dụng đã sẵn sàng cho khách hàng.'
             }
         }
@@ -107,7 +115,7 @@ pipeline {
             }
         }
         success {
-            echo '🎉 Tuyệt vời! Mọi test case đều pass.'
+            echo '🎉 Tuyệt vời! Mọi test case đều pass và Deploy thành công.'
         }
     }
 }
