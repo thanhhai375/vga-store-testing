@@ -12,6 +12,70 @@
       "name": "Auth",
       "item": [
         {
+          "name": "Đăng ký",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var randomNum = Date.now();\r",
+                  "\r",
+                  "var randomEmail = \"test\" + randomNum + \"@gmail.com\";\r",
+                  "var randomUsername = \"user\" + randomNum;\r",
+                  "\r",
+                  "pm.variables.set(\"randomEmail\", randomEmail);\r",
+                  "pm.variables.set(\"randomUsername\", randomUsername);\r",
+                  "\r",
+                  "// Parse request body để lấy username vừa gửi\r",
+                  "const requestBody = JSON.parse(pm.request.body.raw);\r",
+                  "\r",
+                  "// Lưu vào biến môi trường\r",
+                  "pm.environment.set(\"loginUsername\", requestBody.username);\r",
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"email\": \"testuser@example.com\",\r\n  \"username\": \"{{$randomUserName}}\",\r\n  \"password\": \"123456\",\r\n  \"fullName\": \"Người Dùng Test\"\r\n}\r\n"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "register"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
           "name": "Login",
           "event": [
             {
@@ -39,7 +103,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"username\": \"Pete_Cummerata\",\n  \"password\": \"123456\"\n}"
+              "raw": "{\n  \"username\": \"{{loginUsername}}\",\n  \"password\": \"123456\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/auth/login",

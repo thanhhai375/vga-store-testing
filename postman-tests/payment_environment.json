@@ -4,7 +4,7 @@
 	"values": [
 		{
 			"key": "baseUrl",
-			"value": "http://localhost:8080/api",
+			"value": "http://localhost:8080",
 			"enabled": true
 		},
 		{
@@ -39,7 +39,7 @@
 		},
 		{
 			"key": "vnpReturnUrl",
-			"value": "http://localhost:8080/api/payment/pending",
+			"value": "http://localhost:8080/payment/pending",
 			"enabled": true
 		},
 		{
@@ -150,6 +150,6 @@
 	],
 	"color": null,
 	"_postman_variable_scope": "environment",
-	"_postman_exported_at": "2026-05-25T10:56:26.156Z",
+	"_postman_exported_at": "2026-05-25T11:35:36.374Z",
 	"_postman_exported_using": "Postman/11.91.0"
 }
