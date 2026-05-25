@@ -16,7 +16,6 @@ pipeline {
                 echo 'Đang lấy code mới nhất từ Github...'
             }
         }
-// BƯỚC 1: BẬT SERVER LÊN TRƯỚC
         stage('Deploy to Server (Docker)') {
             steps {
                 echo '🚀 Đang tiến hành Deploy lên Server thực tế...'
