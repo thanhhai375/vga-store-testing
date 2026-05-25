@@ -1,6 +1,8 @@
 pipeline {
     agent any
-
+    tools {
+        nodejs 'NodeJS_18'
+    }
     environment {
         JIRA_URL = 'https://nguyenthanhhai375.atlassian.net'
 
