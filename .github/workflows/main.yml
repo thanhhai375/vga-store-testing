@@ -41,6 +41,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # 1. Khởi động Docker Containers
+      - name: Start Backend with Docker
+        run: docker compose up -d
+
+      # 2. Chờ server khởi động xong (Rất quan trọng!)
+      - name: Wait for server to be ready
+        run: sleep 20 
+
       - name: Install Node.js
         uses: actions/setup-node@v4
         with:
@@ -59,7 +67,7 @@ jobs:
         with:
           report_paths: 'junit-report.xml'
 
-      # BƯỚC MỚI: Tự động tạo Bug trên Jira khi test thất bại
+      # BƯỚC TẠO BUG TRÊN JIRA (Giữ nguyên)
       - name: Create Jira Bug on Failure
         if: failure()
         env:
@@ -73,7 +81,7 @@ jobs:
             "fields": {
               "project": {"key": "KCPM"},
               "summary": "API Test Failed: ${{ github.workflow }}",
-              "description": "Các bài test API đã thất bại trong quá trình CI. Vui lòng kiểm tra log tại đây: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}",
+              "description": "API test bị lỗi. Kiểm tra tại: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}",
               "issuetype": {"name": "Bug"}
             }
           }' \
