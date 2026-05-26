@@ -1,0 +1,25 @@
+TestCaseID,Module,TestCase,Precondition,TestSteps,ExpectedResult,Priority,Status
+TC_PROD_001,VGA List,Hiển thị danh sách VGA hợp lệ,Người dùng truy cập trang sản phẩm,"1. Mở trang VGA",Danh sách VGA hiển thị đầy đủ với hình ảnh tên giá và hãng,High,Not Run
+TC_PROD_002,VGA List,Kiểm tra số lượng sản phẩm hiển thị,Đã có dữ liệu VGA trong database,"1. Mở trang VGA","Số lượng sản phẩm hiển thị đúng với dữ liệu hệ thống",Medium,Not Run
+TC_PROD_003,VGA List,Kiểm tra hình ảnh VGA hiển thị,Đã có dữ liệu hình ảnh,"1. Mở trang VGA","Hình ảnh VGA hiển thị đúng không bị lỗi",Medium,Not Run
+TC_PROD_004,VGA List,Kiểm tra giá VGA hiển thị đúng,Đã có dữ liệu giá,"1. Mở trang VGA","Giá VGA hiển thị đúng định dạng tiền tệ",Medium,Not Run
+TC_PROD_005,VGA List,Kiểm tra tên hãng VGA hiển thị đúng,Đã có dữ liệu hãng,"1. Mở trang VGA","Tên hãng VGA hiển thị chính xác",Low,Not Run
+TC_PROD_006,Pagination,Kiểm tra phân trang trang đầu tiên,Có hơn 10 sản phẩm,"1. Mở trang VGA","Trang đầu tiên hiển thị đúng số lượng sản phẩm",High,Not Run
+TC_PROD_007,Pagination,Chuyển sang trang tiếp theo,Có nhiều trang dữ liệu,"1. Nhấn nút Next","Hệ thống chuyển sang trang kế tiếp thành công",High,Not Run
+TC_PROD_008,Pagination,Quay lại trang trước,Có nhiều trang dữ liệu,"1. Nhấn Next 2. Nhấn Previous","Hệ thống quay lại trang trước thành công",Medium,Not Run
+TC_PROD_009,Pagination,Kiểm tra số trang hiển thị,Có nhiều dữ liệu,"1. Mở trang VGA","Số trang hiển thị đúng với dữ liệu",Low,Not Run
+TC_PROD_010,Pagination,Kiểm tra khi ở trang cuối,Có nhiều trang dữ liệu,"1. Chuyển đến trang cuối","Nút Next bị vô hiệu hóa hoặc không hoạt động",Medium,Not Run
+TC_PROD_011,Search,Tìm kiếm VGA theo tên hợp lệ,Có dữ liệu sản phẩm,"1. Nhập tên VGA 2. Nhấn tìm kiếm","Hệ thống hiển thị đúng sản phẩm phù hợp",High,Not Run
+TC_PROD_012,Search,Tìm kiếm không tồn tại,Có dữ liệu sản phẩm,"1. Nhập từ khóa không tồn tại 2. Tìm kiếm","Hiển thị thông báo không tìm thấy sản phẩm",High,Not Run
+TC_PROD_013,Search,Tìm kiếm với ký tự đặc biệt,Có dữ liệu sản phẩm,"1. Nhập ký tự đặc biệt 2. Tìm kiếm","Hệ thống xử lý an toàn không lỗi",Medium,Not Run
+TC_PROD_014,Search,Tìm kiếm không phân biệt chữ hoa chữ thường,Có dữ liệu sản phẩm,"1. Nhập tên sản phẩm viết hoa/thường","Kết quả tìm kiếm chính xác",Low,Not Run
+TC_PROD_015,Filter,lọc sản phẩm theo giá thấp đến cao,Có dữ liệu giá,"1. Chọn lọc giá thấp đến cao","Danh sách sản phẩm sắp xếp đúng",High,Not Run
+TC_PROD_016,Filter,Lọc sản phẩm theo giá cao đến thấp,Có dữ liệu giá,"1. Chọn lọc giá cao đến thấp","Danh sách sản phẩm sắp xếp đúng",High,Not Run
+TC_PROD_017,Filter,Lọc sản phẩm theo hãng NVIDIA,Có sản phẩm NVIDIA,"1. Chọn hãng NVIDIA","Chỉ hiển thị sản phẩm NVIDIA",High,Not Run
+TC_PROD_018,Filter,Lọc sản phẩm theo hãng AMD,Có sản phẩm AMD,"1. Chọn hãng AMD","Chỉ hiển thị sản phẩm AMD",High,Not Run
+TC_PROD_019,Filter,Kết hợp lọc giá và hãng,Có dữ liệu phù hợp,"1. Chọn hãng 2. Chọn khoảng giá","Kết quả hiển thị đúng điều kiện lọc",High,Not Run
+TC_PROD_020,Product Detail,Xem chi tiết sản phẩm VGA,Có dữ liệu sản phẩm,"1. Nhấn vào sản phẩm VGA","Trang chi tiết sản phẩm hiển thị đầy đủ thông tin",High,Not Run
+TC_PROD_021,Product Detail,Kiểm tra thông số kỹ thuật VGA,Có dữ liệu thông số,"1. Mở chi tiết VGA","Thông số kỹ thuật hiển thị chính xác",Medium,Not Run
+TC_PROD_022,Product Detail,Kiểm tra hình ảnh trong trang chi tiết,Có dữ liệu hình ảnh,"1. Mở chi tiết VGA","Hình ảnh sản phẩm hiển thị đầy đủ",Medium,Not Run
+TC_PROD_023,Product Detail,Kiểm tra giá trong trang chi tiết,Có dữ liệu giá,"1. Mở chi tiết VGA","Giá sản phẩm hiển thị chính xác",Medium,Not Run
+TC_PROD_024,Product Detail,Kiểm tra truy cập sản phẩm không tồn tại,Không có sản phẩm ID giả,"1. Truy cập URL sản phẩm không tồn tại","Hiển thị thông báo lỗi hoặc 404",Medium,Not Run
