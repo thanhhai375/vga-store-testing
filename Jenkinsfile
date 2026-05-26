@@ -30,30 +30,82 @@ options {
                 sh 'docker-compose -p vga-store-testing up -d --build db backend admin-frontend user-frontend'
 
                 echo '✅ Triển khai thành công! Đang đợi Backend (Spring Boot) khởi động hoàn tất...'
-                sleep(time: 15, unit: 'SECONDS')
+                
+                sh '''
+                echo "⏳ Bắt đầu Health Check..."
+                max_attempts=30
+                attempt=0
+                
+                # Chờ tối đa 60 giây (30 lần x 2s)
+                while [ $attempt -lt $max_attempts ]; do
+                    # Gọi thử vào backend (trong cùng Docker network). 
+                    # Nếu server đã bật sẽ trả về một mã HTTP (vd: 200, 401, 403, 405...). 
+                    # Nếu server chưa bật hoặc bị lỗi, curl sẽ thất bại và gán giá trị "000".
+                    http_code=$(curl -s -o /dev/null -w "%{http_code}" http://backend:8080/api/orders || echo "000")
+                    
+                    if [ "$http_code" != "000" ]; then
+                        echo "✅ Backend đã sẵn sàng phản hồi! (Mã trạng thái HTTP: $http_code)"
+                        break
+                    fi
+                    
+                    echo "⏳ Backend đang khởi động, vui lòng chờ... (Thử lần $((attempt+1))/$max_attempts)"
+                    sleep 2
+                    attempt=$((attempt+1))
+                done
+
+                if [ $attempt -eq $max_attempts ]; then
+                    echo "❌ QUÁ THỜI GIAN! Backend không thể khởi động sau 60 giây. Đánh rớt Pipeline!"
+                    exit 1
+                fi
+                '''
             }
         }
-// BƯỚC 2: SAU KHI SERVER CHẠY THÌ MỚI BẮN TEST API
         stage('Run API Tests (Newman/Postman)') {
             steps {
                 dir('automation') {
                     echo 'Đang chạy API Test tự động cho TỪNG FILE RIÊNG LẺ...'
                     sh '''
+                    # Xóa file lỗi cũ nếu có
+                    rm -f ../error_reason.txt
+                    failed=0
+
                     # Quét tất cả các file có đuôi .json trong thư mục postman
                     for test_file in postman/*.json; do
                         echo "=================================================="
                         echo "▶️ ĐANG CHẠY KỊCH BẢN: $test_file"
                         echo "=================================================="
 
+                        # Chạy newman, tắt màu để dễ grep, lưu output ra file tạm
                         docker run --rm \\
                             --network vga-store-testing_vga-network \\
                             --volumes-from vga_jenkins \\
                             -w $(pwd) \\
                             postman/newman run "$test_file" \\
+                            --color off --disable-unicode \\
+                            --reporters cli,junit \\
+                            --reporter-junit-export "report-$(basename "$test_file").xml" \\
                             --env-var "baseUrl=http://backend:8080" \\
-                            --env-var "baseurl=http://backend:8080" \\
-                        || { echo "❌ ỐI! LỖI TẠI FILE $test_file" > ../error_reason.txt; exit 1; }
+                            --env-var "baseurl=http://backend:8080" > newman_log.txt 2>&1 || {
+                            
+                                echo "❌ PHÁT HIỆN LỖI TẠI FILE: $test_file" >> ../error_reason.txt
+                                echo "Chi tiết các Test Case bị FAILED:" >> ../error_reason.txt
+                                
+                                # Newman có in ra 1 bảng lỗi ở cuối, chữ "failure         detail". Ta sẽ trích xuất 30 dòng sau nó.
+                                grep -A 30 "failure         detail" newman_log.txt | grep -v "^$" >> ../error_reason.txt || echo "- Lỗi không xác định (xem log Jenkins)" >> ../error_reason.txt
+                                echo "---------------------------------------" >> ../error_reason.txt
+                                echo "" >> ../error_reason.txt
+                                
+                                failed=1
+                            }
+                        
+                        # In log ra console của Jenkins
+                        cat newman_log.txt
                     done
+
+                    # Nếu có bất kỳ file nào failed thì đánh sập pipeline
+                    if [ $failed -eq 1 ]; then
+                        exit 1
+                    fi
                     '''
                 }
             }
@@ -90,12 +142,18 @@ options {
                 }
 
                 def errorReason = "Lỗi hệ thống hoặc lỗi Cài đặt môi trường"
+                def summaryTitle = "Lỗi hệ thống hoặc lỗi Cài đặt môi trường"
                 if (fileExists('error_reason.txt')) {
                     errorReason = readFile('error_reason.txt').trim()
+                    // Lấy dòng đầu tiên làm tiêu đề cho Jira (để không bị lỗi multi-line ở Summary)
+                    summaryTitle = errorReason.split('\\n')[0].take(200)
+                    
+                    // Xử lý xuống dòng (escapes) cho JSON
+                    errorReason = errorReason.replaceAll('\\n', '\\\\n').replaceAll('"', '\\\\"')
                 }
 
-                def bugSummary = "[Bug Tự Động] Hệ thống phát hiện ${errorReason}"
-                def bugDescription = "Hệ thống CI/CD Jenkins vừa quét và phát hiện lỗi mới.\\n\\n**1. Nhánh bị lỗi (Branch):** ${branchName}\\n\\n**2. Khu vực xảy ra lỗi:** ${errorReason}\\n\\n**3. Thủ phạm tình nghi (Người code):** ${culprit}\\n\\n**4. Cách xem chi tiết mã lỗi:** Vui lòng bấm vào đường link này để xem Nhật ký chạy test của Jenkins: [Xem Console Output](${env.BUILD_URL}console)"
+                def bugSummary = "[Bug Tự Động] ${summaryTitle}"
+                def bugDescription = "Hệ thống CI/CD Jenkins vừa quét và phát hiện lỗi mới.\\n\\n**1. Nhánh bị lỗi (Branch):** ${branchName}\\n\\n**2. Chi tiết lỗi (Log):**\\n{code}\\n${errorReason}\\n{code}\\n\\n**3. Thủ phạm tình nghi (Người code):** ${culprit}\\n\\n**4. Cách xem chi tiết mã lỗi:** Vui lòng bấm vào đường link này để xem Nhật ký chạy test của Jenkins: [Xem Console Output](${env.BUILD_URL}console)"
 
                 def payload = """
                 {
