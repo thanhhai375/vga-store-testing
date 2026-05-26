@@ -1,44 +1,17 @@
 TC_ID,Module,Test_Case,Precondition,Test_Steps,Test_Data,Expected_Result,Priority,Status
-AUTH_008,Auth,Đăng nhập với email sai định dạng,Chưa đăng nhập,"1. Mở màn hình login
-2. Nhập email sai định dạng
-3. Nhập password hợp lệ
-4. Nhấn Đăng nhập","email: user@domain; password: 12345678","Hiển thị lỗi 'Email không đúng định dạng'",High,Not Run
-AUTH_009,Auth,Đăng nhập với mật khẩu để trống,Chưa đăng nhập,"1. Mở login
-2. Nhập email hợp lệ
-3. Để trống password
-4. Nhấn Đăng nhập","email: user@test.com; password: ","Hiển thị lỗi trường mật khẩu bắt buộc",High,Not Run
-AUTH_010,Auth,Đăng ký mật khẩu quá ngắn,Chưa có tài khoản với email này,"1. Mở đăng ký
-2. Nhập email hợp lệ
-3. Nhập password 5 ký tự
-4. Nhập confirm password giống password
-5. Nhấn Đăng ký","email: newuser@test.com; password: 12345; confirm_password: 12345","Hiển thị lỗi mật khẩu phải ít nhất 6 ký tự",High,Not Run
-AUTH_011,Auth,Đăng ký với mật khẩu và xác nhận không khớp,Chưa có tài khoản với email này,"1. Mở đăng ký
-2. Nhập email hợp lệ
-3. Nhập password 12345678
-4. Nhập confirm password 12345679
-5. Nhấn Đăng ký","email: newuser2@test.com; password: 12345678; confirm_password: 12345679","Hiển thị lỗi 'Mật khẩu xác nhận không khớp'",High,Not Run
-AUTH_012,Auth,Đăng ký với email dài vượt quá giới hạn,Chưa có tài khoản với email này,"1. Mở đăng ký
-2. Nhập email dài > 254 ký tự
-3. Nhập password hợp lệ
-4. Nhấn Đăng ký","email: <255-char-email>; password: 12345678","Hiển thị lỗi giới hạn độ dài email",Medium,Not Run
-AUTH_013,Auth,Quên mật khẩu với email chưa đăng ký,Không có tài khoản với email này,"1. Mở Forgot Password
-2. Nhập email chưa tồn tại
-3. Nhấn gửi","email: notfound@test.com","Hiển thị thông báo email không tồn tại hoặc hướng dẫn đăng ký",Medium,Not Run
-AUTH_014,Auth,Quên mật khẩu với email sai định dạng,Không quan trọng tài khoản,"1. Mở Forgot Password
-2. Nhập email sai định dạng
-3. Nhấn gửi","email: user@domain","Hiển thị lỗi 'Email không đúng định dạng'",High,Not Run
-AUTH_015,Auth,Reset mật khẩu với token không hợp lệ,Người dùng nhận link reset nhưng token sai,"1. Mở link reset password
-2. Nhập password mới
-3. Xác nhận
-4. Nhấn submit","reset_token: invalidtoken; new_password: 12345678","Hiển thị lỗi token không hợp lệ hoặc link đã hết hạn",High,Not Run
-USER_005,User,Cập nhật profile với số điện thoại sai định dạng,Người dùng đã đăng nhập,"1. Vào trang Profile
-2. Sửa số điện thoại thành 12345abc
-3. Nhấn Save","name: Nguyễn A; phone: 12345abc","Hiển thị lỗi 'Số điện thoại không hợp lệ'",Medium,Not Run
-USER_006,User,Cập nhật profile với tên để trống,Người dùng đã đăng nhập,"1. Vào Profile
-2. Xóa tên
-3. Nhấn Save","name: ; phone: 0900000000","Hiển thị lỗi trường tên bắt buộc",Medium,Not Run
-USER_007,User,Cập nhật profile với địa chỉ quá dài,Người dùng đã đăng nhập,"1. Vào Profile
-2. Nhập địa chỉ > 200 ký tự
-3. Nhấn Save","address: <201-char-string>","Hiển thị lỗi giới hạn độ dài địa chỉ",Medium,Not Run
-USER_008,User,Xem profile với token hợp lệ,Người dùng đã đăng nhập,"1. Vào trang Profile
-2. Tải lại trang","token hợp lệ","Hiển thị thông tin profile hiện tại chính xác",Medium,Not Run
+TC_001,Auth,Đăng ký tài khoản mới thành công,"Hệ thống hoạt động bình thường, baseUrl đã cấu hình.","1. Gửi request POST đến /auth/register.\n2. Kiểm tra phản hồi và lưu username vào biến môi trường.","Body:\n- email: Tự động sinh ngẫu nhiên\n- username: Tự động sinh ngẫu nhiên\n- password: ""123456""\n- fullName: ""Người Dùng Test""","- Hệ thống đăng ký thành công.\n- Trả về mã trạng thái thành công (201 Created/200 OK).\n- Biến loginUsername được cập nhật.",High,Ready
+TC_002,Auth,Đăng nhập hệ thống thành công bằng tài khoản vừa đăng ký,Tài khoản đã đăng ký thành công ở bước trước (loginUsername tồn tại).,"1. Gửi request POST đến /auth/login.\n2. Kiểm tra mã trạng thái phản hồi.\n3. Kiểm tra và lưu token vào biến môi trường.","Body:\n- username: {{loginUsername}}\n- password: ""123456""","- Trả về status mã 200 OK.\n- Trả về chuỗi token không rỗng.\n- Biến token môi trường được lưu thành công.",High,Ready
+TC_003,Auth,Đăng nhập thông qua tài khoản Google,Hệ thống hoạt động bình thường.,1. Gửi request POST đến /auth/google.\n2. Kiểm tra phản hồi từ hệ thống.,"Body:\n- name: ""Test google""\n- email: ""googletest@example.com""","- Trả về mã trạng thái thành công (200 OK).\n- Hệ thống xác thực và cấp quyền thành công cho user.",Medium,Ready
+TC_004,Users,Lấy thông tin profile cá nhân thành công,Người dùng đã đăng nhập và có token hợp lệ kèm theo trong Header.,1. Gửi request GET đến /users/profile.\n2. Gắn Bearer Token ({{token}}) vào request.\n3. Kiểm tra phản hồi thông tin.,Header:\nAuthorization: Bearer {{token}},- Trả về mã trạng thái thành công 200 OK.\n- Trả về đúng thông tin profile cá nhân của tài khoản hiện tại.,High,Ready
+TC_005,Users,Đổi mật khẩu tài khoản thành công,Người dùng đã đăng nhập và có token hợp lệ.,"1. Gửi request PUT đến /users/change-password.\n2. Truyền Bearer Token.\n3. Kiểm tra phản hồi.","Header: Authorization: Bearer {{token}}\nBody:\n- oldPassword: ""123456""\n- newPassword: ""454545""","- Trả về mã trạng thái thành công (200 OK).\n- Mật khẩu cũ được cập nhật thành mật khẩu mới.",High,Ready
+TC_006,Users,Cập nhật thông tin profile cá nhân,Người dùng đã đăng nhập và có token hợp lệ.,"1. Gửi request PUT đến /users/profile.\n2. Điền đầy đủ thông tin cập nhật mới.\n3. Kiểm tra dữ liệu thay đổi.","Header: Authorization: Bearer {{token}}\nBody:\n- username: {{loginUsername}}\n- email: ""test@gmail.com""\n- password: ""454545""\n- fullName: ""Người Dùng Test""\n- phone: ""0901234567""","- Trả về mã trạng thái thành công (200 OK).\n- Thông tin Email, FullName, Phone... được cập nhật mới trên hệ thống.",Medium,Ready
+TC_007,Users,Thêm mới địa chỉ giao hàng thành công,Người dùng đã đăng nhập và có token hợp lệ.,"1. Gửi request POST đến /users/addresses.\n2. Gắn kèm token và thông tin địa chỉ mới.\n3. Kiểm tra phản hồi.","Header: Authorization: Bearer {{token}}\nBody:\n- user_id: 27\n- recipientName: ""Tu Minh Von""\n- phone: ""0342475759""\n- detailedAddress: ""45 phuong go vap tphcm""\n- isDefault: true","- Trả về mã trạng thái thành công (201 Created/200 OK).\n- Địa chỉ mới được lưu vào danh sách địa chỉ của user.",Medium,Ready
+TC_008,Users,Xóa địa chỉ giao hàng theo Address_ID,Người dùng đã đăng nhập và có token hợp lệ. Địa chỉ cần xóa (ID = 1) phải đang tồn tại.,"1. Gửi request DELETE đến /users/addresses/1.\n2. Gắn kèm token.\n3. Kiểm tra phản hồi.",Header: Authorization: Bearer {{token}}\nPath Variable: address_id = 1,"Trả về mã trạng thái thành công (200 OK hoặc 204 No Content).\n- Địa chỉ có ID bằng 1 không còn tồn tại trên hệ thống.",Medium,ReadyTC_ID,Module,Test_Case,Precondition,Test_Steps,Test_Data,Expected_Result,Priority,Status
+TC_009,Auth,Đăng ký thất bại do trùng Email/Username,Hệ thống đã có sẵn một tài khoản test với email và username cụ thể.,1. Gửi request POST đến /auth/register với thông tin trùng lặp.\n2. Kiểm tra mã lỗi phản hồi từ hệ thống.,"Body:\n- email: ""test_trung@gmail.com""\n- username: ""user_trung""\n- password: ""123456""",- Hệ thống từ chối đăng ký.\n- Trả về mã lỗi 400 Bad Request hoặc 409 Conflict.\n- Phản hồi thông báo rõ ràng về việc trùng lặp.,High,Ready
+TC_010,Auth,Đăng ký thất bại do thiếu trường bắt buộc,Hệ thống hoạt động bình thường.,1. Gửi request POST đến /auth/register nhưng bỏ trống trường email và password.\n2. Kiểm tra phản hồi.,Body:\n- username: ""user123""\n- fullName: ""User Test""\n- email: """"\n- password: """"",- Hệ thống trả về mã lỗi 400 Bad Request.\n- Có thông báo validate dữ liệu đầu vào (ví dụ: ""Email/Password là bắt buộc"").,High,Ready
+TC_011,Auth,Đăng nhập thất bại do sai mật khẩu,Tài khoản loginUsername đã tồn tại trên hệ thống.,1. Gửi request POST đến /auth/login.\n2. Nhập sai password.\n3. Kiểm tra mã lỗi phản hồi.,"Body:\n- username: {{loginUsername}}\n- password: ""sai_mat_khau""",- Hệ thống từ chối đăng nhập.\n- Trả về mã lỗi 401 Unauthorized.\n- Thông báo ""Tên đăng nhập hoặc mật khẩu không đúng"".,High,Ready
+TC_012,Users,Lấy thông tin profile thất bại khi Token không hợp lệ,Người dùng truyền Token sai định dạng hoặc Token đã hết hạn.,1. Gửi request GET đến /users/profile.\n2. Gắn Token giả lập hoặc để trống.\n3. Kiểm tra phản hồi.,Header:\nAuthorization: Bearer sai_token_123,- Hệ thống từ chối truy cập.\n- Trả về mã lỗi 401 Unauthorized.,High,Ready
+TC_013,Users,Đổi mật khẩu thất bại do nhập sai mật khẩu cũ,Người dùng đã đăng nhập thành công và có token hợp lệ.,1. Gửi request PUT đến /users/change-password.\n2. Truyền Token hợp lệ.\n3. Nhập sai oldPassword.\n4. Kiểm tra phản hồi.,"Header: Authorization: Bearer {{token}}\nBody:\n- oldPassword: ""mat_khau_cu_sai""\n- newPassword: ""new123456""",- Hệ thống không cho đổi mật khẩu.\n- Trả về mã lỗi 400 Bad Request.\n- Thông báo lỗi ""Mật khẩu cũ không chính xác"".,High,Ready
+TC_014,Users,Đổi mật khẩu thất bại do mật khẩu mới trùng mật khẩu cũ,Người dùng đã đăng nhập thành công và có token hợp lệ.,1. Gửi request PUT đến /users/change-password.\n2. Nhập newPassword giống hệt oldPassword.\n3. Kiểm tra phản hồi.,"Header: Authorization: Bearer {{token}}\nBody:\n- oldPassword: ""123456""\n- newPassword: ""123456""",- Hệ thống từ chối xử lý (tùy thuộc vào business logic của dự án).\n- Trả về mã lỗi 400 Bad Request kèm thông báo phù hợp.,Medium,Ready
+TC_015,Users,Thêm mới địa chỉ thất bại do sai định dạng số điện thoại,Người dùng đã đăng nhập thành công và có token hợp lệ.,1. Gửi request POST đến /users/addresses.\n2. Nhập số điện thoại chứa ký tự chữ hoặc quá ngắn/quá dài.\n3. Kiểm tra phản hồi.,"Header: Authorization: Bearer {{token}}\nBody:\n- user_id: 27\n- recipientName: ""Tu Minh Von""\n- phone: ""abcdefg""\n- detailedAddress: ""45 go vap""\n- isDefault: true",- Hệ thống trả về mã lỗi 400 Bad Request.\n- Thông báo lỗi ""Số điện thoại không hợp lệ"".,Medium,Ready
+TC_016,Users,Xóa địa chỉ thất bại do ID địa chỉ không tồn tại,Người dùng đã đăng nhập thành công và có token hợp lệ.,1. Gửi request DELETE đến /users/addresses/999999 (ID chắc chắn không tồn tại).\n2. Kiểm tra phản hồi.,Header: Authorization: Bearer {{token}}\nPath Variable: address_id = 999999,- Hệ thống không tìm thấy tài nguyên.\n- Trả về mã lỗi 404 Not Found.,Medium,Ready
