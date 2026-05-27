@@ -90,8 +90,8 @@ options {
                                 echo "❌ PHÁT HIỆN LỖI TẠI FILE: $test_file" >> ../error_reason.txt
                                 echo "Chi tiết các Test Case bị FAILED:" >> ../error_reason.txt
 
-                                # Lọc thẳng các dòng chứa chi tiết lỗi (AssertionError, Error) và tên Test Case (inside)
-                                grep -E "AssertionError|Error|inside" newman_log.txt | grep -v "npm" >> ../error_reason.txt || tail -n 30 newman_log.txt >> ../error_reason.txt
+                                # Lọc ra duy nhất TÊN của các test case bị lỗi và loại bỏ các dòng rác, trùng lặp
+                                grep 'inside "' newman_log.txt | grep -v '""' | awk -F'"' '{print "- Failed: " $2}' | sort -u >> ../error_reason.txt || echo "- Lỗi hệ thống: Vui lòng xem chi tiết trong log Jenkins" >> ../error_reason.txt
                                 echo "---------------------------------------" >> ../error_reason.txt
                                 echo "" >> ../error_reason.txt
 
