@@ -162,14 +162,26 @@ EOF
                     branchName = env.GIT_BRANCH ?: "Unknown Branch"
                 }
 
-                def errorReason = "Lỗi hệ thống hoặc lỗi Cài đặt môi trường"
-                def summaryTitle = "Lỗi hệ thống hoặc lỗi Cài đặt môi trường"
+                def errorReason = "Lỗi khởi động môi trường Server (Pipeline sập trước khi kịp chạy Test)"
+                def summaryTitle = "Lỗi Build/Deploy Môi trường Server"
 
                 if (fileExists('error_reason.txt')) {
                     errorReason = readFile('error_reason.txt').trim()
 
+                    // Truy tìm thủ phạm làm ra file Test bị lỗi
+                    def lines = errorReason.split('\n')
+                    def fileLine = lines.find { it.startsWith('❌ FILE: ') }
+                    if (fileLine) {
+                        def failedFile = fileLine.replace('❌ FILE: ', '').trim()
+                        // Truy vấn Git xem ai là người cuối cùng sửa/tạo file Test này
+                        def fileAuthor = sh(script: "git log -1 --pretty=format:'%an <%ae>' -- \"automation/${failedFile}\"", returnStdout: true).trim()
+                        if (fileAuthor) {
+                            culprit = fileAuthor
+                        }
+                    }
+
                     // Lấy dòng đầu làm title và dọn dẹp nháy kép để không vỡ JSON
-                    summaryTitle = errorReason.split('\n')[0].take(200).replace('"', "'")
+                    summaryTitle = lines[0].take(200).replace('"', "'")
 
                     // CÔNG THỨC LÀM SẠCH CHUẨN JSON (Khắc phục lỗi Parsing JSON của Jira)
                     errorReason = errorReason.replace('\\', '\\\\')   // Xử lý dấu \
@@ -180,7 +192,7 @@ EOF
                 }
 
                 def bugSummary = "[Bug Tự Động] ${summaryTitle}"
-                def bugDescription = "Hệ thống CI/CD Jenkins vừa quét và phát hiện lỗi mới.\\n\\n**1. Nhánh bị lỗi (Branch):** ${branchName}\\n\\n**2. Chi tiết lỗi (Log):**\\n{code}\\n${errorReason}\\n{code}\\n\\n**3. Thủ phạm tình nghi (Người code):** ${culprit}\\n\\n**4. Cách xem chi tiết mã lỗi:** Vui lòng bấm vào đường link này để xem Nhật ký chạy test của Jenkins: [Xem Console Output](${env.BUILD_URL}console)"
+                def bugDescription = "Hệ thống CI/CD Jenkins vừa quét và phát hiện lỗi mới.\\n\\n**1. Nhánh bị lỗi (Branch):** ${branchName}\\n\\n**2. Các Testcase rớt & Lý do lỗi:**\\n{code}\\n${errorReason}\\n{code}\\n\\n**3. Thủ phạm tình nghi (Người sửa file cuối):** ${culprit}\\n\\n**4. Xem thêm:** Vui lòng kiểm tra màn hình Jenkins Console (Build #${env.BUILD_NUMBER}) để biết toàn bộ quá trình chạy."
 
                 def payload = """
                 {
