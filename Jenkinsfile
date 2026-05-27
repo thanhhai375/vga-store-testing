@@ -25,6 +25,9 @@ options {
 
                 // "BẮN TỈA": Chỉ tắt và dọn dẹp các app, TUYỆT ĐỐI để Jenkins được sống
                 sh 'docker-compose -p vga-store-testing rm -f -s db backend admin-frontend user-frontend'
+                
+                // Xóa sạch data cũ của Database để đảm bảo môi trường test luôn mới tinh (Fresh DB)
+                sh 'docker run --rm -v vga-store-testing_pgdata:/dbdata alpine sh -c "rm -rf /dbdata/*"'
 
                 // Khởi tạo lại App
                 sh 'docker-compose -p vga-store-testing up -d --build db backend admin-frontend user-frontend'
@@ -40,10 +43,9 @@ options {
                 while [ $attempt -lt $max_attempts ]; do
                     # Gọi thử vào backend (trong cùng Docker network).
                     # Nếu server đã bật sẽ trả về một mã HTTP (vd: 200, 401, 403, 405...).
-                    # Nếu server chưa bật hoặc bị lỗi, curl sẽ thất bại và gán giá trị "000".
-                    http_code=$(curl -s -o /dev/null -w "%{http_code}" http://backend:8080/api/orders || echo "000")
+                    http_code=$(curl -s -o /dev/null -w "%{http_code}" http://backend:8080/api/orders || true)
 
-                    if [ "$http_code" != "000" ]; then
+                    if [ "$http_code" = "200" ] || [ "$http_code" = "401" ] || [ "$http_code" = "403" ] || [ "$http_code" = "405" ]; then
                         echo "✅ Backend đã sẵn sàng phản hồi! (Mã trạng thái HTTP: $http_code)"
                         break
                     fi
@@ -82,6 +84,7 @@ options {
                             -w $(pwd) \
                             postman/newman run "$test_file" \
                             -e "postman/env/VGA_Store_Environment.postman_environment.json" \
+                            --export-environment "postman/env/VGA_Store_Environment.postman_environment.json" \
                             --env-var "baseUrl=http://backend:8080" \
                             --color off --disable-unicode \
                             --reporters cli,junit,json \
