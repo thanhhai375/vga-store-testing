@@ -132,7 +132,7 @@ options {
         */
     }
 
-    post {
+   post {
         failure {
             echo '❌ Ối, Test thất bại rồi! Đang gọi API tự động tạo ticket Bug trên Jira...'
             script {
@@ -144,13 +144,19 @@ options {
 
                 def errorReason = "Lỗi hệ thống hoặc lỗi Cài đặt môi trường"
                 def summaryTitle = "Lỗi hệ thống hoặc lỗi Cài đặt môi trường"
+
                 if (fileExists('error_reason.txt')) {
                     errorReason = readFile('error_reason.txt').trim()
-                    // Lấy dòng đầu tiên làm tiêu đề cho Jira (để không bị lỗi multi-line ở Summary)
-                    summaryTitle = errorReason.split('\\n')[0].take(200)
 
-                    // Xử lý xuống dòng (escapes) cho JSON
-                    errorReason = errorReason.replaceAll('\\n', '\\\\n').replaceAll('"', '\\\\"')
+                    // Lấy dòng đầu làm title và dọn dẹp nháy kép để không vỡ JSON
+                    summaryTitle = errorReason.split('\n')[0].take(200).replace('"', "'")
+
+                    // CÔNG THỨC LÀM SẠCH CHUẨN JSON (Khắc phục lỗi Parsing JSON của Jira)
+                    errorReason = errorReason.replace('\\', '\\\\')   // Xử lý dấu \
+                                             .replace('"', '\\"')     // Xử lý dấu nháy kép "
+                                             .replace('\t', '    ')   // Đổi dấu Tab thành 4 khoảng trắng
+                                             .replace('\r', '')       // Xóa ký tự \r của Windows
+                                             .replace('\n', '\\n')    // Ký tự xuống dòng
                 }
 
                 def bugSummary = "[Bug Tự Động] ${summaryTitle}"
