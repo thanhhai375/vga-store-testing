@@ -69,23 +69,23 @@ options {
                     rm -f ../error_reason.txt
                     failed=0
 
-                    # Quét tất cả các file có đuôi .json trong thư mục postman
-                    for test_file in postman/*.json; do
+                    # Quét tất cả các file có đuôi .postman_collection.json trong các thư mục con của postman
+                    for test_file in postman/*/*.postman_collection.json; do
                         echo "=================================================="
                         echo "▶️ ĐANG CHẠY KỊCH BẢN: $test_file"
                         echo "=================================================="
 
-                        # Chạy newman, tắt màu để dễ grep, lưu output ra file tạm
-                        docker run --rm \\
-                            --network vga-store-testing_vga-network \\
-                            --volumes-from vga_jenkins \\
-                            -w $(pwd) \\
-                            postman/newman run "$test_file" \\
-                            --color off --disable-unicode \\
-                            --reporters cli,junit \\
-                            --reporter-junit-export "report-$(basename "$test_file").xml" \\
-                            --env-var "baseUrl=http://backend:8080" \\
-                            --env-var "baseurl=http://backend:8080" > newman_log.txt 2>&1 || {
+                        # Chạy newman VÀ nạp thêm file Environment vào (như chạy trên máy tính)
+                        docker run --rm \
+                            --network vga-store-testing_vga-network \
+                            --volumes-from vga_jenkins \
+                            -w $(pwd) \
+                            postman/newman run "$test_file" \
+                            -e "postman/env/VGA_Store_Environment.postman_environment.json" \
+                            --env-var "baseUrl=http://backend:8080" \
+                            --color off --disable-unicode \
+                            --reporters cli,junit \
+                            --reporter-junit-export "report-$(basename "$test_file").xml" > newman_log.txt 2>&1 || {
                             
                                 echo "❌ PHÁT HIỆN LỖI TẠI FILE: $test_file" >> ../error_reason.txt
                                 echo "Chi tiết các Test Case bị FAILED:" >> ../error_reason.txt
