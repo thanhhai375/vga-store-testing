@@ -40,7 +40,7 @@ public class CartService {
     }
 
     // Cart
-    @Transactional(readOnly= true)
+    @Transactional
     public CartResponse getMyCart() {
 
         User currentUser = userService.getCurrentUser();

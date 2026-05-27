@@ -301,11 +301,11 @@ public class ProductService {
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy sản phẩm ID: " + id));
     }
 
-    // Image
+    // Image (optional - returns null if no file provided)
     private String uploadImageFile(MultipartFile file) {
 
         if (file == null || file.isEmpty()) {
-            throw new IllegalArgumentException("File ảnh không được để trống!");
+            return null; // ảnh không bắt buộc, trả về null nếu không có file
         }
 
         try {
