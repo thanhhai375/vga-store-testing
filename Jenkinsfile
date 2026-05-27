@@ -101,17 +101,17 @@ try {
       exec.assertions.forEach(assert => {
         if (assert.error) {
           if (!hasError) {
-             fs.appendFileSync('../error_reason.txt', '❌ FILE: ' + testFile + '\n');
+             fs.appendFileSync('../error_reason.txt', '❌ FILE: ' + testFile + '\\n');
              hasError = true;
           }
-          const errMsg = assert.error.message.replace(/\r?\n/g, ' ');
-          fs.appendFileSync('../error_reason.txt', '  - Testcase: ' + exec.item.name + '\n    Lỗi: ' + errMsg + '\n\n');
+          const errMsg = assert.error.message.replace(/\\r?\\n/g, ' ');
+          fs.appendFileSync('../error_reason.txt', '  - Testcase: ' + exec.item.name + '\\n    Lỗi: ' + errMsg + '\\n\\n');
         }
       });
     }
   });
 } catch (e) {
-  fs.appendFileSync('../error_reason.txt', '❌ FILE: ' + testFile + '\n  - Lỗi không xác định (xem log Jenkins): ' + e.message + '\n\n');
+  fs.appendFileSync('../error_reason.txt', '❌ FILE: ' + testFile + '\\n  - Lỗi không xác định (xem log Jenkins): ' + e.message + '\\n\\n');
 }
 EOF
                                 node parse_errors.js "$test_file"
