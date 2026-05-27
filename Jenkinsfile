@@ -30,24 +30,24 @@ options {
                 sh 'docker-compose -p vga-store-testing up -d --build db backend admin-frontend user-frontend'
 
                 echo '✅ Triển khai thành công! Đang đợi Backend (Spring Boot) khởi động hoàn tất...'
-                
+
                 sh '''
                 echo "⏳ Bắt đầu Health Check..."
                 max_attempts=30
                 attempt=0
-                
+
                 # Chờ tối đa 60 giây (30 lần x 2s)
                 while [ $attempt -lt $max_attempts ]; do
-                    # Gọi thử vào backend (trong cùng Docker network). 
-                    # Nếu server đã bật sẽ trả về một mã HTTP (vd: 200, 401, 403, 405...). 
+                    # Gọi thử vào backend (trong cùng Docker network).
+                    # Nếu server đã bật sẽ trả về một mã HTTP (vd: 200, 401, 403, 405...).
                     # Nếu server chưa bật hoặc bị lỗi, curl sẽ thất bại và gán giá trị "000".
                     http_code=$(curl -s -o /dev/null -w "%{http_code}" http://backend:8080/api/orders || echo "000")
-                    
+
                     if [ "$http_code" != "000" ]; then
                         echo "✅ Backend đã sẵn sàng phản hồi! (Mã trạng thái HTTP: $http_code)"
                         break
                     fi
-                    
+
                     echo "⏳ Backend đang khởi động, vui lòng chờ... (Thử lần $((attempt+1))/$max_attempts)"
                     sleep 2
                     attempt=$((attempt+1))
@@ -86,18 +86,18 @@ options {
                             --color off --disable-unicode \
                             --reporters cli,junit \
                             --reporter-junit-export "report-$(basename "$test_file").xml" > newman_log.txt 2>&1 || {
-                            
+
                                 echo "❌ PHÁT HIỆN LỖI TẠI FILE: $test_file" >> ../error_reason.txt
                                 echo "Chi tiết các Test Case bị FAILED:" >> ../error_reason.txt
-                                
-                                # Newman có in ra 1 bảng lỗi ở cuối, chữ "failure         detail". Ta sẽ trích xuất 30 dòng sau nó.
-                                grep -A 30 "failure         detail" newman_log.txt | grep -v "^$" >> ../error_reason.txt || echo "- Lỗi không xác định (xem log Jenkins)" >> ../error_reason.txt
+
+                                # Lọc thẳng các dòng chứa chi tiết lỗi (AssertionError, Error) và tên Test Case (inside)
+                                grep -E "AssertionError|Error|inside" newman_log.txt | grep -v "npm" >> ../error_reason.txt || tail -n 30 newman_log.txt >> ../error_reason.txt
                                 echo "---------------------------------------" >> ../error_reason.txt
                                 echo "" >> ../error_reason.txt
-                                
+
                                 failed=1
                             }
-                        
+
                         # In log ra console của Jenkins
                         cat newman_log.txt
                     done
@@ -147,7 +147,7 @@ options {
                     errorReason = readFile('error_reason.txt').trim()
                     // Lấy dòng đầu tiên làm tiêu đề cho Jira (để không bị lỗi multi-line ở Summary)
                     summaryTitle = errorReason.split('\\n')[0].take(200)
-                    
+
                     // Xử lý xuống dòng (escapes) cho JSON
                     errorReason = errorReason.replaceAll('\\n', '\\\\n').replaceAll('"', '\\\\"')
                 }
