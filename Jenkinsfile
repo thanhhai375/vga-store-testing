@@ -84,17 +84,37 @@ options {
                             -e "postman/env/VGA_Store_Environment.postman_environment.json" \
                             --env-var "baseUrl=http://backend:8080" \
                             --color off --disable-unicode \
-                            --reporters cli,junit \
-                            --reporter-junit-export "report-$(basename "$test_file").xml" > newman_log.txt 2>&1 || {
+                            --reporters cli,junit,json \
+                            --reporter-junit-export "report-$(basename "$test_file").xml" \
+                            --reporter-json-export "report-$(basename "$test_file").json" > newman_log.txt 2>&1 || {
 
-                                echo "❌ PHÁT HIỆN LỖI TẠI FILE: $test_file" >> ../error_reason.txt
-                                echo "Chi tiết các Test Case bị FAILED:" >> ../error_reason.txt
-
-                                # Dùng awk để chộp toàn bộ bảng lỗi bắt đầu từ tiêu đề failure detail đến cuối file
-                                awk '/[fF]ailure.*[dD]etail/ {flag=1} flag' newman_log.txt | grep -v "^$" >> ../error_reason.txt || echo "- Lỗi không xác định (xem log Jenkins)" >> ../error_reason.txt
-
-                                echo "---------------------------------------" >> ../error_reason.txt
-                                echo "" >> ../error_reason.txt
+                                # Tạo script Node.js siêu ngắn để bóc tách chính xác Testcase nào lỗi từ file JSON
+                                cat << 'EOF' > parse_errors.js
+const fs = require('fs');
+const testFile = process.argv[2];
+try {
+  const jsonName = 'report-' + require('path').basename(testFile) + '.json';
+  const data = JSON.parse(fs.readFileSync(jsonName));
+  let hasError = false;
+  data.run.executions.forEach(exec => {
+    if (exec.assertions) {
+      exec.assertions.forEach(assert => {
+        if (assert.error) {
+          if (!hasError) {
+             fs.appendFileSync('../error_reason.txt', '❌ FILE: ' + testFile + '\n');
+             hasError = true;
+          }
+          const errMsg = assert.error.message.replace(/\r?\n/g, ' ');
+          fs.appendFileSync('../error_reason.txt', '  - Testcase: ' + exec.item.name + '\n    Lỗi: ' + errMsg + '\n\n');
+        }
+      });
+    }
+  });
+} catch (e) {
+  fs.appendFileSync('../error_reason.txt', '❌ FILE: ' + testFile + '\n  - Lỗi không xác định (xem log Jenkins): ' + e.message + '\n\n');
+}
+EOF
+                                node parse_errors.js "$test_file"
 
                                 failed=1
                             }
@@ -167,21 +187,7 @@ options {
                     "fields": {
                         "project": { "key": "${JIRA_PROJECT_KEY}" },
                         "summary": "${bugSummary}",
-                        "description": {
-                            "type": "doc",
-                            "version": 1,
-                            "content": [
-                                {
-                                    "type": "paragraph",
-                                    "content": [
-                                        {
-                                            "text": "${bugDescription}",
-                                            "type": "text"
-                                        }
-                                    ]
-                                }
-                            ]
-                        },
+                        "description": "${bugDescription}",
                         "issuetype": { "name": "Bug" }
                     }
                 }
@@ -193,7 +199,7 @@ options {
                 curl -s -X POST -u "${JIRA_USER}:${JIRA_TOKEN}" \\
                 -H "Content-Type: application/json" \\
                 -d @jira_payload.json \\
-                ${JIRA_URL}/rest/api/3/issue/
+                ${JIRA_URL}/rest/api/2/issue/
                 """
             }
         }
