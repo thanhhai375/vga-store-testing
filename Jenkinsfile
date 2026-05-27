@@ -9,7 +9,7 @@ pipeline {
         JIRA_TOKEN = credentials('JIRA_API_TOKEN')
         JIRA_PROJECT_KEY = 'KCPM'
     }
-    options {
+options {
         disableConcurrentBuilds()
     }
     stages {
@@ -18,16 +18,15 @@ pipeline {
                 echo 'Đang lấy code mới nhất từ Github...'
             }
         }
-
-        // BƯỚC 1: DỌN DẸP VÀ BẬT SERVER LÊN TRƯỚC
+      // BƯỚC 1: DỌN DẸP VÀ BẬT SERVER LÊN TRƯỚC
         stage('Deploy to Server (Docker)') {
             steps {
                 echo '🚀 Đang tiến hành Deploy lên Server thực tế...'
 
-                // Dọn dẹp sạch sẽ cả Container lẫn Volume Database cũ để tránh lỗi rác data
-                sh 'docker-compose -p vga-store-testing down -v'
+                // "BẮN TỈA": Chỉ tắt và dọn dẹp các app, TUYỆT ĐỐI để Jenkins được sống
+                sh 'docker-compose -p vga-store-testing rm -f -s db backend admin-frontend user-frontend'
 
-                // Khởi tạo lại App với một Database hoàn toàn mới và sạch
+                // Khởi tạo lại App
                 sh 'docker-compose -p vga-store-testing up -d --build db backend admin-frontend user-frontend'
 
                 echo '✅ Triển khai thành công! Đang đợi Backend (Spring Boot) khởi động hoàn tất...'
@@ -61,7 +60,6 @@ pipeline {
                 '''
             }
         }
-
         stage('Run API Tests (Newman/Postman)') {
             steps {
                 dir('automation') {
@@ -94,6 +92,7 @@ pipeline {
 
                                 # Dùng awk để chộp toàn bộ bảng lỗi bắt đầu từ tiêu đề failure detail đến cuối file
                                 awk '/[fF]ailure.*[dD]etail/ {flag=1} flag' newman_log.txt | grep -v "^$" >> ../error_reason.txt || echo "- Lỗi không xác định (xem log Jenkins)" >> ../error_reason.txt
+
                                 echo "---------------------------------------" >> ../error_reason.txt
                                 echo "" >> ../error_reason.txt
 
