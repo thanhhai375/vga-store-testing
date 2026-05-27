@@ -6,7 +6,9 @@ networks:
 
 services:
   db:
-    image: postgres:17-alpine
+    build:
+      context: ./database
+      dockerfile: Dockerfile
     container_name: vga_db
     environment:
       POSTGRES_USER: postgres
@@ -18,8 +20,6 @@ services:
       - vga-network
     volumes:
       - pgdata:/var/lib/postgresql/data
-      - ./database/create_tables.sql:/docker-entrypoint-initdb.d/1-create_tables.sql
-      - ./database/seed_vga.sql:/docker-entrypoint-initdb.d/2-seed_vga.sql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres -d vga_store"]
       interval: 5s

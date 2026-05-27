@@ -23,6 +23,9 @@ options {
             steps {
                 echo '🚀 Đang tiến hành Deploy lên Server thực tế...'
 
+                // Xóa file log lỗi cũ để tránh bị báo cáo sai nếu sập sớm
+                sh 'rm -f error_reason.txt'
+
                 // "BẮN TỈA": Chỉ tắt và dọn dẹp các app, TUYỆT ĐỐI để Jenkins được sống
                 sh 'docker-compose -p vga-store-testing rm -f -s db backend admin-frontend user-frontend'
                 
