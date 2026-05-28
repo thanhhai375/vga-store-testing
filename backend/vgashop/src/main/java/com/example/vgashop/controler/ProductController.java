@@ -25,7 +25,8 @@ import com.example.vgashop.repository.ApiResponse;
 import com.example.vgashop.service.BrandService;
 import com.example.vgashop.service.CategoryService;
 import com.example.vgashop.service.ProductService;
-
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.context.SecurityContextHolder;
 import jakarta.validation.Valid;
 
 
@@ -164,7 +165,9 @@ public class ProductController {
 
     // Product
     @PostMapping("/upload") 
+    @PreAuthorize("hasRole('ADMIN')") // Chỉ admin mới được phép tạo sản phẩm kèm ảnh
     public ApiResponse<Product> createWithImage(@Valid @ModelAttribute ProductImageDTO dto) {
+        System.out.println("User authorities: " + SecurityContextHolder.getContext().getAuthentication().getAuthorities());
         Product saved = productService.createProductWithImage(dto);
         return ApiResponse.success("Tạo sản phẩm kèm ảnh thành công", saved);
     }

@@ -479,9 +479,8 @@ public class AdminService {
         log.info("Admin xóa category ID: {}", id);
         Category category = categoryRepository.findByIdAndDeleted(id, false)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy danh mục"));
-        
-        // Hard delete to trigger DB constraints for demo
-        categoryRepository.delete(category);
+                category.setDeleted(true);
+        categoryRepository.save(category);
     }
 
 
@@ -513,9 +512,8 @@ public class AdminService {
         log.info("Admin xóa brand ID: {}", id);
         Brand brand = brandRepository.findByIdAndDeleted(id, false)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy thương hiệu"));
-        
-        // Hard delete to trigger DB constraints for demo
-        brandRepository.delete(brand);
+                brand.setDeleted(true);
+        brandRepository.save(brand);
     }
 
 
