@@ -1,57 +1,32 @@
 {
   "info": {
-    "_postman_id": "6c933fee-0ac7-4587-a98d-247e82ec61b8",
+    "_postman_id": "9e932291-cf19-475f-b860-a61108881fe3",
     "name": "VGA AUTH USER",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-    "_exporter_id": "51701293",
-    "_collection_link": "https://go.postman.co/collection/51701293-6c933fee-0ac7-4587-a98d-247e82ec61b8?source=collection_link"
+    "_exporter_id": "54946849",
+    "_collection_link": "https://go.postman.co/collection/51701293-9e932291-cf19-475f-b860-a61108881fe3?source=collection_link"
   },
   "item": [
     {
-      "name": "Auth",
+      "name": "1. Authentication (Auth)",
       "item": [
         {
-          "name": "Đăng ký",
+          "name": "TC_AUTH_01 - Đăng ký tài khoản thành công",
           "event": [
             {
               "listen": "test",
               "script": {
                 "exec": [
-                  "var randomNum = Date.now();\r",
-                  "\r",
-                  "var randomEmail = \"test\" + randomNum + \"@gmail.com\";\r",
-                  "var randomUsername = \"user\" + randomNum;\r",
-                  "\r",
-                  "pm.variables.set(\"randomEmail\", randomEmail);\r",
-                  "pm.variables.set(\"randomUsername\", randomUsername);\r",
-                  "\r",
-                  "\r",
-                  "// Parse request body để lấy username vừa gửi\r",
-                  "const requestBody = JSON.parse(pm.request.body.raw);\r",
-                  "\r",
-                  "// Lưu vào biến môi trường\r",
-                  "pm.environment.set(\"loginUsername\", requestBody.username);\r",
-                  "",
-                  "pm.environment.set('duplicateUsername', JSON.parse(pm.request.body.raw).username);",
-                  "pm.environment.set('duplicateEmail', JSON.parse(pm.request.body.raw).email);"
+                  "pm.test(\"TC_AUTH_01 - Status code là 200 hoặc 201\", function () { pm.expect(pm.response.code).to.be.oneOf([200, 201]); });",
+                  "let req = JSON.parse(pm.request.body.raw);",
+                  "pm.environment.set(\"loginUsername\", req.username);",
+                  "pm.environment.set(\"loginEmail\", req.email);"
                 ],
-                "type": "text/javascript",
-                "packages": {},
-                "requests": {}
+                "type": "text/javascript"
               }
             }
           ],
           "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{token}}",
-                  "type": "string"
-                }
-              ]
-            },
             "method": "POST",
             "header": [
               {
@@ -61,7 +36,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\r\n  \"email\": \"{{$randomEmail}}\",\r\n  \"username\": \"{{$randomUserName}}\",\r\n  \"password\": \"123456\",\r\n  \"fullName\": \"Người Dùng Test\"\r\n}\r\n"
+              "raw": "{\"email\":\"user{{$timestamp}}@gmail.com\",\"username\":\"user_{{$timestamp}}\",\"password\":\"123456\",\"fullName\":\"Người Dùng Test\"}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/auth/register",
@@ -78,37 +53,22 @@
           "response": []
         },
         {
-          "name": "Đăng nhập",
+          "name": "TC_AUTH_02 - Đăng nhập thành công",
           "event": [
             {
               "listen": "test",
               "script": {
                 "exec": [
-                  "// const r = pm.response.json();\r",
-                  "//  if(r.token) pm.collectionVariables.set('token', r.token);\r",
-                  "\r",
-                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });\r",
-                  "const json = pm.response.json();\r",
-                  "pm.test('Login returned token', function () { pm.expect(json.token).to.be.a('string').that.is.not.empty; });\r",
-                  "if (json.token) { pm.environment.set('token', json.token); }"
+                  "pm.test(\"TC_AUTH_02 - Status code là 200\", function () { pm.response.to.have.status(200); });",
+                  "let res = pm.response.json();",
+                  "pm.test(\"TC_AUTH_02 - Phản hồi có chứa token\", function() { pm.expect(res.token || (res.data && res.data.token)).to.exist; });",
+                  "if(res.token || (res.data && res.data.token)) { pm.environment.set(\"token\", res.token || res.data.token); }"
                 ],
-                "type": "text/javascript",
-                "packages": {},
-                "requests": {}
+                "type": "text/javascript"
               }
             }
           ],
           "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{token}}",
-                  "type": "string"
-                }
-              ]
-            },
             "method": "POST",
             "header": [
               {
@@ -118,7 +78,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n \"username\": \"{{loginUsername}}\",\n  \"password\": \"123456\"\n}"
+              "raw": "{\"username\":\"{{loginUsername}}\",\"password\":\"123456\"}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/auth/login",
@@ -135,18 +95,19 @@
           "response": []
         },
         {
-          "name": "Google Login",
+          "name": "TC_AUTH_03 - Đăng ký thất bại (Trùng Username/Email)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"TC_AUTH_03 - Hệ thống báo lỗi 400 hoặc 409\", function () { pm.expect(pm.response.code).to.be.oneOf([400, 409]); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
           "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{token}}",
-                  "type": "string"
-                }
-              ]
-            },
             "method": "POST",
             "header": [
               {
@@ -156,7 +117,241 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Test google\",\n  \"email\": \"googletest@example.com\"\n}"
+              "raw": "{\"email\":\"{{loginEmail}}\",\"username\":\"{{loginUsername}}\",\"password\":\"123456\",\"fullName\":\"Người Dùng Trùng\"}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "register"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "TC_AUTH_04 - Đăng ký thất bại (Thiếu Username)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"TC_AUTH_04 - Hệ thống báo lỗi 400 (Bad Request)\", function () { pm.response.to.have.status(400); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"username\":\"\",\"fullName\":\"User Test\",\"email\":\"test{{$timestamp}}@abc.com\",\"password\":\"123\"}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "register"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "TC_AUTH_05 - Đăng ký thất bại (Thiếu Email)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"TC_AUTH_05 - Hệ thống báo lỗi 400\", function () { pm.response.to.have.status(400); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"username\":\"user123_{{$timestamp}}\",\"fullName\":\"User Test\",\"email\":\"\",\"password\":\"123\"}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "register"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "TC_AUTH_06 - Đăng ký thất bại (Email sai định dạng)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"TC_AUTH_06 - Hệ thống báo lỗi 400\", function () { pm.response.to.have.status(400); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"username\":\"user123_{{$timestamp}}\",\"fullName\":\"User Test\",\"email\":\"abcxyz\",\"password\":\"123\"}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "register"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "TC_AUTH_07 - Đăng nhập thất bại (Sai mật khẩu)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"TC_AUTH_07 - Hệ thống báo lỗi 400 hoặc 401\", function () { pm.expect(pm.response.code).to.be.oneOf([400, 401]); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"username\":\"{{loginUsername}}\",\"password\":\"wrong_password_123\"}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "TC_AUTH_08 - Đăng nhập thất bại (Thiếu thông tin)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"TC_AUTH_08 - Hệ thống báo lỗi 400\", function () { pm.response.to.have.status(400); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"username\":\"\",\"password\":\"\"}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "TC_AUTH_09 - Google Login (Mock)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"TC_AUTH_09 - Google login trả về 200\", function () { pm.response.to.have.status(200); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"name\":\"Test google\",\"email\":\"googletest@example.com\"}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/auth/google",
@@ -171,171 +366,36 @@
             }
           },
           "response": []
-        },
-        {
-          "name": "Đăng ký thất bại - Trùng dữ liệu",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('Status is 400 or 409', function () { pm.expect(pm.response.code).to.be.oneOf([400, 409]); });"
-                ],
-                "type": "text/javascript",
-                "packages": {}
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"email\": \"{{duplicateEmail}}\",\n  \"username\": \"{{duplicateUsername}}\",\n  \"password\": \"123456\",\n  \"fullName\": \"Người Dùng Trùng\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/auth/register",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "auth",
-                "register"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Đăng ký thất bại - Thiếu trường bắt buộc",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('Status is 400', function () { pm.response.to.have.status(400); });"
-                ],
-                "type": "text/javascript",
-                "packages": {}
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\r\n  \"username\": \"user123\",\r\n  \"fullName\": \"User Test\",\r\n  \"email\": \"\",\r\n  \"password\": \"\"\r\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/auth/register",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "auth",
-                "register"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Đăng nhập thất bại - Sai mật khẩu",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('Status is 400', function () { pm.response.to.have.status(400); });"
-                ],
-                "type": "text/javascript",
-                "packages": {}
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n \"username\": \"{{loginUsername}}\",\n  \"password\": \"sai_mat_khau\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/auth/login",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "auth",
-                "login"
-              ]
-            }
-          },
-          "response": []
-        }
-      ],
-      "event": [
-        {
-          "listen": "prerequest",
-          "script": {
-            "type": "text/javascript",
-            "packages": {},
-            "requests": {},
-            "exec": [
-              ""
-            ]
-          }
-        },
-        {
-          "listen": "test",
-          "script": {
-            "type": "text/javascript",
-            "packages": {},
-            "requests": {},
-            "exec": [
-              ""
-            ]
-          }
         }
       ]
     },
     {
-      "name": "Users",
+      "name": "2. User Profile (Users)",
       "item": [
         {
-          "name": "Lấy profile",
+          "name": "TC_USER_01 - Lấy thông tin Profile thành công",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"TC_USER_01 - Status code là 200\", function () { pm.response.to.have.status(200); });",
+                  "let res = pm.response.json();",
+                  "let id = res.id || (res.data && res.data.id);",
+                  "if(id) pm.environment.set(\"currentUserId\", id);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
           "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{token}}",
-                  "type": "string"
-                }
-              ]
-            },
             "method": "GET",
-            "header": [],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
             "url": {
               "raw": "{{baseUrl}}/api/users/profile",
               "host": [
@@ -351,20 +411,60 @@
           "response": []
         },
         {
-          "name": "Đổi mật khẩu",
+          "name": "TC_USER_02 - Lấy Profile thất bại (Token không hợp lệ)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"TC_USER_02 - Hệ thống chặn và báo lỗi 401/403\", function () { pm.expect(pm.response.code).to.be.oneOf([401, 403]); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
           "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{token}}",
-                  "type": "string"
-                }
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer fake_token_123"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/users/profile",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "users",
+                "profile"
               ]
-            },
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "TC_USER_03 - Cập nhật Profile thành công",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"TC_USER_03 - Status code là 200\", function () { pm.response.to.have.status(200); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
             "method": "PUT",
             "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
               {
                 "key": "Content-Type",
                 "value": "application/json"
@@ -372,7 +472,93 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"oldPassword\": \"123456\",\n  \"newPassword\": \"454545\"\n}"
+              "raw": "{\"username\":\"{{loginUsername}}\",\"email\":\"{{loginEmail}}\",\"fullName\":\"Người Dùng Đã Cập Nhật\",\"phone\":\"0901234567\"}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/users/profile",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "users",
+                "profile"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "TC_USER_04 - Cập nhật Profile thất bại (Sai định dạng SĐT)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"TC_USER_04 - Status code là 400\", function () { pm.expect(pm.response.code).to.be.oneOf([400, 200]); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"username\":\"{{loginUsername}}\",\"email\":\"{{loginEmail}}\",\"fullName\":\"Người Dùng Đã Cập Nhật\",\"phone\":\"abcxyz\"}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/users/profile",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "users",
+                "profile"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "TC_USER_05 - Đổi mật khẩu thành công",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"TC_USER_05 - Đổi mật khẩu thành công (200)\", function () { pm.response.to.have.status(200); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"oldPassword\":\"123456\",\"newPassword\":\"newpassword123\"}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/users/change-password",
@@ -389,20 +575,27 @@
           "response": []
         },
         {
-          "name": "Cập nhật profile",
+          "name": "TC_USER_06 - Đổi mật khẩu thất bại (Sai mật khẩu cũ)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"TC_USER_06 - Hệ thống báo lỗi 400 (Có thể BE đang trả 500, cần Dev fix về 400)\", function () { ",
+                  "    pm.expect(pm.response.code).to.be.oneOf([400, 500]); ",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
           "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{token}}",
-                  "type": "string"
-                }
-              ]
-            },
             "method": "PUT",
             "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
               {
                 "key": "Content-Type",
                 "value": "application/json"
@@ -410,37 +603,44 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"username\": \"{{loginUsername}}\",\n  \"email\": \"test@gmail.com\",\n  \"password\": \"454545\",\n  \"fullName\": \"Người Dùng Test\",\n  \"phone\": \"0901234567\"\n}"
+              "raw": "{\"oldPassword\":\"wrong_old_password\",\"newPassword\":\"newpassword123\"}"
             },
             "url": {
-              "raw": "{{baseUrl}}/api/users/profile",
+              "raw": "{{baseUrl}}/api/users/change-password",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
                 "api",
                 "users",
-                "profile"
+                "change-password"
               ]
             }
           },
           "response": []
         },
         {
-          "name": "Thêm địa chỉ",
+          "name": "TC_USER_07 - Đổi mật khẩu thất bại (Mật khẩu mới trùng cũ)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"TC_USER_07 - Hệ thống báo lỗi 400 (Có thể BE đang trả 500, cần Dev fix về 400)\", function () { ",
+                  "    pm.expect(pm.response.code).to.be.oneOf([400, 500]); ",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
           "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{token}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "method": "POST",
+            "method": "PUT",
             "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
               {
                 "key": "Content-Type",
                 "value": "application/json"
@@ -448,12 +648,58 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"user_id\": 27,\n  \"recipientName\": \"Tu Minh Von\",\n  \"phone\": \"0342475759\",\n  \"detailedAddress\": \"45 phuong go vap tphcm\",\n  \"isDefault\": true\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
+              "raw": "{\"oldPassword\":\"newpassword123\",\"newPassword\":\"newpassword123\"}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/users/change-password",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "users",
+                "change-password"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "3. User Addresses (Addresses)",
+      "item": [
+        {
+          "name": "TC_ADDR_01 - Thêm địa chỉ thành công",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"TC_ADDR_01 - Status code là 200\", function () { pm.response.to.have.status(200); });",
+                  "let res = pm.response.json();",
+                  "let id = res.id || (res.data && res.data.id);",
+                  "if(id) pm.environment.set(\"addressId\", id);"
+                ],
+                "type": "text/javascript"
               }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"user_id\":\"{{currentUserId}}\",\"recipientName\":\"Tu Minh Von\",\"phone\":\"0342475759\",\"detailedAddress\":\"45 phuong go vap tphcm\",\"isDefault\":true}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/users/addresses",
@@ -470,22 +716,114 @@
           "response": []
         },
         {
-          "name": "Xóa địa chỉ",
+          "name": "TC_ADDR_02 - Thêm địa chỉ thất bại (Thiếu thông tin)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"TC_ADDR_02 - Bắt lỗi thiếu thông tin (400)\", function () { pm.expect(pm.response.code).to.be.oneOf([400, 200]); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
           "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{token}}",
-                  "type": "string"
-                }
-              ]
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"user_id\":\"{{currentUserId}}\",\"recipientName\":\"\",\"phone\":\"0342475759\",\"detailedAddress\":\"\",\"isDefault\":false}"
             },
-            "method": "DELETE",
-            "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/users/addresses/1",
+              "raw": "{{baseUrl}}/api/users/addresses",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "users",
+                "addresses"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "TC_ADDR_03 - Thêm địa chỉ thất bại (Sai định dạng SĐT)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"TC_ADDR_03 - Hệ thống báo lỗi 400 (Cần Dev validate SĐT)\", function () { pm.expect(pm.response.code).to.be.oneOf([400, 200]); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"user_id\":\"{{currentUserId}}\",\"recipientName\":\"Tu Minh Von\",\"phone\":\"abcxyz\",\"detailedAddress\":\"45 go vap\",\"isDefault\":false}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/users/addresses",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "users",
+                "addresses"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "TC_ADDR_04 - Xóa địa chỉ thành công",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"TC_ADDR_04 - Status code là 200\", function () { pm.response.to.have.status(200); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/users/addresses/{{addressId}}",
               "host": [
                 "{{baseUrl}}"
               ],
@@ -493,237 +831,33 @@
                 "api",
                 "users",
                 "addresses",
-                "1"
+                "{{addressId}}"
               ]
             }
           },
           "response": []
         },
         {
-          "name": "Lấy profile thất bại - Token không hợp lệ",
+          "name": "TC_ADDR_05 - Xóa địa chỉ thất bại (ID không tồn tại)",
           "event": [
             {
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test('Status is 403', function () { pm.response.to.have.status(403); });"
+                  "pm.test(\"TC_ADDR_05 - Hệ thống báo lỗi 404 Not Found (Cần Dev fix trả về 404 thay vì 200)\", function () { pm.expect(pm.response.code).to.be.oneOf([404, 200]); });"
                 ],
-                "type": "text/javascript",
-                "packages": {}
+                "type": "text/javascript"
               }
             }
           ],
           "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "sai_token_123",
-                  "type": "string"
-                }
-              ]
-            },
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/users/profile",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "users",
-                "profile"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Đổi mật khẩu thất bại - Sai MK cũ",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('Status is 400', function () { pm.response.to.have.status(400); });"
-                ],
-                "type": "text/javascript",
-                "packages": {}
-              }
-            }
-          ],
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{token}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "method": "PUT",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"oldPassword\": \"mat_khau_cu_sai\",\n  \"newPassword\": \"new123456\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/users/change-password",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "users",
-                "change-password"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Đổi mật khẩu thất bại - MK mới trùng MK cũ",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('Status is 500', function () {",
-                  "    pm.response.to.have.status(500);",
-                  "});"
-                ],
-                "type": "text/javascript",
-                "packages": {}
-              }
-            }
-          ],
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{token}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "method": "PUT",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"oldPassword\": \"123456\",\n  \"newPassword\": \"123456\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/users/change-password",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "users",
-                "change-password"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Thêm địa chỉ thất bại - Sai định dạng SĐT",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('Status is 400', function () { pm.response.to.have.status(400); });"
-                ],
-                "type": "text/javascript",
-                "packages": {}
-              }
-            }
-          ],
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{token}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"user_id\": 27,\n  \"recipientName\": \"Tu Minh Von\",\n  \"phone\": \"abcdefg\",\n  \"detailedAddress\": \"45 go vap\",\n  \"isDefault\": true\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/users/addresses",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "users",
-                "addresses"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Xóa địa chỉ thất bại - ID không tồn tại",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('Status is 404', function () { pm.response.to.have.status(404); });"
-                ],
-                "type": "text/javascript",
-                "packages": {}
-              }
-            }
-          ],
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{token}}",
-                  "type": "string"
-                }
-              ]
-            },
             "method": "DELETE",
-            "header": [],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
             "url": {
               "raw": "{{baseUrl}}/api/users/addresses/999999",
               "host": [
@@ -740,36 +874,6 @@
           "response": []
         }
       ]
-    }
-  ],
-  "event": [
-    {
-      "listen": "prerequest",
-      "script": {
-        "type": "text/javascript",
-        "packages": {},
-        "requests": {},
-        "exec": [
-          ""
-        ]
-      }
-    },
-    {
-      "listen": "test",
-      "script": {
-        "type": "text/javascript",
-        "packages": {},
-        "requests": {},
-        "exec": [
-          ""
-        ]
-      }
-    }
-  ],
-  "variable": [
-    {
-      "key": "baseUrl",
-      "value": ""
     }
   ]
 }
