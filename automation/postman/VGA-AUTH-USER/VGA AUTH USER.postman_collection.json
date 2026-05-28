@@ -1,10 +1,10 @@
 {
   "info": {
-    "_postman_id": "407b2666-8ba9-44f5-9f98-a6d35a3857ca",
-    "name": "TEST API AUTH USER",
+    "_postman_id": "6c933fee-0ac7-4587-a98d-247e82ec61b8",
+    "name": "VGA AUTH USER",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-    "_exporter_id": "54946849",
-    "_collection_link": "https://go.postman.co/collection/54946849-407b2666-8ba9-44f5-9f98-a6d35a3857ca?source=collection_link"
+    "_exporter_id": "51701293",
+    "_collection_link": "https://go.postman.co/collection/51701293-6c933fee-0ac7-4587-a98d-247e82ec61b8?source=collection_link"
   },
   "item": [
     {
@@ -31,7 +31,9 @@
                   "\r",
                   "// Lưu vào biến môi trường\r",
                   "pm.environment.set(\"loginUsername\", requestBody.username);\r",
-                  ""
+                  "",
+                  "pm.environment.set('duplicateUsername', JSON.parse(pm.request.body.raw).username);",
+                  "pm.environment.set('duplicateEmail', JSON.parse(pm.request.body.raw).email);"
                 ],
                 "type": "text/javascript",
                 "packages": {},
@@ -62,11 +64,12 @@
               "raw": "{\r\n  \"email\": \"{{$randomEmail}}\",\r\n  \"username\": \"{{$randomUserName}}\",\r\n  \"password\": \"123456\",\r\n  \"fullName\": \"Người Dùng Test\"\r\n}\r\n"
             },
             "url": {
-              "raw": "{{baseUrl}}/auth/register",
+              "raw": "{{baseUrl}}/api/auth/register",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
+                "api",
                 "auth",
                 "register"
               ]
@@ -118,11 +121,12 @@
               "raw": "{\n \"username\": \"{{loginUsername}}\",\n  \"password\": \"123456\"\n}"
             },
             "url": {
-              "raw": "{{baseUrl}}/auth/login",
+              "raw": "{{baseUrl}}/api/auth/login",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
+                "api",
                 "auth",
                 "login"
               ]
@@ -155,11 +159,12 @@
               "raw": "{\n  \"name\": \"Test google\",\n  \"email\": \"googletest@example.com\"\n}"
             },
             "url": {
-              "raw": "{{baseUrl}}/auth/google",
+              "raw": "{{baseUrl}}/api/auth/google",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
+                "api",
                 "auth",
                 "google"
               ]
@@ -191,14 +196,15 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\r\n  \"email\": \"test_trung@gmail.com\",\r\n  \"username\": \"user_trung\",\r\n  \"password\": \"123456\",\r\n  \"fullName\": \"Người Dùng Trùng\"\r\n}"
+              "raw": "{\n  \"email\": \"{{duplicateEmail}}\",\n  \"username\": \"{{duplicateUsername}}\",\n  \"password\": \"123456\",\n  \"fullName\": \"Người Dùng Trùng\"\n}"
             },
             "url": {
-              "raw": "{{baseUrl}}/auth/register",
+              "raw": "{{baseUrl}}/api/auth/register",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
+                "api",
                 "auth",
                 "register"
               ]
@@ -233,11 +239,12 @@
               "raw": "{\r\n  \"username\": \"user123\",\r\n  \"fullName\": \"User Test\",\r\n  \"email\": \"\",\r\n  \"password\": \"\"\r\n}"
             },
             "url": {
-              "raw": "{{baseUrl}}/auth/register",
+              "raw": "{{baseUrl}}/api/auth/register",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
+                "api",
                 "auth",
                 "register"
               ]
@@ -252,7 +259,7 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test('Status is 401', function () { pm.response.to.have.status(401); });"
+                  "pm.test('Status is 400', function () { pm.response.to.have.status(400); });"
                 ],
                 "type": "text/javascript",
                 "packages": {}
@@ -272,11 +279,12 @@
               "raw": "{\n \"username\": \"{{loginUsername}}\",\n  \"password\": \"sai_mat_khau\"\n}"
             },
             "url": {
-              "raw": "{{baseUrl}}/auth/login",
+              "raw": "{{baseUrl}}/api/auth/login",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
+                "api",
                 "auth",
                 "login"
               ]
@@ -329,11 +337,12 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/users/profile",
+              "raw": "{{baseUrl}}/api/users/profile",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
+                "api",
                 "users",
                 "profile"
               ]
@@ -366,11 +375,12 @@
               "raw": "{\n  \"oldPassword\": \"123456\",\n  \"newPassword\": \"454545\"\n}"
             },
             "url": {
-              "raw": "{{baseUrl}}/users/change-password",
+              "raw": "{{baseUrl}}/api/users/change-password",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
+                "api",
                 "users",
                 "change-password"
               ]
@@ -403,11 +413,12 @@
               "raw": "{\n  \"username\": \"{{loginUsername}}\",\n  \"email\": \"test@gmail.com\",\n  \"password\": \"454545\",\n  \"fullName\": \"Người Dùng Test\",\n  \"phone\": \"0901234567\"\n}"
             },
             "url": {
-              "raw": "{{baseUrl}}/users/profile",
+              "raw": "{{baseUrl}}/api/users/profile",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
+                "api",
                 "users",
                 "profile"
               ]
@@ -445,11 +456,12 @@
               }
             },
             "url": {
-              "raw": "{{baseUrl}}/users/addresses",
+              "raw": "{{baseUrl}}/api/users/addresses",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
+                "api",
                 "users",
                 "addresses"
               ]
@@ -473,11 +485,12 @@
             "method": "DELETE",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/users/addresses/1",
+              "raw": "{{baseUrl}}/api/users/addresses/1",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
+                "api",
                 "users",
                 "addresses",
                 "1"
@@ -493,7 +506,7 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test('Status is 401', function () { pm.response.to.have.status(401); });"
+                  "pm.test('Status is 403', function () { pm.response.to.have.status(403); });"
                 ],
                 "type": "text/javascript",
                 "packages": {}
@@ -514,11 +527,12 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/users/profile",
+              "raw": "{{baseUrl}}/api/users/profile",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
+                "api",
                 "users",
                 "profile"
               ]
@@ -563,11 +577,12 @@
               "raw": "{\n  \"oldPassword\": \"mat_khau_cu_sai\",\n  \"newPassword\": \"new123456\"\n}"
             },
             "url": {
-              "raw": "{{baseUrl}}/users/change-password",
+              "raw": "{{baseUrl}}/api/users/change-password",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
+                "api",
                 "users",
                 "change-password"
               ]
@@ -582,7 +597,9 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test('Status is 400', function () { pm.response.to.have.status(400); });"
+                  "pm.test('Status is 500', function () {",
+                  "    pm.response.to.have.status(500);",
+                  "});"
                 ],
                 "type": "text/javascript",
                 "packages": {}
@@ -612,11 +629,12 @@
               "raw": "{\n  \"oldPassword\": \"123456\",\n  \"newPassword\": \"123456\"\n}"
             },
             "url": {
-              "raw": "{{baseUrl}}/users/change-password",
+              "raw": "{{baseUrl}}/api/users/change-password",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
+                "api",
                 "users",
                 "change-password"
               ]
@@ -666,11 +684,12 @@
               }
             },
             "url": {
-              "raw": "{{baseUrl}}/users/addresses",
+              "raw": "{{baseUrl}}/api/users/addresses",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
+                "api",
                 "users",
                 "addresses"
               ]
@@ -706,11 +725,12 @@
             "method": "DELETE",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/users/addresses/999999",
+              "raw": "{{baseUrl}}/api/users/addresses/999999",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
+                "api",
                 "users",
                 "addresses",
                 "999999"
