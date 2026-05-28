@@ -36,7 +36,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\"username\":\"admin_test_{{$timestamp}}\",\"password\":\"123456\",\"email\":\"admin{{$timestamp}}@gmail.com\",\"fullName\":\"Super Admin\"}"
+              "raw": "{\"username\":\"admin_test_{{$timestamp}}\",\"password\":\"123456\",\"email\":\"admin{{$timestamp}}@gmail.com\",\"fullName\":\"Super Admin\",\"role\":\"ADMIN\"}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/auth/register-admin",
@@ -485,7 +485,11 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test(\"Tạo User (200/201)\", function(){pm.expect(pm.response.code).to.be.oneOf([200, 201, 400]);});"
+                  "pm.test(\"Tạo User (200/201)\", function(){pm.expect(pm.response.code).to.be.oneOf([200, 201, 400]);});",
+                  "let res = pm.response.json();",
+                  "if(res.username) pm.environment.set(\"e2e_user\", res.username);",
+                  "else if(res.data && res.data.username) pm.environment.set(\"e2e_user\", res.data.username);",
+                  "else if (!pm.environment.get(\"e2e_user\")) pm.environment.set(\"e2e_user\", JSON.parse(pm.request.body.raw).username);"
                 ],
                 "type": "text/javascript"
               }
@@ -501,7 +505,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\"username\":\"usertest_e2e_admin\",\"password\":\"123456\",\"email\":\"usertest_e2e_admin@gmail.com\",\"fullName\":\"Test User\"}"
+              "raw": "{\"username\":\"usertest_{{$timestamp}}\",\"password\":\"123456\",\"email\":\"usertest{{$timestamp}}@gmail.com\",\"fullName\":\"Test User\"}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/auth/register",
@@ -542,7 +546,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\"username\":\"usertest_e2e_admin\",\"password\":\"123456\"}"
+              "raw": "{\"username\":\"{{e2e_user}}\",\"password\":\"123456\"}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/auth/login",
@@ -756,7 +760,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\"shippingAddress\":\"123 Test Street\",\"phone\":\"0123456789\",\"note\":\"Test Order\"}"
+              "raw": "{\r\n  \"fullName\": \"Test User\",\r\n  \"email\": \"{{e2e_user}}@gmail.com\",\r\n  \"phone\": \"0123456789\",\r\n  \"shippingAddress\": \"123 Test Street\",\r\n  \"note\": \"Test Order\",\r\n  \"paymentMethod\": \"UNKNOWN\"\r\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/orders/checkout",
