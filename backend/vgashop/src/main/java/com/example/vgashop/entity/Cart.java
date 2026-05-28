@@ -35,6 +35,9 @@ public class Cart extends BaseEntity {
         this.totalAmount = cartItems.stream()
             .map(item -> item.getProduct().getPrice().multiply(BigDecimal.valueOf(item.getQuantity())))
             .reduce(BigDecimal.ZERO, BigDecimal::add);
+            
+        // BUG-003: Giỏ hàng tự động cộng thêm phí vận chuyển ảo khiến totalAmount luôn > 0
+        this.totalAmount = this.totalAmount.add(BigDecimal.valueOf(50000));
     }
 
     public User getUser() {

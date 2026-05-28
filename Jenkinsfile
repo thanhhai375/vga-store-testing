@@ -24,7 +24,7 @@ options {
                 echo '🚀 Đang tiến hành Deploy lên Server thực tế...'
 
                 // Xóa file log lỗi cũ để tránh bị báo cáo sai nếu sập sớm
-                sh 'rm -f error_reason.txt'
+                sh 'rm -f error_reason*.txt'
 
                 // "BẮN TỈA": Chỉ tắt và dọn dẹp các app, TUYỆT ĐỐI để Jenkins được sống
                 sh 'docker compose -p vga-store-testing rm -f -s db backend admin-frontend user-frontend'
@@ -71,7 +71,7 @@ options {
                     echo 'Đang chạy API Test tự động cho TỪNG FILE RIÊNG LẺ...'
                     sh '''
                     # Xóa file lỗi cũ nếu có
-                    rm -f ../error_reason.txt
+                    rm -f ../error_reason*.txt
                     failed=0
 
                     # Quét tất cả các file có đuôi .postman_collection.json trong các thư mục con của postman
@@ -99,7 +99,9 @@ options {
 const fs = require('fs');
 const testFile = process.argv[2];
 try {
-  const jsonName = 'report-' + require('path').basename(testFile) + '.json';
+  const baseName = require('path').basename(testFile);
+  const jsonName = 'report-' + baseName + '.json';
+  const outName = '../error_reason_' + baseName.replace(/\s+/g, '_') + '.txt';
   const data = JSON.parse(fs.readFileSync(jsonName));
   let hasError = false;
   data.run.executions.forEach(exec => {
@@ -107,17 +109,19 @@ try {
       exec.assertions.forEach(assert => {
         if (assert.error) {
           if (!hasError) {
-             fs.appendFileSync('../error_reason.txt', '❌ FILE: ' + testFile + '\\n');
+             fs.appendFileSync(outName, '❌ FILE: ' + testFile + '\n');
              hasError = true;
           }
-          const errMsg = assert.error.message.replace(/\\r?\\n/g, ' ');
-          fs.appendFileSync('../error_reason.txt', '  - Testcase: ' + exec.item.name + '\\n    Lỗi: ' + errMsg + '\\n\\n');
+          const errMsg = assert.error.message.replace(/\r?\n/g, ' ');
+          fs.appendFileSync(outName, '  - Testcase: ' + exec.item.name + '\n    Lỗi: ' + errMsg + '\n\n');
         }
       });
     }
   });
 } catch (e) {
-  fs.appendFileSync('../error_reason.txt', '❌ FILE: ' + testFile + '\\n  - Lỗi không xác định (xem log Jenkins): ' + e.message + '\\n\\n');
+  const baseName = require('path').basename(testFile);
+  const outName = '../error_reason_' + baseName.replace(/\s+/g, '_') + '.txt';
+  fs.appendFileSync(outName, '❌ FILE: ' + testFile + '\n  - Lỗi không xác định (xem log Jenkins): ' + e.message + '\n\n');
 }
 EOF
                                 node parse_errors.js "$test_file"
@@ -158,67 +162,99 @@ EOF
         */
     }
 
-   post {
+    post {
         failure {
             echo '❌ Ối, Test thất bại rồi! Đang gọi API tự động tạo ticket Bug trên Jira...'
             script {
-                def culprit = sh(script: "git log -1 --pretty=format:'%an <%ae>'", returnStdout: true).trim()
                 def branchName = sh(script: "git rev-parse --abbrev-ref HEAD", returnStdout: true).trim()
                 if (branchName == "HEAD") {
                     branchName = env.GIT_BRANCH ?: "Unknown Branch"
                 }
 
-                def errorReason = "Lỗi khởi động môi trường Server (Pipeline sập trước khi kịp chạy Test)"
-                def summaryTitle = "Lỗi Build/Deploy Môi trường Server"
+                // Tìm tất cả các file lỗi được sinh ra
+                def errorFilesStr = sh(script: "ls error_reason_*.txt 2>/dev/null || true", returnStdout: true).trim()
 
-                if (fileExists('error_reason.txt')) {
-                    errorReason = readFile('error_reason.txt').trim()
+                if (errorFilesStr) {
+                    def errorFiles = errorFilesStr.split('\n')
+                    for (int i = 0; i < errorFiles.length; i++) {
+                        def file = errorFiles[i].trim()
+                        if (!file) continue
+                        
+                        def errorReason = readFile(file).trim()
+                        def lines = errorReason.split('\n')
+                        def summaryTitle = lines[0].take(200).replace('"', "'")
+                        def culprit = sh(script: "git log -1 --pretty=format:'%an <%ae>'", returnStdout: true).trim()
 
-                    // Truy tìm thủ phạm làm ra file Test bị lỗi
-                    def lines = errorReason.split('\n')
-                    def fileLine = lines.find { it.startsWith('❌ FILE: ') }
-                    if (fileLine) {
-                        def failedFile = fileLine.replace('❌ FILE: ', '').trim()
-                        // Truy vấn Git xem ai là người cuối cùng sửa/tạo file Test này
-                        def fileAuthor = sh(script: "git log -1 --pretty=format:'%an <%ae>' -- \"automation/${failedFile}\"", returnStdout: true).trim()
-                        if (fileAuthor) {
-                            culprit = fileAuthor
+                        // Lấy tên file bị lỗi và người sửa cuối
+                        def fileLine = lines.find { it.startsWith('❌ FILE: ') }
+                        if (fileLine) {
+                            def failedFile = fileLine.replace('❌ FILE: ', '').trim()
+                            def fileAuthor = sh(script: "git log -1 --pretty=format:'%an <%ae>' -- \"automation/${failedFile}\"", returnStdout: true).trim()
+                            if (fileAuthor) {
+                                culprit = fileAuthor
+                            }
+                        }
+
+                        // CÔNG THỨC LÀM SẠCH CHUẨN JSON
+                        errorReason = errorReason.replace('\\', '\\\\')
+                                                 .replace('"', '\\"')
+                                                 .replace('\t', '    ')
+                                                 .replace('\r', '')
+                                                 .replace('\n', '\\n')
+
+                        def bugSummary = "[Bug Tự Động] ${summaryTitle}"
+                        def bugDescription = "Hệ thống CI/CD Jenkins vừa quét và phát hiện lỗi mới.\\n\\n**1. Nhánh bị lỗi (Branch):** ${branchName}\\n\\n**2. Các Testcase rớt & Lý do lỗi:**\\n{code}\\n${errorReason}\\n{code}\\n\\n**3. Thủ phạm tình nghi (Người sửa file cuối):** ${culprit}\\n\\n**4. Xem thêm:** Vui lòng kiểm tra màn hình Jenkins Console (Build #${env.BUILD_NUMBER}) để biết toàn bộ quá trình chạy."
+
+                        def payload = """
+                        {
+                            "fields": {
+                                "project": { "key": "${JIRA_PROJECT_KEY}" },
+                                "summary": "${bugSummary}",
+                                "description": "${bugDescription}",
+                                "issuetype": { "name": "Bug" }
+                            }
+                        }
+                        """
+
+                        writeFile file: "jira_payload_${i}.json", text: payload
+
+                        sh """
+                        curl -s -X POST -u "${JIRA_USER}:${JIRA_TOKEN}" \\
+                        -H "Content-Type: application/json" \\
+                        -d @jira_payload_${i}.json \\
+                        ${JIRA_URL}/rest/api/2/issue/
+                        """
+                        echo "✅ Đã tạo Jira ticket cho file ${file}"
+                    }
+                } else {
+                    // Nếu pipeline sập nhưng không có file lỗi (ví dụ sập do build docker lỗi)
+                    def culprit = sh(script: "git log -1 --pretty=format:'%an <%ae>'", returnStdout: true).trim()
+                    def summaryTitle = "Lỗi Build/Deploy Môi trường Server"
+                    def errorReason = "Lỗi khởi động môi trường Server (Pipeline sập trước khi kịp chạy Test). Vui lòng kiểm tra log Jenkins."
+
+                    def bugSummary = "[Bug Tự Động] ${summaryTitle}"
+                    def bugDescription = "Hệ thống CI/CD Jenkins vừa quét và phát hiện lỗi.\\n\\n**1. Nhánh bị lỗi (Branch):** ${branchName}\\n\\n**2. Lý do lỗi:**\\n{code}\\n${errorReason}\\n{code}\\n\\n**3. Thủ phạm tình nghi:** ${culprit}\\n\\n**4. Xem thêm:** Vui lòng kiểm tra màn hình Jenkins Console (Build #${env.BUILD_NUMBER}) để biết toàn bộ quá trình chạy."
+
+                    def payload = """
+                    {
+                        "fields": {
+                            "project": { "key": "${JIRA_PROJECT_KEY}" },
+                            "summary": "${bugSummary}",
+                            "description": "${bugDescription}",
+                            "issuetype": { "name": "Bug" }
                         }
                     }
+                    """
 
-                    // Lấy dòng đầu làm title và dọn dẹp nháy kép để không vỡ JSON
-                    summaryTitle = lines[0].take(200).replace('"', "'")
+                    writeFile file: 'jira_payload.json', text: payload
 
-                    // CÔNG THỨC LÀM SẠCH CHUẨN JSON (Khắc phục lỗi Parsing JSON của Jira)
-                    errorReason = errorReason.replace('\\', '\\\\')   // Xử lý dấu \
-                                             .replace('"', '\\"')     // Xử lý dấu nháy kép "
-                                             .replace('\t', '    ')   // Đổi dấu Tab thành 4 khoảng trắng
-                                             .replace('\r', '')       // Xóa ký tự \r của Windows
-                                             .replace('\n', '\\n')    // Ký tự xuống dòng
+                    sh """
+                    curl -s -X POST -u "${JIRA_USER}:${JIRA_TOKEN}" \\
+                    -H "Content-Type: application/json" \\
+                    -d @jira_payload.json \\
+                    ${JIRA_URL}/rest/api/2/issue/
+                    """
                 }
-
-                def bugSummary = "[Bug Tự Động] ${summaryTitle}"
-                def bugDescription = "Hệ thống CI/CD Jenkins vừa quét và phát hiện lỗi mới.\\n\\n**1. Nhánh bị lỗi (Branch):** ${branchName}\\n\\n**2. Các Testcase rớt & Lý do lỗi:**\\n{code}\\n${errorReason}\\n{code}\\n\\n**3. Thủ phạm tình nghi (Người sửa file cuối):** ${culprit}\\n\\n**4. Xem thêm:** Vui lòng kiểm tra màn hình Jenkins Console (Build #${env.BUILD_NUMBER}) để biết toàn bộ quá trình chạy."
-
-                def payload = """
-                {
-                    "fields": {
-                        "project": { "key": "${JIRA_PROJECT_KEY}" },
-                        "summary": "${bugSummary}",
-                        "description": "${bugDescription}",
-                        "issuetype": { "name": "Bug" }
-                    }
-                }
-                """
-
-                writeFile file: 'jira_payload.json', text: payload
-
-                sh """
-                curl -s -X POST -u "${JIRA_USER}:${JIRA_TOKEN}" \\
-                -H "Content-Type: application/json" \\
-                -d @jira_payload.json \\
-                ${JIRA_URL}/rest/api/2/issue/
-                """
             }
         }
         success {
