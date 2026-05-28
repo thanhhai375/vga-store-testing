@@ -1,10 +1,10 @@
 {
   "info": {
-    "_postman_id": "acbc7572-68ad-435e-8540-93a71b58e665",
+    "_postman_id": "7a712285-76af-4d43-a32e-0075aa475165",
     "name": "VGA Store Cart",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
     "_exporter_id": "54964269",
-    "_collection_link": "https://go.postman.co/collection/51701293-acbc7572-68ad-435e-8540-93a71b58e665?source=collection_link"
+    "_collection_link": "https://go.postman.co/collection/51701293-7a712285-76af-4d43-a32e-0075aa475165?source=collection_link"
   },
   "item": [
     {
@@ -293,9 +293,18 @@
                   "    pm.expect(res).to.have.property(\"message\");\r",
                   "});\r",
                   "\r",
+                  "pm.test(\"BUG-003 - Kiểm tra tổng tiền chính xác (không bị cộng phí ảo)\", function () {\r",
+                  "    const cartData = res.data || res;\r",
+                  "    if (cartData && cartData.items) {\r",
+                  "        let expectedTotal = cartData.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);\r",
+                  "        pm.expect(cartData.totalAmount).to.eql(expectedTotal);\r",
+                  "    }\r",
+                  "});\r",
+                  "\r",
                   "// Tự động bóc tách và lưu cartItemId cho các bước sau\r",
-                  "if ((statusCode === 200 || statusCode === 201) && res.data && res.data.items && res.data.items.length > 0) {\r",
-                  "    pm.environment.set(\"cartItemId\", res.data.items[0].cartItemId);\r",
+                  "const cartData = res.data || res;\r",
+                  "if ((statusCode === 200 || statusCode === 201) && cartData && cartData.items && cartData.items.length > 0) {\r",
+                  "    pm.environment.set(\"cartItemId\", cartData.items[0].cartItemId);\r",
                   "}"
                 ],
                 "type": "text/javascript",
