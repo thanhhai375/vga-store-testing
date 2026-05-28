@@ -61,7 +61,11 @@ public class UserService {
                 .orElseThrow(() -> new RuntimeException("User not found"));
                 
         if (!passwordEncoder.matches(req.getOldPassword(), user.getPassword())) {
-            throw new RuntimeException("Mật khẩu cũ không đúng!");
+            throw new IllegalArgumentException("Mật khẩu cũ không đúng!");
+        }
+        
+        if (passwordEncoder.matches(req.getNewPassword(), user.getPassword())) {
+            throw new IllegalArgumentException("Mật khẩu mới không được trùng mật khẩu cũ!");
         }
         
         user.setPassword(passwordEncoder.encode(req.getNewPassword()));
