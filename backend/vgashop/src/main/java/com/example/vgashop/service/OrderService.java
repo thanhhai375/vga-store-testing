@@ -72,6 +72,9 @@ public class OrderService {
         order.setStatus(OrderStatus.PENDING);
         order.setPaymentStatus(PaymentStatus.UNPAID);
         order.setFullName(req.getFullName());
+        if (req.getPhone() == null || req.getPhone().trim().length() < 10) {
+            throw new IllegalArgumentException("Số điện thoại không hợp lệ (phone error)");
+        }
         order.setPhone(req.getPhone());
         order.setShippingAddress(req.getAddress());
         order.setNote(req.getNote());
@@ -283,7 +286,7 @@ public class OrderService {
 
         String paymentMethod = "UNKNOWN";
         try {
-            Payment payment = paymentRepository.findByOrder_IdAndDeletedFalse(order.getId()).orElse(null);
+            Payment payment = paymentRepository.findFirstByOrder_IdAndDeletedFalseOrderByIdDesc(order.getId()).orElse(null);
             if (payment != null && payment.getPaymentMethod() != null)
                 paymentMethod = payment.getPaymentMethod().name();
         } catch (Exception ignored) {}

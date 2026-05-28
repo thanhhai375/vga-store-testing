@@ -252,7 +252,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"fullName\": \"Nguyễn Văn C\",\n  \"phone\": \"0901234567\",\n  \"shippingAddress\": \"123 Đường ABC, TP.HCM\",\n  \"note\": \"test COD\",\n  \"address\": \"hcm\",\n  \"items\": [\n    {\n      \"productId\": 3,\n      \"quantity\": 1\n    }\n  ]\n}",
+              "raw": "{\n  \"fullName\": \"Nguyễn Văn C\",\n  \"phone\": \"0901234567\",\n  \"shippingAddress\": \"123 Đường ABC, TP.HCM\",\n  \"note\": \"test COD\",\n  \"address\": \"hcm\",\n  \"items\": [\n    {\n      \"productId\": 10,\n      \"quantity\": 1\n    }\n  ]\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -307,6 +307,7 @@
                   "pm.environment.set(\"orderId\", jsonData.data.orderId);",
                   "pm.environment.set(\"paymentMethod\", jsonData.data.paymentMethod);",
                   "pm.environment.set(\"paymentStatus\", jsonData.data.paymentStatus);",
+                    "pm.environment.set(\"vnpayTransactionCode\", jsonData.data.transactionCode);",
                   "",
                   "pm.collectionVariables.set(\"paymentId\", jsonData.data.paymentId);",
                   "pm.collectionVariables.set(\"orderId\", jsonData.data.orderId);",
@@ -1103,7 +1104,7 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/payments/vnpay/callback?vnp_ResponseCode=00&vnp_TxnRef=INVALID&vnp_SecureHash=BADHASH?vnp_ResponseCode=00&vnp_TxnRef=INVALID&vnp_SecureHash=BADHASH",
+              "raw": "{{baseUrl}}/api/payments/vnpay/callback?vnp_ResponseCode=00&vnp_TxnRef=INVALID&vnp_SecureHash=BADHASH",
               "host": [
                 "{{baseUrl}}"
               ],
@@ -1158,14 +1159,19 @@
                   "  vnp_OrderType: 'other',",
                   "  vnp_Locale: 'vn',",
                   "  vnp_ReturnUrl: pm.environment.get('vnpReturnUrl') || 'http://localhost:8080',",
-                  "  vnp_IpAddr: '127.0.0.1'",
+                  "  vnp_IpAddr: '127.0.0.1',",
+                  "  vnp_ResponseCode: '00'",
                   "};",
                   "const keys = Object.keys(params).sort();",
                   "const hashData = keys.map(k => k + '=' + params[k]).join('&');",
                   "const secret = pm.environment.get('vnpayHashSecret') || 'SECRET';",
                   "const hash = CryptoJS.HmacSHA512(hashData, secret).toString();",
-                  "const query = keys.map(k => encodeURIComponent(k) + '=' + encodeURIComponent(params[k])).join('&') + '&vnp_SecureHash=' + hash;",
-                  "pm.environment.set('vnpSuccessQuery', query);"
+                  "pm.request.url.query.clear();",
+                  "keys.forEach(k => {",
+                  "  pm.request.url.query.add({ key: k, value: params[k] });",
+                  "});",
+                  "pm.request.url.query.add({ key: 'vnp_SecureHash', value: hash });"
+
                 ],
                 "type": "text/javascript",
                 "packages": {},
@@ -1222,6 +1228,15 @@
         {
           "name": "TC_PAYMENT_21 - Giỏ hàng KHÔNG được xóa cho VNPAY",
           "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "pm.sendRequest({\n  url: pm.environment.get('baseUrl') + '/api/cart/add',\n  method: 'POST',\n  header: {\n    'Content-Type': 'application/json',\n    'Authorization': 'Bearer ' + pm.environment.get('token')\n  },\n  body: {\n    mode: 'raw',\n    raw: JSON.stringify({ productId: 10, quantity: 1 })\n  }\n}, function (err, res) {\n  console.log('Added item to cart:', res ? res.code : err);\n});"
+                ],
+                "type": "text/javascript"
+              }
+            },
             {
               "listen": "test",
               "script": {

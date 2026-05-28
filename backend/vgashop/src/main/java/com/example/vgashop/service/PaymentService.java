@@ -61,7 +61,7 @@ public class PaymentService {
             throw new IllegalArgumentException("Cannot create payment for a cancelled order");
         }
 
-        paymentRepository.findByOrder_IdAndDeletedFalse(orderId).ifPresent(existing -> {
+        paymentRepository.findFirstByOrder_IdAndDeletedFalseOrderByIdDesc(orderId).ifPresent(existing -> {
             if (existing.getPaymentStatus() == PaymentStatus.SUCCESS) {
                 throw new IllegalArgumentException("Order has already been paid");
             }
@@ -126,7 +126,7 @@ public class PaymentService {
     @Transactional(readOnly = true)
     public PaymentResponse getPaymentByOrderId(Long orderId) {
         userService.getCurrentUser();
-        return toPaymentResponse(paymentRepository.findByOrder_IdAndDeletedFalse(orderId)
+        return toPaymentResponse(paymentRepository.findFirstByOrder_IdAndDeletedFalseOrderByIdDesc(orderId)
                 .orElseThrow(() -> new ResourceNotFoundException("No payment for order: " + orderId)));
     }
 

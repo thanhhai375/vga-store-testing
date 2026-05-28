@@ -407,7 +407,7 @@ public class AdminService {
 
         String paymentMethodStr = "Chưa rõ";
         try {
-            com.example.vgashop.entity.Payment payment = paymentRepository.findByOrder_IdAndDeletedFalse(order.getId()).orElse(null);
+            com.example.vgashop.entity.Payment payment = paymentRepository.findFirstByOrder_IdAndDeletedFalseOrderByIdDesc(order.getId()).orElse(null);
             if (payment != null && payment.getPaymentMethod() != null) {
                 paymentMethodStr = payment.getPaymentMethod().name();
             }

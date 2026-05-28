@@ -153,20 +153,15 @@ public class CartService {
     @Transactional
     public void clearCart() {
         User currentUser = userService.getCurrentUser();
-        Cart cart = cartRepository.findByUser_IdAndDeletedFalse(currentUser.getId())
-                .orElseThrow(() -> new ResourceNotFoundException("Giỏ hàng không tồn tại"));
-        
-        // Retrieve all
-        cart.getCartItems().forEach(item -> item.setDeleted(true)); // Retrieve all
-        cart.getCartItems().clear(); // Retrieve all
-        cart.setTotalAmount(BigDecimal.ZERO); // Total
-        cartRepository.save(cart);
-
-
+        cartRepository.findByUser_IdAndDeletedFalse(currentUser.getId()).ifPresent(cart -> {
+            cart.getCartItems().forEach(item -> item.setDeleted(true));
+            cart.getCartItems().clear();
+            cart.setTotalAmount(BigDecimal.ZERO);
+            cartRepository.save(cart);
+        });
+    }
         // Delete
         // cartRepository.save(cart);
-
-    }
 
 
     public CartResponse convertToCartResponse(Cart cart) {
