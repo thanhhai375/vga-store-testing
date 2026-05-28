@@ -27,13 +27,13 @@ options {
                 sh 'rm -f error_reason.txt'
 
                 // "BẮN TỈA": Chỉ tắt và dọn dẹp các app, TUYỆT ĐỐI để Jenkins được sống
-                sh 'docker-compose -p vga-store-testing rm -f -s db backend admin-frontend user-frontend'
+                sh 'docker compose -p vga-store-testing rm -f -s db backend admin-frontend user-frontend'
                 
                 // Xóa sạch data cũ của Database để đảm bảo môi trường test luôn mới tinh (Fresh DB)
                 sh 'docker run --rm -v vga-store-testing_pgdata:/dbdata alpine sh -c "rm -rf /dbdata/*"'
 
                 // Khởi tạo lại App
-                sh 'docker-compose -p vga-store-testing up -d --build db backend admin-frontend user-frontend'
+                sh 'docker compose -p vga-store-testing up -d --build db backend admin-frontend user-frontend'
 
                 echo '✅ Triển khai thành công! Đang đợi Backend (Spring Boot) khởi động hoàn tất...'
 
