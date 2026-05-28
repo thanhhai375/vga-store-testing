@@ -101,7 +101,7 @@ const testFile = process.argv[2];
 try {
   const baseName = require('path').basename(testFile);
   const jsonName = 'report-' + baseName + '.json';
-  const outName = '../error_reason_' + baseName.replace(/\s+/g, '_') + '.txt';
+  const outName = '../error_reason_' + baseName.replace(/\\s+/g, '_') + '.txt';
   const data = JSON.parse(fs.readFileSync(jsonName));
   let hasError = false;
   data.run.executions.forEach(exec => {
@@ -109,19 +109,19 @@ try {
       exec.assertions.forEach(assert => {
         if (assert.error) {
           if (!hasError) {
-             fs.appendFileSync(outName, '❌ FILE: ' + testFile + '\n');
+             fs.appendFileSync(outName, '❌ FILE: ' + testFile + '\\n');
              hasError = true;
           }
-          const errMsg = assert.error.message.replace(/\r?\n/g, ' ');
-          fs.appendFileSync(outName, '  - Testcase: ' + exec.item.name + '\n    Lỗi: ' + errMsg + '\n\n');
+          const errMsg = assert.error.message.replace(/\\r?\\n/g, ' ');
+          fs.appendFileSync(outName, '  - Testcase: ' + exec.item.name + '\\n    Lỗi: ' + errMsg + '\\n\\n');
         }
       });
     }
   });
 } catch (e) {
   const baseName = require('path').basename(testFile);
-  const outName = '../error_reason_' + baseName.replace(/\s+/g, '_') + '.txt';
-  fs.appendFileSync(outName, '❌ FILE: ' + testFile + '\n  - Lỗi không xác định (xem log Jenkins): ' + e.message + '\n\n');
+  const outName = '../error_reason_' + baseName.replace(/\\s+/g, '_') + '.txt';
+  fs.appendFileSync(outName, '❌ FILE: ' + testFile + '\\n  - Lỗi không xác định (xem log Jenkins): ' + e.message + '\\n\\n');
 }
 EOF
                                 node parse_errors.js "$test_file"
