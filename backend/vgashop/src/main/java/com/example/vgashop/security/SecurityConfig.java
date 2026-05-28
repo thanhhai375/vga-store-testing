@@ -14,6 +14,8 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
+
 
 import java.util.Arrays;
 import java.util.List;
@@ -21,6 +23,7 @@ import java.util.stream.Collectors;
 
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity(prePostEnabled = true)
 public class SecurityConfig {
 
     private final JwtAuthFilter jwtAuthFilter;
@@ -62,6 +65,11 @@ public class SecurityConfig {
                 // === ADMIN endpoints ===
                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
                 .requestMatchers("/api/staff/**").hasAnyRole("ADMIN", "STAFF")
+
+                .requestMatchers(HttpMethod.POST, "/api/products/upload").hasRole("ADMIN")
+                // .requestMatchers(HttpMethod.POST, "/api/products/**").hasRole("ADMIN")
+                // .requestMatchers(HttpMethod.PUT, "/api/products/**").hasRole("ADMIN")
+                // .requestMatchers(HttpMethod.DELETE, "/api/products/**").hasRole("ADMIN")
 
                 // === AUTHENTICATED endpoints ===
                 .requestMatchers("/api/orders/**").authenticated()
