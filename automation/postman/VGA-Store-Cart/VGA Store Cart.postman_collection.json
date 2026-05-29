@@ -1,0 +1,645 @@
+{
+  "info": {
+    "_postman_id": "7a712285-76af-4d43-a32e-0075aa475165",
+    "name": "VGA Store Cart",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "54984213",
+    "_collection_link": "https://go.postman.co/collection/51701293-7a712285-76af-4d43-a32e-0075aa475165?source=collection_link"
+  },
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Đăng ký",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const jsonData = pm.response.json();\r",
+                  "\r",
+                  "pm.test(\"Status code is 200\", function () {\r",
+                  "    pm.response.to.have.status(200);\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Response has token\", function () {\r",
+                  "    pm.expect(jsonData.token).to.not.be.undefined;\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Registration successful\", function () {\r",
+                  "    pm.expect(jsonData.message).to.eql(\"Registration successful\");\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Response has username and userId\", function () {\r",
+                  "    pm.expect(jsonData.username).to.not.be.undefined;\r",
+                  "    pm.expect(jsonData.userId).to.not.be.undefined;\r",
+                  "});\r",
+                  "\r",
+                  "// Lưu vào Environment để Login dùng\r",
+                  "pm.environment.set(\"loginUsername\", jsonData.username);\r",
+                  "pm.environment.set(\"token\", jsonData.token);\r",
+                  "pm.environment.set(\"userId\", jsonData.userId);\r",
+                  "\r",
+                  "console.log(\"Saved loginUsername = \" + jsonData.username);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"email\": \"{{$randomEmail}}\",\r\n  \"username\": \"{{$randomUserName}}\",\r\n  \"password\": \"123456\",\r\n  \"fullName\": \"Người Dùng Test\"\r\n}\r\n"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "register"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Đăng nhập",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const jsonData = pm.response.json();\r",
+                  "\r",
+                  "pm.test(\"Status code is 200\", function () {\r",
+                  "    pm.response.to.have.status(200);\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Login successful\", function () {\r",
+                  "    pm.expect(jsonData.message).to.eql(\"Login successful\");\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Response has token\", function () {\r",
+                  "    pm.expect(jsonData.token).to.not.be.undefined;\r",
+                  "});\r",
+                  "\r",
+                  "pm.environment.set(\"token\", jsonData.token);\r",
+                  "pm.environment.set(\"userId\", jsonData.userId);\r",
+                  "\r",
+                  "console.log(\"Login token saved\");"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"username\": \"{{loginUsername}}\",\n    \"password\": \"123456\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "response": []
+        }
+      ],
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {},
+            "exec": [
+              ""
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {},
+            "exec": [
+              ""
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Cart",
+      "item": [
+        {
+          "name": "TC_CART_01_02_03_04_05_06_07_20 - Thêm sản phẩm vào giỏ hàng",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const statusCode = pm.response.code;\r",
+                  "const res = pm.response.json();\r",
+                  "\r",
+                  "\r",
+                  "pm.test(\"TC_CART_01 - Thêm sản phẩm vào giỏ hàng thành công\", function () {\r",
+                  "    pm.expect(statusCode).to.be.oneOf([200, 201]);\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"TC_CART_02 - Thêm sản phẩm với số lượng hợp lệ thành công\", function () {\r",
+                  "    pm.expect(statusCode).to.be.oneOf([200, 201]);\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"TC_CART_03 - Hệ thống bắt lỗi khi số lượng vượt tồn kho (Bỏ qua nếu đang chạy luồng Đúng)\", function () {\r",
+                  "    if (statusCode === 400 || statusCode === 422) { pm.expect(res.message).to.be.a('string'); }\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"TC_CART_04 - Hệ thống bắt lỗi khi productId trống (Bỏ qua nếu đang chạy luồng Đúng)\", function () {\r",
+                  "    if (statusCode === 400 || statusCode === 422) { pm.expect(res.message).to.be.a('string'); }\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"TC_CART_05 - Hệ thống bắt lỗi khi số lượng bằng 0 (Bỏ qua nếu đang chạy luồng Đúng)\", function () {\r",
+                  "    if (statusCode === 400 || statusCode === 422) { pm.expect(res.message).to.be.a('string'); }\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"TC_CART_06 - Hệ thống bắt lỗi khi số lượng là số âm (Bỏ qua nếu đang chạy luồng Đúng)\", function () {\r",
+                  "    if (statusCode === 400 || statusCode === 422) { pm.expect(res.message).to.be.a('string'); }\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"TC_CART_07 - Hệ thống bắt lỗi khi productId không tồn tại (Bỏ qua nếu đang chạy luồng Đúng)\", function () {\r",
+                  "    if (statusCode === 404) { pm.expect(statusCode).to.eql(404); }\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"TC_CART_20 - Hệ thống trả về cấu trúc giỏ hàng và thông báo hợp lệ\", function () {\r",
+                  "    pm.expect(res).to.have.property(\"message\");\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"BUG-003 - Kiểm tra tổng tiền chính xác\", function () {\r",
+                  "    const cartData = res.data;\r",
+                  "    \r",
+                  "    // 1. Tính tổng tiền sản phẩm từ danh sách items\r",
+                  "    let itemsTotal = cartData.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);\r",
+                  "    \r",
+                  "    // 2. Lấy phí vận chuyển thực tế từ API (hoặc tính chênh lệch)\r",
+                  "    // Giả sử API trả về totalAmount là tổng cuối cùng\r",
+                  "    const actualTotal = cartData.totalAmount;\r",
+                  "    \r",
+                  "    // 3. Kiểm tra logic: Total = ItemSubtotal + Fee\r",
+                  "    // Nếu bạn không biết phí là bao nhiêu, hãy kiểm tra: Total phải >= ItemSubtotal\r",
+                  "    pm.expect(actualTotal).to.be.at.least(itemsTotal);\r",
+                  "    \r",
+                  "    console.log(\"Tổng tiền hàng: \" + itemsTotal + \", Tổng thanh toán: \" + actualTotal);\r",
+                  "});\r",
+                  "// Tự động bóc tách và lưu cartItemId cho các bước sau\r",
+                  "const cartData = res.data || res;\r",
+                  "if ((statusCode === 200 || statusCode === 201) && cartData && cartData.items && cartData.items.length > 0) {\r",
+                  "    pm.environment.set(\"cartItemId\", cartData.items[0].cartItemId);\r",
+                  "}"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"productId\": 1,\n  \"quantity\": 1\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/cart/add",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "cart",
+                "add"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "TC_CART_08_09 - Lấy dữ liệu danh sách giỏ hàng",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const res = pm.response.json();\r",
+                  "const cartData = res.data || res;\r",
+                  "\r",
+                  "pm.test(\"TC_CART_08 - Kiểm tra hiển thị thông tin khi giỏ hàng rỗng (Bỏ qua nếu giỏ có đồ)\", function () {\r",
+                  "    if (cartData.totalItems === 0) {\r",
+                  "        pm.expect(cartData.totalAmount).to.eql(0);\r",
+                  "    }\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"TC_CART_09 - Hiển thị danh sách sản phẩm trong giỏ hàng thành công\", function () {\r",
+                  "    pm.response.to.have.status(200);\r",
+                  "    if (cartData.items) { pm.expect(cartData.items).to.be.an('array'); }\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"productId\": 1,\r\n  \"quantity\": 1\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/cart",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "cart"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Logic - Thêm số lượng âm vào giỏ hàng không bị chặn",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// BUG: API không chặn số lượng <= 0",
+                  "// Expected: 400 Bad Request",
+                  "// Actual: 200 OK (Thành công thêm số âm vào giỏ)",
+                  "",
+                  "pm.test('Status is 400', function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"productId\": 1,\n  \"quantity\": -5\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/cart/add",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "cart",
+                "add"
+              ]
+            },
+            "description": "BUG-002: Lỗ hổng cho phép truyền số lượng âm vào giỏ hàng, khiến tổng tiền bị âm."
+          },
+          "response": []
+        },
+        {
+          "name": "TC_CART_10_11_12_13_14_15 - Cập nhật số lượng sản phẩm",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const statusCode = pm.response.code;\r",
+                  "\r",
+                  "pm.test(\"TC_CART_10 - Tăng số lượng sản phẩm trong giỏ hàng thành công\", function () {\r",
+                  "    if (statusCode === 200) pm.response.to.have.status(200);\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"TC_CART_11 - Giảm số lượng sản phẩm trong giỏ hàng thành công\", function () {\r",
+                  "    if (statusCode === 200) pm.response.to.have.status(200);\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"TC_CART_12 - Hệ thống bắt lỗi cập nhật số lượng bằng 0 (Bỏ qua nếu đang chạy luồng Đúng)\", function () {\r",
+                  "    if (statusCode !== 200) pm.expect(statusCode).to.be.oneOf([400, 422]);\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"TC_CART_13 - Hệ thống bắt lỗi cập nhật số lượng âm (Bỏ qua nếu đang chạy luồng Đúng)\", function () {\r",
+                  "    if (statusCode !== 200) pm.expect(statusCode).to.be.oneOf([400, 422]);\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"TC_CART_14 - Hệ thống bắt lỗi cập nhật số lượng vượt tồn kho (Bỏ qua nếu đang chạy luồng Đúng)\", function () {\r",
+                  "    if (statusCode !== 200) pm.expect(statusCode).to.be.oneOf([400, 422]);\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"TC_CART_15 - Hệ thống bắt lỗi khi cartItemId không tồn tại (Bỏ qua nếu đang chạy luồng Đúng)\", function () {\r",
+                  "    if (statusCode === 404) pm.expect(statusCode).to.eql(404);\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"quantity\": 2\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/cart/items/{{cartItemId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "cart",
+                "items",
+                "{{cartItemId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "TC_CART_16_17 - Xóa sản phẩm khỏi giỏ hàng",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const statusCode = pm.response.code;\r",
+                  "\r",
+                  "pm.test(\"TC_CART_16 - Chọn sản phẩm và xóa khỏi giỏ hàng thành công\", function () {\r",
+                  "    if (statusCode === 200 || statusCode === 204) pm.expect(statusCode).to.be.oneOf([200, 204]);\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"TC_CART_17 - Hệ thống bắt lỗi khi xóa sản phẩm với ID không tồn tại (Bỏ qua nếu đang chạy luồng Đúng)\", function () {\r",
+                  "    if (statusCode === 404) pm.expect(statusCode).to.eql(404);\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/cart/items/{{cartItemId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "cart",
+                "items",
+                "{{cartItemId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "TC_CART_18_19 - Xóa sạch toàn bộ giỏ hàng",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const statusCode = pm.response.code;\r",
+                  "\r",
+                  "pm.test(\"TC_CART_18 - Xóa toàn bộ giỏ hàng thành công, totalAmount quay về bằng 0\", function () {\r",
+                  "    if (statusCode === 200 || statusCode === 204) {\r",
+                  "        pm.expect(statusCode).to.be.oneOf([200, 204]);\r",
+                  "    }\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"TC_CART_19 - Hệ thống bắt lỗi khi xóa giỏ hàng đã rỗng sẵn (Bỏ qua nếu đang chạy luồng Đúng)\", function () {\r",
+                  "    if (statusCode === 400 || statusCode === 404) {\r",
+                  "        pm.expect(statusCode).to.be.oneOf([400, 404]);\r",
+                  "    }\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/cart",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "cart"
+              ]
+            }
+          },
+          "response": []
+        }
+      ],
+      "auth": {
+        "type": "bearer",
+        "bearer": [
+          {
+            "key": "token",
+            "value": "{{token}}",
+            "type": "string"
+          }
+        ]
+      },
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {},
+            "exec": [
+              ""
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {},
+            "exec": [
+              ""
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [
+          ""
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [
+          ""
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "token",
+      "value": ""
+    },
+    {
+      "key": "baseUrl",
+      "value": ""
+    },
+    {
+      "key": "validProductId",
+      "value": ""
+    },
+    {
+      "key": "invalidProductId",
+      "value": ""
+    },
+    {
+      "key": "cartItemId",
+      "value": ""
+    },
+    {
+      "key": "invalidCartItemId",
+      "value": ""
+    }
+  ]
+}

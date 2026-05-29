@@ -20,7 +20,7 @@ import com.example.vgashop.entity.PaymentStatus;
 public interface PaymentRepository extends JpaRepository<Payment, Long> {
 
     /** Finds the non-deleted payment record associated with the given order. */
-    Optional<Payment> findByOrder_IdAndDeletedFalse(Long orderId);
+    Optional<Payment> findFirstByOrder_IdAndDeletedFalseOrderByIdDesc(Long orderId);
 
     /** Returns paginated non-deleted payments for the given user. */
     Page<Payment> findByOrder_User_IdAndDeletedFalse(Long userId, Pageable pageable);

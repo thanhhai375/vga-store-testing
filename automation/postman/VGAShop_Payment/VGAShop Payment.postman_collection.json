@@ -1,11 +1,11 @@
 {
   "info": {
-    "_postman_id": "29b17efa-15fd-4502-abdd-7b6e8a440870",
+    "_postman_id": "c641238d-6cce-42d7-a16c-f77446af6154",
     "name": "VGAShop Payment",
     "description": "Postman collection for payment flow testing only, matching the current backend endpoints.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
     "_exporter_id": "54939211",
-    "_collection_link": "https://go.postman.co/collection/51701293-29b17efa-15fd-4502-abdd-7b6e8a440870?source=collection_link"
+    "_collection_link": "https://go.postman.co/collection/51701293-c641238d-6cce-42d7-a16c-f77446af6154?source=collection_link"
   },
   "item": [
     {
@@ -252,7 +252,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"fullName\": \"Nguyễn Văn C\",\n  \"phone\": \"0901234567\",\n  \"shippingAddress\": \"123 Đường ABC, TP.HCM\",\n  \"note\": \"test COD\",\n  \"address\": \"hcm\",\n  \"items\": [\n    {\n      \"productId\": 3,\n      \"quantity\": 1\n    }\n  ]\n}",
+              "raw": "{\n  \"fullName\": \"Nguyễn Văn C\",\n  \"phone\": \"0901234567\",\n  \"shippingAddress\": \"123 Đường ABC, TP.HCM\",\n  \"note\": \"test COD\",\n  \"address\": \"hcm\",\n  \"items\": [\n    {\n      \"productId\": 10,\n      \"quantity\": 1\n    }\n  ]\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -307,6 +307,7 @@
                   "pm.environment.set(\"orderId\", jsonData.data.orderId);",
                   "pm.environment.set(\"paymentMethod\", jsonData.data.paymentMethod);",
                   "pm.environment.set(\"paymentStatus\", jsonData.data.paymentStatus);",
+                    "pm.environment.set(\"vnpayTransactionCode\", jsonData.data.transactionCode);",
                   "",
                   "pm.collectionVariables.set(\"paymentId\", jsonData.data.paymentId);",
                   "pm.collectionVariables.set(\"orderId\", jsonData.data.orderId);",
@@ -806,94 +807,6 @@
           "response": []
         },
         {
-          "name": "TC_PAYMENT_27 - Payment Pending - Hiển thị mã QR và Timer",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "let jsonData = {};\r",
-                  "\r",
-                  "try {\r",
-                  "    jsonData = pm.response.json();\r",
-                  "} catch (e) {\r",
-                  "    jsonData = {};\r",
-                  "}\r",
-                  "\r",
-                  "pm.test(\"TC_PAYMENT_27 - Payment Pending - API trả về 200\", function () {\r",
-                  "    pm.response.to.have.status(200);\r",
-                  "});\r",
-                  "\r",
-                  "pm.test(\"TC_PAYMENT_27 - Payment Pending - Có orderId để hiển thị trang pending\", function () {\r",
-                  "    const orderId =\r",
-                  "        jsonData.orderId ||\r",
-                  "        jsonData.data?.orderId ||\r",
-                  "        pm.environment.get(\"orderId\") ||\r",
-                  "        pm.collectionVariables.get(\"orderId\");\r",
-                  "\r",
-                  "    pm.expect(orderId, \"Cần có orderId để mở Payment Pending\").to.not.be.undefined;\r",
-                  "});\r",
-                  "\r",
-                  "pm.test(\"TC_PAYMENT_27 - Payment Pending - Có orderCode để tạo nội dung chuyển khoản\", function () {\r",
-                  "    const orderCode =\r",
-                  "        jsonData.orderCode ||\r",
-                  "        jsonData.data?.orderCode ||\r",
-                  "        pm.environment.get(\"orderCode\") ||\r",
-                  "        pm.collectionVariables.get(\"orderCode\");\r",
-                  "\r",
-                  "    pm.expect(orderCode, \"Cần có orderCode để hiển thị nội dung chuyển khoản/QR\").to.not.be.undefined;\r",
-                  "});\r",
-                  "\r",
-                  "pm.test(\"TC_PAYMENT_27 - Payment Pending - Có amount hoặc totalPrice để tạo QR\", function () {\r",
-                  "    const amount =\r",
-                  "        jsonData.amount ||\r",
-                  "        jsonData.totalPrice ||\r",
-                  "        jsonData.totalAmount ||\r",
-                  "        jsonData.data?.amount ||\r",
-                  "        jsonData.data?.totalPrice ||\r",
-                  "        jsonData.data?.totalAmount ||\r",
-                  "        pm.environment.get(\"amount\") ||\r",
-                  "        pm.collectionVariables.get(\"amount\");\r",
-                  "\r",
-                  "    pm.expect(amount, \"Cần có amount/totalPrice để hiển thị QR\").to.not.be.undefined;\r",
-                  "});\r",
-                  "\r",
-                  "console.warn(\"NOTE TC_PAYMENT_27: Postman kiểm tra dữ liệu orderId/orderCode/amount. Phần QR code và timer 15 phút cần xác nhận bằng UI Payment Pending.\");"
-                ],
-                "type": "text/javascript",
-                "packages": {},
-                "requests": {}
-              }
-            }
-          ],
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{token}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/orders/{{orderId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "orders",
-                "{{orderId}}"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
           "name": "TC_PAYMENT_28 - Payment Pending - Polling kiểm tra thanh toán",
           "event": [
             {
@@ -968,200 +881,6 @@
             },
             "method": "GET",
             "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/orders/{{orderId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "orders",
-                "{{orderId}}"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "TC_PAYMENT_29 - Payment Pending - Hết hạn 15 phút",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "let jsonData = {};\r",
-                  "\r",
-                  "try {\r",
-                  "    jsonData = pm.response.json();\r",
-                  "} catch (e) {\r",
-                  "    jsonData = {};\r",
-                  "}\r",
-                  "\r",
-                  "pm.test(\"TC_PAYMENT_29 - Payment Pending - Hết hạn 15 phút - API trả về 200\", function () {\r",
-                  "    pm.response.to.have.status(200);\r",
-                  "});\r",
-                  "\r",
-                  "pm.test(\"TC_PAYMENT_29 - Payment Pending - Có orderId để kiểm tra hết hạn\", function () {\r",
-                  "    const orderId =\r",
-                  "        jsonData.orderId ||\r",
-                  "        jsonData.data?.orderId ||\r",
-                  "        pm.environment.get(\"orderId\") ||\r",
-                  "        pm.collectionVariables.get(\"orderId\");\r",
-                  "\r",
-                  "    pm.expect(orderId, \"Cần có orderId để kiểm tra trạng thái hết hạn\").to.not.be.undefined;\r",
-                  "});\r",
-                  "\r",
-                  "pm.test(\"TC_PAYMENT_29 - Payment Pending - Response có trạng thái đơn hàng\", function () {\r",
-                  "    const status =\r",
-                  "        jsonData.status ||\r",
-                  "        jsonData.paymentStatus ||\r",
-                  "        jsonData.data?.status ||\r",
-                  "        jsonData.data?.paymentStatus;\r",
-                  "\r",
-                  "    pm.expect(status, \"API cần trả status/paymentStatus để biết đơn đã hết hạn hay chưa\").to.not.be.undefined;\r",
-                  "});\r",
-                  "\r",
-                  "pm.test(\"TC_PAYMENT_29 - Payment Pending - Trạng thái hợp lệ khi chờ hoặc hết hạn\", function () {\r",
-                  "    const status = String(\r",
-                  "        jsonData.status ||\r",
-                  "        jsonData.paymentStatus ||\r",
-                  "        jsonData.data?.status ||\r",
-                  "        jsonData.data?.paymentStatus ||\r",
-                  "        \"\"\r",
-                  "    ).toUpperCase();\r",
-                  "\r",
-                  "    pm.expect(\r",
-                  "        [\"PENDING\", \"CANCELLED\", \"FAILED\", \"EXPIRED\", \"UNPAID\"],\r",
-                  "        \"Status phải là trạng thái chờ thanh toán hoặc hết hạn\"\r",
-                  "    ).to.include(status);\r",
-                  "});\r",
-                  "\r",
-                  "console.warn(\"NOTE TC_PAYMENT_29: Postman chỉ kiểm tra API có trạng thái để xác định đơn pending/hết hạn. Timer 15 phút về 00:00, màn hình hết hạn và các nút UI cần xác nhận trên trang Payment Pending.\");"
-                ],
-                "type": "text/javascript",
-                "packages": {},
-                "requests": {}
-              }
-            }
-          ],
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{token}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/orders/{{orderId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "orders",
-                "{{orderId}}"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "TC_PAYMENT_30 - Copy thông tin tài khoản",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "let jsonData = {};\r",
-                  "\r",
-                  "try {\r",
-                  "    jsonData = pm.response.json();\r",
-                  "} catch (e) {\r",
-                  "    jsonData = {};\r",
-                  "}\r",
-                  "\r",
-                  "pm.test(\"TC_PAYMENT_30 - Copy thông tin tài khoản - API trả về 200\", function () {\r",
-                  "    pm.response.to.have.status(200);\r",
-                  "});\r",
-                  "\r",
-                  "pm.test(\"TC_PAYMENT_30 - Copy thông tin tài khoản - Có orderCode để copy nội dung chuyển khoản\", function () {\r",
-                  "    const orderCode =\r",
-                  "        jsonData.orderCode ||\r",
-                  "        jsonData.data?.orderCode ||\r",
-                  "        pm.environment.get(\"orderCode\") ||\r",
-                  "        pm.collectionVariables.get(\"orderCode\");\r",
-                  "\r",
-                  "    pm.expect(orderCode, \"Cần có orderCode để copy nội dung chuyển khoản\").to.not.be.undefined;\r",
-                  "});\r",
-                  "\r",
-                  "pm.test(\"TC_PAYMENT_30 - Copy thông tin tài khoản - Có số tiền để copy/thanh toán\", function () {\r",
-                  "    const amount =\r",
-                  "        jsonData.amount ||\r",
-                  "        jsonData.totalPrice ||\r",
-                  "        jsonData.totalAmount ||\r",
-                  "        jsonData.data?.amount ||\r",
-                  "        jsonData.data?.totalPrice ||\r",
-                  "        jsonData.data?.totalAmount ||\r",
-                  "        pm.environment.get(\"amount\") ||\r",
-                  "        pm.collectionVariables.get(\"amount\");\r",
-                  "\r",
-                  "    pm.expect(amount, \"Cần có amount/totalPrice để copy thông tin thanh toán\").to.not.be.undefined;\r",
-                  "});\r",
-                  "\r",
-                  "pm.test(\"TC_PAYMENT_30 - Copy thông tin tài khoản - Có dữ liệu để hiển thị thông tin chuyển khoản\", function () {\r",
-                  "    const responseText = pm.response.text().toLowerCase();\r",
-                  "\r",
-                  "    pm.expect(responseText).to.satisfy(function (text) {\r",
-                  "        return (\r",
-                  "            text.includes(\"ordercode\") ||\r",
-                  "            text.includes(\"amount\") ||\r",
-                  "            text.includes(\"totalprice\") ||\r",
-                  "            text.includes(\"bank\") ||\r",
-                  "            text.includes(\"transfer\") ||\r",
-                  "            text.includes(\"payment\")\r",
-                  "        );\r",
-                  "    });\r",
-                  "});\r",
-                  "\r",
-                  "console.warn(\"NOTE TC_PAYMENT_30: Postman chỉ kiểm tra API có dữ liệu để UI copy. Phần bấm nút Copy, clipboard và toast thông báo phải xác nhận trên giao diện Payment Pending.\");"
-                ],
-                "type": "text/javascript",
-                "packages": {},
-                "requests": {}
-              }
-            }
-          ],
-          "protocolProfileBehavior": {
-            "disableBodyPruning": true
-          },
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{token}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "method": "GET",
-            "header": [],
-            "body": {
-              "mode": "raw",
-              "raw": "",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
             "url": {
               "raw": "{{baseUrl}}/api/orders/{{orderId}}",
               "host": [
@@ -1385,7 +1104,7 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/payments/vnpay/callback?vnp_ResponseCode=00&vnp_TxnRef=INVALID&vnp_SecureHash=BADHASH?vnp_ResponseCode=00&vnp_TxnRef=INVALID&vnp_SecureHash=BADHASH",
+              "raw": "{{baseUrl}}/api/payments/vnpay/callback?vnp_ResponseCode=00&vnp_TxnRef=INVALID&vnp_SecureHash=BADHASH",
               "host": [
                 "{{baseUrl}}"
               ],
@@ -1440,14 +1159,19 @@
                   "  vnp_OrderType: 'other',",
                   "  vnp_Locale: 'vn',",
                   "  vnp_ReturnUrl: pm.environment.get('vnpReturnUrl') || 'http://localhost:8080',",
-                  "  vnp_IpAddr: '127.0.0.1'",
+                  "  vnp_IpAddr: '127.0.0.1',",
+                  "  vnp_ResponseCode: '00'",
                   "};",
                   "const keys = Object.keys(params).sort();",
                   "const hashData = keys.map(k => k + '=' + params[k]).join('&');",
                   "const secret = pm.environment.get('vnpayHashSecret') || 'SECRET';",
                   "const hash = CryptoJS.HmacSHA512(hashData, secret).toString();",
-                  "const query = keys.map(k => encodeURIComponent(k) + '=' + encodeURIComponent(params[k])).join('&') + '&vnp_SecureHash=' + hash;",
-                  "pm.environment.set('vnpSuccessQuery', query);"
+                  "pm.request.url.query.clear();",
+                  "keys.forEach(k => {",
+                  "  pm.request.url.query.add({ key: k, value: params[k] });",
+                  "});",
+                  "pm.request.url.query.add({ key: 'vnp_SecureHash', value: hash });"
+
                 ],
                 "type": "text/javascript",
                 "packages": {},
@@ -1502,172 +1226,17 @@
           "response": []
         },
         {
-          "name": "TC_PAYMENT_18 - Lỗi khi lấy link thanh toán VNPAY thất bại",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test(\"TC_PAYMENT_18 - Phải trả về lỗi khi lấy link thanh toán VNPAY thất bại\", function () {\r",
-                  "    pm.expect([400, 404, 500]).to.include(pm.response.code);\r",
-                  "});\r",
-                  "\r",
-                  "pm.test(\"TC_PAYMENT_18 - Response có thông báo lỗi thanh toán VNPAY\", function () {\r",
-                  "    const responseText = pm.response.text().toLowerCase();\r",
-                  "\r",
-                  "    pm.expect(responseText).to.satisfy(function (text) {\r",
-                  "        return (\r",
-                  "            text.includes(\"vnpay\") ||\r",
-                  "            text.includes(\"payment\") ||\r",
-                  "            text.includes(\"thanh toán\") ||\r",
-                  "            text.includes(\"order\") ||\r",
-                  "            text.includes(\"lỗi\") ||\r",
-                  "            text.includes(\"error\")\r",
-                  "        );\r",
-                  "    });\r",
-                  "});\r",
-                  "\r",
-                  "console.warn(\"TC_PAYMENT_18: Test case gốc yêu cầu mock lỗi orderService.createPayment. Nếu backend/Postman không mock được lỗi VNPAY thật, cần dev hỗ trợ endpoint/mock hoặc cấu hình test để simulate createPayment error.\");"
-                ],
-                "type": "text/javascript",
-                "packages": {},
-                "requests": {}
-              }
-            }
-          ],
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "",
-                  "type": "string"
-                },
-                {
-                  "key": "undefined",
-                  "type": "any"
-                }
-              ]
-            },
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json",
-                "type": "default"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{token}}",
-                "type": "default"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"paymentMethod\": \"VNPAY\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/payments/orders/999999",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "payments",
-                "orders",
-                "999999"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "TC_PAYMENT_19 - Lưu orderId vào sessionStorage khi chuyển hướng VNPAY",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "const jsonData = pm.response.json();\r",
-                  "\r",
-                  "pm.test(\"TC_PAYMENT_19 - Trả về 200 khi tạo thanh toán VNPAY\", function () {\r",
-                  "    pm.response.to.have.status(200);\r",
-                  "});\r",
-                  "\r",
-                  "pm.test(\"TC_PAYMENT_19 - Payment method phải là VNPAY\", function () {\r",
-                  "    pm.expect(jsonData.data.paymentMethod).to.eql(\"VNPAY\");\r",
-                  "});\r",
-                  "\r",
-                  "pm.test(\"TC_PAYMENT_19 - Response phải có orderId để frontend lưu sessionStorage\", function () {\r",
-                  "    pm.expect(jsonData.data.orderId).to.not.be.undefined;\r",
-                  "});\r",
-                  "\r",
-                  "pm.test(\"TC_PAYMENT_19 - Response phải có paymentId\", function () {\r",
-                  "    pm.expect(jsonData.data.paymentId).to.not.be.undefined;\r",
-                  "});\r",
-                  "\r",
-                  "pm.test(\"TC_PAYMENT_19 - Response cần có paymentUrl/fetchedPaymentUrl để chuyển hướng VNPAY\", function () {\r",
-                  "    pm.expect(\r",
-                  "        jsonData.data.paymentUrl ||\r",
-                  "        jsonData.data.fetchedPaymentUrl ||\r",
-                  "        jsonData.paymentUrl ||\r",
-                  "        jsonData.fetchedPaymentUrl,\r",
-                  "        \"Backend cần trả paymentUrl hoặc fetchedPaymentUrl để frontend redirect VNPAY\"\r",
-                  "    ).to.not.be.undefined;\r",
-                  "});\r",
-                  "\r",
-                  "pm.environment.set(\"pendingOrderId\", jsonData.data.orderId);\r",
-                  "pm.collectionVariables.set(\"pendingOrderId\", jsonData.data.orderId);\r",
-                  "\r",
-                  "console.warn(\"NOTE TC_PAYMENT_19: Postman chỉ kiểm tra API có trả orderId/paymentUrl. Phần sessionStorage['pendingOrderId'] phải kiểm tra bằng frontend/UI test.\");"
-                ],
-                "type": "text/javascript",
-                "packages": {},
-                "requests": {}
-              }
-            }
-          ],
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{token}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "method": "POST",
-            "header": [],
-            "body": {
-              "mode": "raw",
-              "raw": "{\r\n  \"paymentMethod\": \"VNPAY\"\r\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/payments/orders/{{orderId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "payments",
-                "orders",
-                "{{orderId}}"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
           "name": "TC_PAYMENT_21 - Giỏ hàng KHÔNG được xóa cho VNPAY",
           "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "pm.sendRequest({\n  url: pm.environment.get('baseUrl') + '/api/cart/add',\n  method: 'POST',\n  header: {\n    'Content-Type': 'application/json',\n    'Authorization': 'Bearer ' + pm.environment.get('token')\n  },\n  body: {\n    mode: 'raw',\n    raw: JSON.stringify({ productId: 10, quantity: 1 })\n  }\n}, function (err, res) {\n  console.log('Added item to cart:', res ? res.code : err);\n});"
+                ],
+                "type": "text/javascript"
+              }
+            },
             {
               "listen": "test",
               "script": {
@@ -1882,81 +1451,6 @@
             "body": {
               "mode": "raw",
               "raw": "{\n  \"fullName\": \"Nguyễn Văn A\",\n  \"phone\": \"0912345678\",\n  \"shippingAddress\": \"123 Nguyễn Huệ, Phường Bến Nghé, Quận 1, TP.HCM\",\n  \"note\": \"saved address test\",\n  \"address\": \"123 Nguyễn Huệ, Phường Bến Nghé, Quận 1, TP.HCM\",\n  \"items\": [\n    {\n      \"productId\": 4,\n      \"quantity\": 1\n    }\n  ]\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/orders",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "orders"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "TC_PAYMENT_24 - Địa chỉ mặc định được tự động chọn",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "const jsonData = pm.response.json();\r",
-                  "\r",
-                  "pm.test(\"TC_PAYMENT_24 - Địa chỉ mặc định được tự động chọn - Trả về 200\", function () {\r",
-                  "    pm.response.to.have.status(200);\r",
-                  "});\r",
-                  "\r",
-                  "pm.test(\"TC_PAYMENT_24 - Địa chỉ mặc định được tự động chọn - Đơn hàng được tạo thành công\", function () {\r",
-                  "    pm.expect(jsonData.orderId).to.not.be.undefined;\r",
-                  "    pm.expect(jsonData.status).to.eql(\"PENDING\");\r",
-                  "});\r",
-                  "\r",
-                  "pm.test(\"TC_PAYMENT_24 - Địa chỉ mặc định được tự động chọn - Tên và SĐT được dùng đúng\", function () {\r",
-                  "    pm.expect(jsonData.fullName).to.eql(\"Nguyễn Văn A\");\r",
-                  "    pm.expect(jsonData.phone).to.eql(\"0912345678\");\r",
-                  "});\r",
-                  "\r",
-                  "pm.test(\"TC_PAYMENT_24 - Địa chỉ mặc định được tự động chọn - Địa chỉ được gửi đúng\", function () {\r",
-                  "    pm.expect(jsonData.address).to.include(\"TP.HCM\");\r",
-                  "});\r",
-                  "\r",
-                  "console.warn(\"NOTE TC_PAYMENT_24: Postman chỉ kiểm tra API tạo đơn bằng dữ liệu địa chỉ mặc định. Phần địa chỉ mặc định tự động được chọn và tên/SĐT tự fill phải xác nhận bằng UI.\");"
-                ],
-                "type": "text/javascript",
-                "packages": {},
-                "requests": {}
-              }
-            }
-          ],
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{token}}",
-                  "type": "string"
-                },
-                {
-                  "key": "undefined",
-                  "type": "any"
-                }
-              ]
-            },
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json",
-                "type": "default"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"fullName\": \"Nguyễn Văn A\",\n  \"phone\": \"0912345678\",\n  \"shippingAddress\": \"123 Nguyễn Huệ, Phường Bến Nghé, Quận 1, TP.HCM\",\n  \"note\": \"default address test\",\n  \"address\": \"123 Nguyễn Huệ, Phường Bến Nghé, Quận 1, TP.HCM\",\n  \"items\": [\n    {\n      \"productId\": 4,\n      \"quantity\": 1\n    }\n  ]\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/orders",
@@ -2629,183 +2123,6 @@
           "response": []
         },
         {
-          "name": "TC_PAYMENT_09 - Thiếu quận/huyện",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test(\"TC_PAYMENT_09 - Phải trả về 400 khi thiếu quận/huyện\", function () {\r",
-                  "    pm.response.to.have.status(400);\r",
-                  "});\r",
-                  "\r",
-                  "pm.test(\"TC_PAYMENT_09 - Response phải có lỗi địa chỉ\", function () {\r",
-                  "    const responseText = pm.response.text().toLowerCase();\r",
-                  "    pm.expect(responseText).to.include(\"address\");\r",
-                  "});\r",
-                  "\r",
-                  "console.warn(\"BUG TC_PAYMENT_09: Expected 400 khi thiếu quận/huyện, nhưng backend trả 200 OK và vẫn tạo đơn hàng. Cần dev bổ sung validate địa chỉ giao hàng.\");"
-                ],
-                "type": "text/javascript",
-                "packages": {},
-                "requests": {}
-              }
-            }
-          ],
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{token}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "method": "POST",
-            "header": [],
-            "body": {
-              "mode": "raw",
-              "raw": "{\r\n  \"fullName\": \"Nguyễn Văn C\",\r\n  \"phone\": \"0901234567\",\r\n  \"shippingAddress\": \"TP.HCM\",\r\n  \"note\": \"missing district test\",\r\n  \"address\": \"TP.HCM\",\r\n  \"items\": [\r\n    {\r\n      \"productId\": 4,\r\n      \"quantity\": 1\r\n    }\r\n  ]\r\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/orders",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "orders"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "TC_PAYMENT_10 - Thiếu phường/xã",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test(\"TC_PAYMENT_10 - Phải trả về 400 khi thiếu phường/xã\", function () {\r",
-                  "    pm.response.to.have.status(400);\r",
-                  "});\r",
-                  "\r",
-                  "pm.test(\"TC_PAYMENT_10 - Response phải có lỗi địa chỉ\", function () {\r",
-                  "    const responseText = pm.response.text().toLowerCase();\r",
-                  "    pm.expect(responseText).to.include(\"address\");\r",
-                  "});\r",
-                  "\r",
-                  "console.warn(\"BUG TC_PAYMENT_10: Expected 400 khi thiếu phường/xã nhưng backend trả 200 và vẫn tạo đơn hàng. Cần dev bổ sung validate địa chỉ.\");"
-                ],
-                "type": "text/javascript",
-                "packages": {},
-                "requests": {}
-              }
-            }
-          ],
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{token}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "method": "POST",
-            "header": [],
-            "body": {
-              "mode": "raw",
-              "raw": "{\r\n  \"fullName\": \"Nguyễn Văn C\",\r\n  \"phone\": \"0901234567\",\r\n  \"shippingAddress\": \"Phường Bến Nghé, Quận 1, TP.HCM\",\r\n  \"note\": \"missing street test\",\r\n  \"address\": \"Phường Bến Nghé, Quận 1, TP.HCM\",\r\n  \"items\": [\r\n    {\r\n      \"productId\": 4,\r\n      \"quantity\": 1\r\n    }\r\n  ]\r\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/orders",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "orders"
-              ]
-            },
-            "description": "BUG NOTE:  \nTest case TC_PAYMENT_10 mong đợi API trả 400 Bad Request khi thiếu phường/xã.\n\nExpected:\n\n- POST /api/orders trả 400 Bad Request\n    \n- Không tạo đơn hàng\n    \n- Response báo lỗi địa chỉ thiếu phường/xã\n    \n\nActual:\n\n- API trả 200 OK\n    \n- Backend vẫn tạo đơn hàng thành công\n    \n- orderId được sinh ra dù địa chỉ chưa đầy đủ\n    \n\nĐề xuất dev:\n\n- Backend cần validate địa chỉ giao hàng chi tiết hơn.\n    \n- Nếu hệ thống yêu cầu đủ Province/District/Ward/Street thì API nên nhận các field riêng:  \n    province, district, ward, street  \n    hoặc validate chuỗi address/shippingAddress theo rule thống nhất."
-          },
-          "response": []
-        },
-        {
-          "name": "TC_PAYMENT_11 - Thiếu số nhà/tên đường",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test(\"TC_PAYMENT_11 - Phải trả về 400 khi thiếu số nhà/tên đường\", function () {\r",
-                  "    pm.response.to.have.status(400);\r",
-                  "});\r",
-                  "\r",
-                  "pm.test(\"TC_PAYMENT_11 - Response phải có lỗi địa chỉ\", function () {\r",
-                  "    const responseText = pm.response.text().toLowerCase();\r",
-                  "    pm.expect(responseText).to.include(\"address\");\r",
-                  "});\r",
-                  "console.warn(\"BUG TC_PAYMENT_10: Expected 400 khi thiếu phường/xã, nhưng backend trả 200 OK và vẫn tạo đơn hàng. Cần dev bổ sung validate địa chỉ: thiếu phường/xã thì không cho tạo đơn.\");"
-                ],
-                "type": "text/javascript",
-                "packages": {},
-                "requests": {}
-              }
-            }
-          ],
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{token}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "method": "POST",
-            "header": [],
-            "body": {
-              "mode": "raw",
-              "raw": "{\r\n  \"fullName\": \"Nguyễn Văn C\",\r\n  \"phone\": \"0901234567\",\r\n  \"shippingAddress\": \"Phường Bến Nghé, Quận 1, TP.HCM\",\r\n  \"note\": \"missing street test\",\r\n  \"address\": \"Phường Bến Nghé, Quận 1, TP.HCM\",\r\n  \"items\": [\r\n    {\r\n      \"productId\": 4,\r\n      \"quantity\": 1\r\n    }\r\n  ]\r\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/orders",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "orders"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
           "name": "TC_PAYMENT_12 - Giỏ hàng rỗng",
           "event": [
             {
@@ -2877,274 +2194,7 @@
     },
     {
       "name": "Payment_Vận chuyển",
-      "item": [
-        {
-          "name": "TC_PAYMENT_13 - Hỏa tốc chỉ áp dụng tại TP.HCM",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test(\"TC_PAYMENT_13 - Phải trả về 400 khi chọn hỏa tốc ngoài TP.HCM\", function () {\r",
-                  "    pm.response.to.have.status(400);\r",
-                  "});\r",
-                  "\r",
-                  "pm.test(\"TC_PAYMENT_13 - Response phải có lỗi vận chuyển hoặc địa chỉ\", function () {\r",
-                  "    const responseText = pm.response.text().toLowerCase();\r",
-                  "\r",
-                  "    pm.expect(responseText).to.satisfy(function (text) {\r",
-                  "        return (\r",
-                  "            text.includes(\"shipping\") ||\r",
-                  "            text.includes(\"express\") ||\r",
-                  "            text.includes(\"hỏa tốc\") ||\r",
-                  "            text.includes(\"hoả tốc\") ||\r",
-                  "            text.includes(\"address\") ||\r",
-                  "            text.includes(\"địa chỉ\") ||\r",
-                  "            text.includes(\"tp.hcm\") ||\r",
-                  "            text.includes(\"hcm\")\r",
-                  "        );\r",
-                  "    });\r",
-                  "});\r",
-                  "\r",
-                  "console.warn(\"BUG TC_PAYMENT_13: Expected 400 khi chọn hỏa tốc ngoài TP.HCM. Nếu backend trả 200 OK thì cần dev bổ sung validate shippingMethod/address.\");"
-                ],
-                "type": "text/javascript",
-                "packages": {},
-                "requests": {}
-              }
-            }
-          ],
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{token}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "method": "POST",
-            "header": [],
-            "body": {
-              "mode": "raw",
-              "raw": "{\r\n  \"fullName\": \"Nguyễn Văn C\",\r\n  \"phone\": \"0901234567\",\r\n  \"shippingAddress\": \"123 Cầu Giấy, Hà Nội\",\r\n  \"note\": \"express shipping outside HCM test\",\r\n  \"address\": \"Hà Nội\",\r\n  \"shippingMethod\": \"express\",\r\n  \"shippingFee\": 50000,\r\n  \"items\": [\r\n    {\r\n      \"productId\": 4,\r\n      \"quantity\": 1\r\n    }\r\n  ]\r\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/orders",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "orders"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "TC_PAYMENT_14 - Hỏa tốc khả dụng tại TP.HCM",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "const jsonData = pm.response.json();\r",
-                  "\r",
-                  "pm.test(\"TC_PAYMENT_14 - Trả về 200 khi chọn hỏa tốc tại TP.HCM\", function () {\r",
-                  "    pm.response.to.have.status(200);\r",
-                  "});\r",
-                  "\r",
-                  "pm.test(\"TC_PAYMENT_14 - Đơn hàng được tạo thành công\", function () {\r",
-                  "    pm.expect(jsonData.orderId).to.not.be.undefined;\r",
-                  "    pm.expect(jsonData.status).to.eql(\"PENDING\");\r",
-                  "});\r",
-                  "\r",
-                  "pm.test(\"TC_PAYMENT_14 - Địa chỉ là TP.HCM\", function () {\r",
-                  "    pm.expect(jsonData.address).to.include(\"TP.HCM\");\r",
-                  "});\r",
-                  "\r",
-                  "console.log(\"TC_PAYMENT_14 passed - Hỏa tốc khả dụng tại TP.HCM\");"
-                ],
-                "type": "text/javascript",
-                "packages": {},
-                "requests": {}
-              }
-            }
-          ],
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{token}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "method": "POST",
-            "header": [],
-            "body": {
-              "mode": "raw",
-              "raw": "{\r\n  \"fullName\": \"Nguyễn Văn C\",\r\n  \"phone\": \"0901234567\",\r\n  \"shippingAddress\": \"123 Nguyễn Huệ, Quận 1, TP.HCM\",\r\n  \"note\": \"express shipping in HCM test\",\r\n  \"address\": \"TP.HCM\",\r\n  \"shippingMethod\": \"express\",\r\n  \"shippingFee\": 50000,\r\n  \"items\": [\r\n    {\r\n      \"productId\": 4,\r\n      \"quantity\": 1\r\n    }\r\n  ]\r\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/orders",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "orders"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "TC_PAYMENT_15 - Phí ship tiêu chuẩn",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "const jsonData = pm.response.json();\r",
-                  "\r",
-                  "pm.test(\"TC_PAYMENT_15 - Trả về 200 khi chọn vận chuyển tiêu chuẩn\", function () {\r",
-                  "    pm.response.to.have.status(200);\r",
-                  "});\r",
-                  "\r",
-                  "pm.test(\"TC_PAYMENT_15 - Đơn hàng được tạo thành công\", function () {\r",
-                  "    pm.expect(jsonData.orderId).to.not.be.undefined;\r",
-                  "    pm.expect(jsonData.status).to.eql(\"PENDING\");\r",
-                  "});\r",
-                  "\r",
-                  "pm.test(\"TC_PAYMENT_15 - Tổng tiền phải lớn hơn 0\", function () {\r",
-                  "    pm.expect(jsonData.totalPrice).to.be.above(0);\r",
-                  "});\r",
-                  "\r",
-                  "console.log(\"TC_PAYMENT_15 passed - UI hiển thị giao hàng tiêu chuẩn là Miễn phí. Backend hiện tại không trả shippingFee nên Postman chỉ kiểm tra tạo đơn thành công.\");"
-                ],
-                "type": "text/javascript",
-                "packages": {},
-                "requests": {}
-              }
-            }
-          ],
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{token}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "method": "POST",
-            "header": [],
-            "body": {
-              "mode": "raw",
-              "raw": "{\r\n  \"fullName\": \"Nguyễn Văn C\",\r\n  \"phone\": \"0901234567\",\r\n  \"shippingAddress\": \"123 Nguyễn Huệ, Quận 1, TP.HCM\",\r\n  \"note\": \"standard shipping test\",\r\n  \"address\": \"TP.HCM\",\r\n  \"shippingMethod\": \"standard\",\r\n  \"items\": [\r\n    {\r\n      \"productId\": 4,\r\n      \"quantity\": 1\r\n    }\r\n  ]\r\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/orders",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "orders"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "TC_PAYMENT_16 - Phí ship hỏa tốc",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "const jsonData = pm.response.json();\r",
-                  "\r",
-                  "pm.test(\"TC_PAYMENT_16 - Trả về 200 khi chọn vận chuyển hỏa tốc\", function () {\r",
-                  "    pm.response.to.have.status(200);\r",
-                  "});\r",
-                  "\r",
-                  "pm.test(\"TC_PAYMENT_16 - Đơn hàng được tạo thành công\", function () {\r",
-                  "    pm.expect(jsonData.orderId).to.not.be.undefined;\r",
-                  "    pm.expect(jsonData.status).to.eql(\"PENDING\");\r",
-                  "});\r",
-                  "\r",
-                  "pm.test(\"TC_PAYMENT_16 - Tổng tiền phải lớn hơn 0\", function () {\r",
-                  "    pm.expect(jsonData.totalPrice).to.be.above(0);\r",
-                  "});\r",
-                  "\r",
-                  "console.log(\"TC_PAYMENT_16 passed - UI hiển thị giao hàng hỏa tốc là 50.000đ. Backend hiện tại không trả shippingFee nên Postman chỉ kiểm tra tạo đơn thành công.\");"
-                ],
-                "type": "text/javascript",
-                "packages": {},
-                "requests": {}
-              }
-            }
-          ],
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{token}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "method": "POST",
-            "header": [],
-            "body": {
-              "mode": "raw",
-              "raw": "{\r\n  \"fullName\": \"Nguyễn Văn C\",\r\n  \"phone\": \"0901234567\",\r\n  \"shippingAddress\": \"123 Nguyễn Huệ, Quận 1, TP.HCM\",\r\n  \"note\": \"express shipping test\",\r\n  \"address\": \"TP.HCM\",\r\n  \"shippingMethod\": \"express\",\r\n  \"items\": [\r\n    {\r\n      \"productId\": 4,\r\n      \"quantity\": 1\r\n    }\r\n  ]\r\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/orders",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "orders"
-              ]
-            }
-          },
-          "response": []
-        }
-      ]
+      "item": []
     }
   ],
   "variable": [

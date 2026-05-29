@@ -41,7 +41,7 @@ public class PaymentExpiryScheduler {
         List<Order> expired  = orderRepository.findExpiredPendingOrders(cutoff);
 
         for (Order order : expired) {
-            Payment payment = paymentRepository.findByOrder_IdAndDeletedFalse(order.getId()).orElse(null);
+            Payment payment = paymentRepository.findFirstByOrder_IdAndDeletedFalseOrderByIdDesc(order.getId()).orElse(null);
 
             if (payment != null && payment.getPaymentMethod() != PaymentMethod.BANK_TRANSFER) {
                 continue;
