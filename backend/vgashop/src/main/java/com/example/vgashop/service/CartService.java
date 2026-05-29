@@ -42,7 +42,7 @@ public class CartService {
     // Cart
     @Transactional
     public CartResponse getMyCart() {
-
+    
         User currentUser = userService.getCurrentUser();
         Cart cart = cartRepository.findByUser_IdAndDeletedFalse(currentUser.getId())
                 .orElseGet(() -> createNewCartForUser(currentUser));
@@ -61,6 +61,9 @@ public class CartService {
     // Cart
     @Transactional
     public CartResponse addToCart(AddToCartRequest request) {
+        if (request.getQuantity() <= 0) {
+        throw new IllegalArgumentException("Số lượng phải lớn hơn hoặc bằng 1");
+    }
         User currentUser = userService.getCurrentUser();
         Cart cart = cartRepository.findByUser_IdAndDeletedFalse(currentUser.getId())
                 .orElseGet(() -> createNewCartForUser(currentUser));
