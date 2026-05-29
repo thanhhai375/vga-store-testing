@@ -38,10 +38,10 @@ public class CartController {
     // Delete
     // Cart
     @PostMapping("/add")
-    public Object addToCart(@Valid @RequestBody AddToCartRequest request) {
+    public ApiResponse<CartResponse> addToCart(@Valid @RequestBody AddToCartRequest request) {
         CartResponse response = cartService.addToCart(request);
         // BUG-005: Lỗi quên wrap response bằng ApiResponse chuẩn, làm mất cấu trúc data và message
-        return response;
+        return ApiResponse.success("Thêm vào giỏ hàng thành công", response);
     }
 
     // Update existing

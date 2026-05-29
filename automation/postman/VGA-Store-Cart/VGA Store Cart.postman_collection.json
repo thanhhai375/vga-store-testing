@@ -3,7 +3,7 @@
     "_postman_id": "7a712285-76af-4d43-a32e-0075aa475165",
     "name": "VGA Store Cart",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-    "_exporter_id": "54964269",
+    "_exporter_id": "54984213",
     "_collection_link": "https://go.postman.co/collection/51701293-7a712285-76af-4d43-a32e-0075aa475165?source=collection_link"
   },
   "item": [
@@ -185,72 +185,6 @@
       "name": "Cart",
       "item": [
         {
-          "name": "TC_CART_08_09 - Lấy dữ liệu danh sách giỏ hàng",
-          "event": [
-            {
-              "listen": "prerequest",
-              "script": {
-                "exec": [
-                  ""
-                ],
-                "type": "text/javascript",
-                "packages": {},
-                "requests": {}
-              }
-            },
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "const res = pm.response.json();\r",
-                  "const cartData = res.data || res;\r",
-                  "\r",
-                  "pm.test(\"TC_CART_08 - Kiểm tra hiển thị thông tin khi giỏ hàng rỗng (Bỏ qua nếu giỏ có đồ)\", function () {\r",
-                  "    if (cartData.totalItems === 0) {\r",
-                  "        pm.expect(cartData.totalAmount).to.eql(0);\r",
-                  "    }\r",
-                  "});\r",
-                  "\r",
-                  "pm.test(\"TC_CART_09 - Hiển thị danh sách sản phẩm trong giỏ hàng thành công\", function () {\r",
-                  "    pm.response.to.have.status(200);\r",
-                  "    if (cartData.items) { pm.expect(cartData.items).to.be.an('array'); }\r",
-                  "});"
-                ],
-                "type": "text/javascript",
-                "packages": {},
-                "requests": {}
-              }
-            }
-          ],
-          "protocolProfileBehavior": {
-            "disableBodyPruning": true
-          },
-          "request": {
-            "method": "GET",
-            "header": [],
-            "body": {
-              "mode": "raw",
-              "raw": "{\r\n  \"productId\": 1,\r\n  \"quantity\": 1\r\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/cart",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "cart"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
           "name": "TC_CART_01_02_03_04_05_06_07_20 - Thêm sản phẩm vào giỏ hàng",
           "event": [
             {
@@ -340,12 +274,77 @@
           "response": []
         },
         {
+          "name": "TC_CART_08_09 - Lấy dữ liệu danh sách giỏ hàng",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const res = pm.response.json();\r",
+                  "const cartData = res.data || res;\r",
+                  "\r",
+                  "pm.test(\"TC_CART_08 - Kiểm tra hiển thị thông tin khi giỏ hàng rỗng (Bỏ qua nếu giỏ có đồ)\", function () {\r",
+                  "    if (cartData.totalItems === 0) {\r",
+                  "        pm.expect(cartData.totalAmount).to.eql(0);\r",
+                  "    }\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"TC_CART_09 - Hiển thị danh sách sản phẩm trong giỏ hàng thành công\", function () {\r",
+                  "    pm.response.to.have.status(200);\r",
+                  "    if (cartData.items) { pm.expect(cartData.items).to.be.an('array'); }\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"productId\": 1,\r\n  \"quantity\": 1\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/cart",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "cart"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
           "name": "Logic - Thêm số lượng âm vào giỏ hàng không bị chặn",
           "event": [
             {
               "listen": "test",
               "script": {
-                "type": "text/javascript",
                 "exec": [
                   "// BUG: API không chặn số lượng <= 0",
                   "// Expected: 400 Bad Request",
@@ -354,7 +353,10 @@
                   "pm.test('Status is 400', function () {",
                   "    pm.response.to.have.status(400);",
                   "});"
-                ]
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
               }
             }
           ],
