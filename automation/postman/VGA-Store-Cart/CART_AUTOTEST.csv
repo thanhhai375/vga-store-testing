@@ -1,0 +1,22 @@
+﻿tc_id,summary,method,url,body_productId,body_quantity,body_cartItemId,expected_status,expected_message
+TC_CART_01,Thêm sản phẩm vào giỏ thành công,POST,{{baseUrl}}/api/cart,1,1,,200,Thêm vào giỏ thành công
+TC_CART_02,Thêm cùng sản phẩm nhiều lần,POST,{{baseUrl}}/api/cart,1,1,,200,Cập nhật số lượng thành công
+TC_CART_03,Thêm sản phẩm vượt tồn kho,POST,{{baseUrl}}/api/cart,1,999999,,400,Sản phẩm không đủ số lượng trong kho
+TC_CART_04,Thêm sản phẩm với productId rỗng,POST,{{baseUrl}}/api/cart,,1,,400,Product ID không được để trống
+TC_CART_05,Thêm sản phẩm với quantity = 0,POST,{{baseUrl}}/api/cart,1,0,,400,Số lượng phải lớn hơn hoặc bằng 1
+TC_CART_06,Thêm sản phẩm với quantity âm,POST,{{baseUrl}}/api/cart,1,-5,,400,Số lượng phải lớn hơn hoặc bằng 1
+TC_CART_07,Thêm sản phẩm không tồn tại,POST,{{baseUrl}}/api/cart,99999,1,,404,Không tìm thấy sản phẩm
+TC_CART_08,Xem giỏ hàng khi chưa có sản phẩm,GET,{{baseUrl}}/api/cart,,,,200,
+TC_CART_09,Xem giỏ hàng khi có sản phẩm,GET,{{baseUrl}}/api/cart,,,,200,
+TC_CART_10,Cập nhật tăng số lượng,PUT,{{baseUrl}}/api/cart/{{cartItemId}},,5,{{cartItemId}},200,Cập nhật số lượng thành công
+TC_CART_11,Cập nhật giảm số lượng,PUT,{{baseUrl}}/api/cart/{{cartItemId}},,2,{{cartItemId}},200,Cập nhật số lượng thành công
+TC_CART_12,Cập nhật số lượng bằng 0,PUT,{{baseUrl}}/api/cart/{{cartItemId}},,0,{{cartItemId}},400,Số lượng phải lớn hơn hoặc bằng 1
+TC_CART_13,Cập nhật số lượng với giá trị âm,PUT,{{baseUrl}}/api/cart/{{cartItemId}},,-1,{{cartItemId}},400,Số lượng phải lớn hơn hoặc bằng 1
+TC_CART_14,Cập nhật số lượng vượt tồn kho,PUT,{{baseUrl}}/api/cart/{{cartItemId}},,999999,{{cartItemId}},400,Vượt quá số lượng tồn kho
+TC_CART_15,Cập nhật item không tồn tại,PUT,{{baseUrl}}/api/cart/99999,,1,99999,404,Không tìm thấy item trong giỏ
+TC_CART_16,Xóa một sản phẩm khỏi giỏ,DELETE,{{baseUrl}}/api/cart/{{cartItemId}},,,{{cartItemId}},200,Xóa item thành công
+TC_CART_17,Xóa item không tồn tại,DELETE,{{baseUrl}}/api/cart/99999,,,99999,404,Không tìm thấy item trong giỏ
+TC_CART_18,Xóa toàn bộ giỏ hàng,DELETE,{{baseUrl}}/api/cart,,,,200,Xóa toàn bộ giỏ hàng thành công
+TC_CART_19,Xóa toàn bộ giỏ hàng khi giỏ rỗng,DELETE,{{baseUrl}}/api/cart,,,,404,Giỏ hàng
+TC_CART_20,Kiểm tra đồng bộ giỏ hàng,GET,{{baseUrl}}/api/cart,,,,200,
+TC_CART_21,Thêm lại sản phẩm sau khi xóa sạch,POST,{{baseUrl}}/api/cart,1,1,,200,Thêm vào giỏ thành công
