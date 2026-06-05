@@ -1,0 +1,27 @@
+﻿🛠 VGA STORE ADMIN API – REQUEST & RESPONSE REFERENCE,,,,,,
+TC_ID,Method,Endpoint,Request Headers,Request Body,Expected HTTP Code,Expected Response
+TC_ADM_AUTH_01,POST,/api/auth/register,Content-Type: application/json,"{""username"":""{{adminUsername}}"",""password"":""123456"",""email"":""{{adminEmail}}"",""fullName"":""Super Admin"",""role"":""ADMIN""}",200/201/400/409,Admin được tạo hoặc báo trùng dữ liệu
+TC_ADM_AUTH_02,POST,/api/auth/login,Content-Type: application/json,"{""username"":""{{adminUsername}}"",""password"":""123456""}",200,Trả về JWT token Admin
+TC_ADM_BRND_01,POST,/api/admin/brands,Authorization: Bearer {{adminToken}},"{""name"":""Test Brand {{$timestamp}}"",""description"":""Brand for e2e testing""}",200,Tạo Brand thành công
+TC_ADM_CAT_01,POST,/api/admin/categories,Authorization: Bearer {{adminToken}},"{""name"":""Test Category {{$timestamp}}"",""description"":""Category for e2e testing""}",200,Tạo Category thành công
+TC_ADM_BRND_02,GET,/api/admin/brands,Authorization: Bearer {{adminToken}},-,200,Danh sách Brand
+TC_ADM_BRND_03,PUT,/api/admin/brands/{{brandId}},Authorization: Bearer {{adminToken}},"{""name"":""Test Brand Updated"",""description"":""Updated description""}",200,Brand được cập nhật
+TC_ADM_CAT_02,GET,/api/admin/categories,Authorization: Bearer {{adminToken}},-,200,Danh sách Category
+TC_ADM_PRD_01,POST,/api/admin/products,Authorization: Bearer {{adminToken}},{Product Payload},200/201/400,Tạo Product thành công
+TC_ADM_PRD_02,GET,/api/products,Authorization: Bearer {{adminToken}},-,200,Danh sách Product
+TC_ADM_PRD_03,GET,/api/products/{{productId}},Authorization: Bearer {{adminToken}},-,200/404,Chi tiết Product
+TC_ADM_PRD_04,DELETE,/api/admin/products/{{productId}},Authorization: Bearer {{adminToken}},-,200/404,Xóa Product
+TC_ADM_USR_01,POST,/api/auth/register,Content-Type: application/json,"{""username"":""usertest_{{$timestamp}}"",""password"":""123456"",""email"":""usertest{{$timestamp}}@gmail.com"",""fullName"":""Test User""}",200/201/400,Tạo User
+TC_ADM_USR_02,POST,/api/auth/login,Content-Type: application/json,"{""username"":""{{e2e_user}}"",""password"":""123456""}",200,Login User thành công
+TC_ADM_USR_03,GET,/api/admin/users,Authorization: Bearer {{adminToken}},-,200,Danh sách User
+TC_ADM_USR_04,GET,/api/admin/users/{{userId}},Authorization: Bearer {{adminToken}},-,200/404,Chi tiết User
+TC_ADM_USR_05,DELETE,/api/admin/users/{{userId}},Authorization: Bearer {{adminToken}},-,200/404,Xóa User
+TC_ADM_ORD_00,POST,/api/cart,Authorization: Bearer {{userToken}},"{""productId"":{{productId}},""quantity"":1}",200/201,Thêm vào giỏ hàng
+TC_ADM_ORD_01,POST,/api/orders,Authorization: Bearer {{userToken}},"{""fullName"":""{{fullName}}"",""email"":""{{email}}"",""phone"":""{{phone}}"",""shippingAddress"":""{{shippingAddress}}"",""note"":""{{note}}"",""paymentMethod"":""{{paymentMethod}}""}",200/201,Tạo đơn hàng
+TC_ADM_ORD_02,GET,/api/admin/orders,Authorization: Bearer {{adminToken}},-,200,Danh sách đơn hàng
+TC_ADM_ORD_03,GET,/api/admin/orders/{{orderId}},Authorization: Bearer {{adminToken}},-,200/404,Chi tiết đơn hàng
+TC_ADM_ORD_04,PUT,/api/admin/orders/{{orderId}}/status,Authorization: Bearer {{adminToken}},"{""status"":""SHIPPING""}",200/404,Cập nhật trạng thái đơn
+TC_ADM_DASH_01,GET,/api/admin/dashboard,Authorization: Bearer {{adminToken}},-,200,Dữ liệu Dashboard
+TC_ADM_CLN_01,DELETE,/api/admin/orders/{{orderId}},Authorization: Bearer {{adminToken}},-,200/404/409,Cleanup Order
+TC_ADM_CLN_02,DELETE,/api/admin/products/{{productId}},Authorization: Bearer {{adminToken}},-,200/404/409,Cleanup Product
+TC_ADM_CLN_03,DELETE,/api/admin/brands/{{brandId}},Authorization: Bearer {{adminToken}},-,200/404/409,Cleanup Brand/Category
