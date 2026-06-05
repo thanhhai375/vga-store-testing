@@ -26,14 +26,23 @@ options {
                 // Xóa file log lỗi cũ để tránh bị báo cáo sai nếu sập sớm
                 sh 'rm -f error_reason*.txt'
 
-                // "BẮN TỈA": Chỉ tắt và dọn dẹp các app, TUYỆT ĐỐI để Jenkins được sống
-                sh 'docker compose -p vga-store-testing rm -f -s db backend admin-frontend user-frontend'
-                
-                // Xóa sạch data cũ của Database để đảm bảo môi trường test luôn mới tinh (Fresh DB)
-                sh 'docker run --rm -v vga-store-testing_pgdata:/dbdata alpine sh -c "rm -rf /dbdata/*"'
+                sh '''
+                # Tải docker-compose (v2) về workspace nếu chưa có (vì server không có sẵn lệnh docker-compose)
+                if [ ! -f ./docker-compose ]; then
+                    echo "Đang tải docker-compose..."
+                    curl -sSL https://github.com/docker/compose/releases/download/v2.26.1/docker-compose-linux-x86_64 -o docker-compose
+                    chmod +x docker-compose
+                fi
 
-                // Khởi tạo lại App
-                sh 'docker compose -p vga-store-testing up -d --build db backend admin-frontend user-frontend'
+                # "BẮN TỈA": Chỉ tắt và dọn dẹp các app, TUYỆT ĐỐI để Jenkins được sống
+                ./docker-compose -p vga-store-testing rm -f -s db backend admin-frontend user-frontend
+                
+                # Xóa sạch data cũ của Database để đảm bảo môi trường test luôn mới tinh (Fresh DB)
+                docker run --rm -v vga-store-testing_pgdata:/dbdata alpine sh -c "rm -rf /dbdata/*"
+
+                # Khởi tạo lại App
+                ./docker-compose -p vga-store-testing up -d --build db backend admin-frontend user-frontend
+                '''
 
                 echo '✅ Triển khai thành công! Đang đợi Backend (Spring Boot) khởi động hoàn tất...'
 
@@ -69,38 +78,42 @@ options {
             steps {
                 dir('automation') {
                     echo 'Đang chạy API Test tự động cho TỪNG FILE RIÊNG LẺ...'
+                    // sh '''
+                    // # Xóa file lỗi cũ nếu có
+                    // rm -f ../error_reason*.txt
+                    // failed=0
+
+                    // # Quét tất cả các file có đuôi .postman_collection.json trong các thư mục con của postman
+                    // for test_file in postman/*/*.postman_collection.json; do
+                    //     echo "=================================================="
+                    //     echo "▶️ ĐANG CHẠY KỊCH BẢN: $test_file"
+                    //     echo "=================================================="
+
+                    //     # Chạy newman VÀ nạp thêm file Environment vào (như chạy trên máy tính)
+                    //     docker run --rm \
+                    //         --network vga-store-testing_vga-network \
+                    //         --volumes-from vga_jenkins \
+                    //         -w $(pwd) \
+                    //         postman/newman run "$test_file" \
+                    //         -e "postman/env/VGA_Store_Environment.postman_environment.json" \
+                    //         --export-environment "postman/env/VGA_Store_Environment.postman_environment.json" \
+                    //         --env-var "baseUrl=http://backend:8080" \
+                    //         --color off --disable-unicode \
+                    //         --reporters cli,junit,json \
+                    //         --reporter-junit-export "report-$(basename "$test_file").xml" \
+                    //         --reporter-json-export "report-$(basename "$test_file").json" > newman_log.txt 2>&1 || {
                     sh '''
-                    # Xóa file lỗi cũ nếu có
-                    rm -f ../error_reason*.txt
-                    failed=0
+    # Xóa file lỗi cũ nếu có
+    rm -f ../error_reason*.txt
+    failed=0
 
-                    # Quét tất cả các file có đuôi .postman_collection.json trong các thư mục con của postman
-                    for test_file in postman/*/*.postman_collection.json; do
-                        echo "=================================================="
-                        echo "▶️ ĐANG CHẠY KỊCH BẢN: $test_file"
-                        echo "=================================================="
-
-                        # Chạy newman VÀ nạp thêm file Environment vào (như chạy trên máy tính)
-                        docker run --rm \
-                            --network vga-store-testing_vga-network \
-                            --volumes-from vga_jenkins \
-                            -w $(pwd) \
-                            postman/newman run "$test_file" \
-                            -e "postman/env/VGA_Store_Environment.postman_environment.json" \
-                            --export-environment "postman/env/VGA_Store_Environment.postman_environment.json" \
-                            --env-var "baseUrl=http://backend:8080" \
-                            --color off --disable-unicode \
-                            --reporters cli,junit,json \
-                            --reporter-junit-export "report-$(basename "$test_file").xml" \
-                            --reporter-json-export "report-$(basename "$test_file").json" > newman_log.txt 2>&1 || {
-
-                                # Tạo script Node.js siêu ngắn để bóc tách chính xác Testcase nào lỗi từ file JSON
-                                cat << 'EOF' > parse_errors.js
+    # Tạo script Node.js siêu ngắn để bóc tách chính xác Testcase nào lỗi từ file JSON
+    cat << 'EOF' > parse_errors.js
 const fs = require('fs');
 const testFile = process.argv[2];
+const jsonName = process.argv[3];
 try {
   const baseName = require('path').basename(testFile);
-  const jsonName = 'report-' + baseName + '.json';
   const outName = '../error_reason_' + baseName.replace(/\\s+/g, '_') + '.txt';
   const data = JSON.parse(fs.readFileSync(jsonName));
   let hasError = false;
@@ -124,20 +137,76 @@ try {
   fs.appendFileSync(outName, '❌ FILE: ' + testFile + '\\n  - Lỗi không xác định (xem log Jenkins): ' + e.message + '\\n\\n');
 }
 EOF
-                                node parse_errors.js "$test_file"
 
-                                failed=1
-                            }
+    # Quét tất cả các file có đuôi .postman_collection.json trong các thư mục con
+    for test_file in postman/*/*.postman_collection.json; do
+        dir_name=$(dirname "$test_file")
+        base_test_name=$(basename "$test_file")
+        
+        # Đếm số lượng file CSV
+        csv_count=0
+        for csv_file in "$dir_name"/*.csv; do
+            if [ -f "$csv_file" ]; then
+                csv_count=$((csv_count+1))
+                base_csv_name=$(basename "$csv_file")
+                json_report_name="report-${base_test_name}-${base_csv_name}.json"
+                echo "=================================================="
+                echo "▶️ ĐANG CHẠY KỊCH BẢN: $test_file"
+                echo "📊 Dữ liệu: $base_csv_name"
+                echo "=================================================="
 
-                        # In log ra console của Jenkins
-                        cat newman_log.txt
-                    done
+                docker run --rm \
+                    --network vga-store-testing_vga-network \
+                    --volumes-from vga_jenkins \
+                    -w $(pwd) \
+                    postman/newman run "$test_file" \
+                    -d "$csv_file" \
+                    -e "postman/env/VGA_Store_Environment.postman_environment.json" \
+                    --export-environment "postman/env/VGA_Store_Environment.postman_environment.json" \
+                    --env-var "baseUrl=http://backend:8080" \
+                    --color off --disable-unicode \
+                    --reporters cli,junit,json \
+                    --reporter-junit-export "report-${base_test_name}-${base_csv_name}.xml" \
+                    --reporter-json-export "$json_report_name" > newman_log.txt 2>&1 || {
+                        node parse_errors.js "$test_file" "$json_report_name"
+                        failed=1
+                    }
+                cat newman_log.txt
+            fi
+        done
 
-                    # Nếu có bất kỳ file nào failed thì đánh sập pipeline
-                    if [ $failed -eq 1 ]; then
-                        exit 1
-                    fi
-                    '''
+        # Nếu không có file CSV nào, chạy kịch bản 1 lần không có data
+        if [ "$csv_count" -eq 0 ]; then
+            json_report_name="report-${base_test_name}.json"
+            echo "=================================================="
+            echo "▶️ ĐANG CHẠY KỊCH BẢN: $test_file"
+            echo "⚠️ Không tìm thấy file CSV, chạy không có dữ liệu."
+            echo "=================================================="
+
+            docker run --rm \
+                --network vga-store-testing_vga-network \
+                --volumes-from vga_jenkins \
+                -w $(pwd) \
+                postman/newman run "$test_file" \
+                -e "postman/env/VGA_Store_Environment.postman_environment.json" \
+                --export-environment "postman/env/VGA_Store_Environment.postman_environment.json" \
+                --env-var "baseUrl=http://backend:8080" \
+                --color off --disable-unicode \
+                --reporters cli,junit,json \
+                --reporter-junit-export "report-${base_test_name}.xml" \
+                --reporter-json-export "$json_report_name" > newman_log.txt 2>&1 || {
+                    node parse_errors.js "$test_file" "$json_report_name"
+                    failed=1
+                }
+            cat newman_log.txt
+        fi
+    done
+
+    # Nếu có bất kỳ file nào failed thì đánh sập pipeline
+    if [ $failed -eq 1 ]; then
+        exit 1
+    fi
+    '''
                 }
             }
         }
