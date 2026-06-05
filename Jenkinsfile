@@ -26,14 +26,23 @@ options {
                 // Xóa file log lỗi cũ để tránh bị báo cáo sai nếu sập sớm
                 sh 'rm -f error_reason*.txt'
 
-                // "BẮN TỈA": Chỉ tắt và dọn dẹp các app, TUYỆT ĐỐI để Jenkins được sống
-                sh 'docker-compose -p vga-store-testing rm -f -s db backend admin-frontend user-frontend'
-                
-                // Xóa sạch data cũ của Database để đảm bảo môi trường test luôn mới tinh (Fresh DB)
-                sh 'docker run --rm -v vga-store-testing_pgdata:/dbdata alpine sh -c "rm -rf /dbdata/*"'
+                sh '''
+                # Tải docker-compose (v2) về workspace nếu chưa có (vì server không có sẵn lệnh docker-compose)
+                if [ ! -f ./docker-compose ]; then
+                    echo "Đang tải docker-compose..."
+                    curl -sSL https://github.com/docker/compose/releases/download/v2.26.1/docker-compose-linux-x86_64 -o docker-compose
+                    chmod +x docker-compose
+                fi
 
-                // Khởi tạo lại App
-                sh 'docker-compose -p vga-store-testing up -d --build db backend admin-frontend user-frontend'
+                # "BẮN TỈA": Chỉ tắt và dọn dẹp các app, TUYỆT ĐỐI để Jenkins được sống
+                ./docker-compose -p vga-store-testing rm -f -s db backend admin-frontend user-frontend
+                
+                # Xóa sạch data cũ của Database để đảm bảo môi trường test luôn mới tinh (Fresh DB)
+                docker run --rm -v vga-store-testing_pgdata:/dbdata alpine sh -c "rm -rf /dbdata/*"
+
+                # Khởi tạo lại App
+                ./docker-compose -p vga-store-testing up -d --build db backend admin-frontend user-frontend
+                '''
 
                 echo '✅ Triển khai thành công! Đang đợi Backend (Spring Boot) khởi động hoàn tất...'
 
