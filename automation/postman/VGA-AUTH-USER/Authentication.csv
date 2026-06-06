@@ -1,10 +1,10 @@
-TC_ID,email,username,password,fullName,expectedStatus
-TC_AUTH_01,user001@gmail.com,user001,123456,User 001,201
-TC_AUTH_02,user001@gmail.com,user001,123456,User 001,200
-TC_AUTH_03,user001@gmail.com,user001,123456,User 001,409
-TC_AUTH_04,test@gmail.com,,123456,Missing Username,400
-TC_AUTH_05,,user005,123456,Missing Email,400
-TC_AUTH_06,abcxyz,user006,123456,Invalid Email,400
-TC_AUTH_07,user001@gmail.com,user001,wrong_password,User 001,401
-TC_AUTH_08,,,,,400
-TC_AUTH_09,googletest@example.com,google_user,123456,Google User,200
+TC_ID,testCaseName,email,username,password,fullName,expectedStatus,description
+TC_AUTH_01,Register Success,user001@gmail.com,user001,123456,User 001,201,Register new user successfully
+TC_AUTH_02,Login Success,user001@gmail.com,user001,123456,User 001,200,Login successfully with valid credentials
+TC_AUTH_03,Duplicate User,user001@gmail.com,user001,123456,User 001,409,Register with existing account
+TC_AUTH_04,Missing Username,test@gmail.com,,123456,Missing Username,400,Register without username
+TC_AUTH_05,Missing Email,,user005,123456,Missing Email,400,Register without email
+TC_AUTH_06,Invalid Email,abcxyz,user006,123456,Invalid Email,400,Register with invalid email format
+TC_AUTH_07,Wrong Password,user001@gmail.com,user001,wrong_password,User 001,401,Login with incorrect password
+TC_AUTH_08,Empty Request,,,,,,400,Submit request with all fields empty
+TC_AUTH_09,Google Login,googletest@example.com,google_user,123456,Google User,200,Login or register using Google account
