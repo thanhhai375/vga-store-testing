@@ -69,6 +69,13 @@ public class ProductController {
         return ApiResponse.success("Tìm kiếm sản phẩm thành công", data);
     }
 
+    // Cố ý tạo SQL Injection endpoint cho mục đích đào tạo bảo mật (OWASP)
+    @GetMapping("/search-vulnerable")
+    public ApiResponse<List<Product>> searchVulnerable(@RequestParam String keyWord) {
+        List<Product> data = productService.searchProductsVulnerable(keyWord);
+        return ApiResponse.success("Tìm kiếm (Vulnerable) thành công", data);
+    }
+
 
     public Page<Product> filterBrand(@RequestParam String brand) {
         return productService.filterByBrand(brand);

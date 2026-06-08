@@ -53,6 +53,24 @@ public class AuthController {
         }
     }
 
+    /**
+     * [OWASP A03 - SQL INJECTION] Endpoint đăng nhập lỗ hổng – chỉ dùng để kiểm thử bảo mật.
+     * Payload bypass xác thực:
+     *   username: admin'--          password: anything
+     *   username: ' OR '1'='1'--   password: anything
+     * Payload lấy token admin:
+     *   username: ' OR role='ADMIN'--   password: x
+     */
+    @PostMapping("/login-vulnerable")
+    public ResponseEntity<?> loginVulnerable(@RequestBody LoginRequest req) {
+        try {
+            AuthResponse resp = authService.loginVulnerable(req.getUsername(), req.getPassword());
+            return ResponseEntity.ok(resp);
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        }
+    }
+
     @PostMapping("/google")
     public ResponseEntity<?> googleLogin(@Valid @RequestBody GoogleLoginRequest req) {
         try {

