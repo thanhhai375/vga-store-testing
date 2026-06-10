@@ -1,0 +1,38 @@
+﻿tc_id,summary,method,url,query_search,query_brand,query_minPrice,query_maxPrice,query_page,query_limit,body_name,body_price,body_brand,expected_status,expected_message
+TC_PROD_001,Hiển thị danh sách VGA hợp lệ,GET,{{baseUrl}}/api/products,,,,,,,,,,200,products
+TC_PROD_002,Kiểm tra số lượng sản phẩm hiển thị,GET,{{baseUrl}}/api/products,,,,,,,,,,200,totalItems
+TC_PROD_003,Kiểm tra hình ảnh VGA hiển thị,GET,{{baseUrl}}/api/products,,,,,,,,,,200,imageUrl
+TC_PROD_004,Kiểm tra giá VGA hiển thị đúng,GET,{{baseUrl}}/api/products,,,,,,,,,,200,price
+TC_PROD_005,Kiểm tra tên hãng VGA hiển thị đúng,GET,{{baseUrl}}/api/products,,,,,,,,,,200,brand
+TC_PROD_006,Kiểm tra phân trang trang đầu tiên,GET,{{baseUrl}}/api/products,,,,,1,10,,,,200,currentPage
+TC_PROD_007,Chuyển sang trang tiếp theo,GET,{{baseUrl}}/api/products,,,,,2,10,,,,200,currentPage
+TC_PROD_013,Tìm kiếm chính xác tên sản phẩm,GET,{{baseUrl}}/api/products,RTX 4060,,,,,,,,,200,name
+TC_PROD_014,Tìm kiếm không dấu hoặc chữ thường,GET,{{baseUrl}}/api/products,vga rtx,,,,,,,,,200,products
+TC_PROD_015,Lọc sản phẩm theo giá thấp đến cao,GET,{{baseUrl}}/api/products,,,,,,,,,,200,products
+TC_PROD_016,Lọc sản phẩm theo giá cao đến thấp,GET,{{baseUrl}}/api/products,,,,,,,,,,200,products
+TC_PROD_017,Lọc sản phẩm theo hãng NVIDIA,GET,{{baseUrl}}/api/products,,NVIDIA,,,,,,,,200,brand
+TC_PROD_018,Lọc sản phẩm theo hãng AMD,GET,{{baseUrl}}/api/products,,AMD,,,,,,,,200,brand
+TC_PROD_019,Kết hợp lọc giá và hãng,GET,{{baseUrl}}/api/products,,NVIDIA,5000000,15000000,,,,,,200,products
+TC_PROD_020,Xem chi tiết sản phẩm VGA,GET,{{baseUrl}}/api/products/1,,,,,,,,,,200,id: 1
+TC_PROD_021,Kiểm tra thông số kỹ thuật VGA,GET,{{baseUrl}}/api/products/1,,,,,,,,,,200,specifications:
+TC_PROD_022,Kiểm tra hình ảnh trong trang chi tiết,GET,{{baseUrl}}/api/products/1,,,,,,,,,,200,images:
+TC_PROD_023,Kiểm tra giá trong trang chi tiết,GET,{{baseUrl}}/api/products/1,,,,,,,,,,200,price
+TC_PROD_024,Kiểm tra truy cập sản phẩm không tồn tại,GET,{{baseUrl}}/api/products/99999,,,,,,,,,,404,error
+TC_PROD_025,Thêm mới sản phẩm VGA thành công,POST,{{baseUrl}}/api/products,,,,,,,VGA RTX 5090,45000000,NVIDIA,201,Thêm thành công
+TC_PROD_026,Thêm mới sản phẩm thiếu thông tin bắt buộc,POST,{{baseUrl}}/api/products,,,,,,,,45000000,NVIDIA,400,validationError
+TC_PROD_027,Cập nhật thông tin sản phẩm thành công,PUT,{{baseUrl}}/api/products/1,,,,,,,,12500000,,200,Cập nhật thành công
+TC_PROD_028,Cập nhật sản phẩm không tồn tại,PUT,{{baseUrl}}/api/products/99999,,,,,,,,12500000,,404,error
+TC_PROD_029,Xóa sản phẩm thành công,DELETE,{{baseUrl}}/api/products/1,,,,,,,,,,200,Xóa thành công
+TC_PROD_030,Xóa sản phẩm không có quyền (User thường),DELETE,{{baseUrl}}/api/products/1,,,,,,,,,,403,Không có quyền truy cập
+TC_PROD_031,Lọc giá với minPrice bằng 0,GET,{{baseUrl}}/api/products,,,0,20000000,,,,,,200,products
+TC_PROD_032,Lọc giá lỗi - minPrice là số âm,GET,{{baseUrl}}/api/products,,,-1500000,,,,,,,400,Giá không được nhỏ hơn 0
+TC_PROD_033,Lọc giá lỗi - maxPrice là số âm,GET,{{baseUrl}}/api/products,,,,-5000000,,,,,,400,Giá không được nhỏ hơn 0
+TC_PROD_034,Lọc giá biên - logic minPrice lớn hơn maxPrice,GET,{{baseUrl}}/api/products,,,20000000,5000000,,,,,,400,Khoảng giá minPrice không được lớn hơn maxPrice
+TC_PROD_035,Lọc giá biên - maxPrice bằng 0,GET,{{baseUrl}}/api/products,,,0,0,,,,,,200,"{""currentPage"": 1, ""products"": []}"
+TC_PROD_036,Lọc giá lỗi - minPrice bị tràn số (Overflow),GET,{{baseUrl}}/api/products,,,9999999999999999,,,,,,,400,Giá trị vượt quá giới hạn cho phép (Overflow)
+TC_PROD_037,Lọc giá lỗi - maxPrice bị tràn số (Overflow),GET,{{baseUrl}}/api/products,,,,9999999999999999,,,,,,400,Giá trị vượt quá giới hạn cho phép (Overflow)
+TC_PROD_038,Phân trang lỗi - Số lượng trang (page) bằng 0,GET,{{baseUrl}}/api/products,,,,,0,10,,,,400,Số trang phải lớn hơn hoặc bằng 1
+TC_PROD_039,Phân trang lỗi - Số lượng trang (page) là số âm,GET,{{baseUrl}}/api/products,,,,,-5,10,,,,400,Số trang phải lớn hơn hoặc bằng 1
+TC_PROD_040,Phân trang lỗi - Số lượng hiển thị (limit) bằng 0,GET,{{baseUrl}}/api/products,,,,,1,0,,,,400,Số lượng hiển thị phải lớn hơn hoặc bằng 1
+TC_PROD_041,Phân trang lỗi - Số lượng hiển thị (limit) âm,GET,{{baseUrl}}/api/products,,,,,1,-10,,,,400,Số lượng hiển thị phải lớn hơn hoặc bằng 1
+TC_PROD_042,Phân trang biên - Số trang vượt quá dữ liệu,GET,{{baseUrl}}/api/products,,,,,9999,10,,,,200,"{""currentPage"": 9999, ""products"": []}"
