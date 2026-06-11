@@ -1,0 +1,182 @@
+{
+  "info": {
+    "_postman_id": "886ea03b-1b58-4cac-9cdd-b3e5a1a7aa53",
+    "name": "VGA Store Auth",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "54984213",
+    "_collection_link": "https://go.postman.co/collection/54984213-886ea03b-1b58-4cac-9cdd-b3e5a1a7aa53?source=collection_link"
+  },
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "TC_AUTH_01 - Đăng ký tài khoản thành công",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"TC_AUTH_01 - Status code là 200 hoặc 201\", function () { pm.expect(pm.response.code).to.be.oneOf([200, 201]); });",
+                  "let req = JSON.parse(pm.request.body.raw);",
+                  "pm.environment.set(\"loginUsername\", req.username);",
+                  "pm.environment.set(\"loginEmail\", req.email);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\":\"user{{$timestamp}}@gmail.com\",\"username\":\"user_{{$timestamp}}\",\"password\":\"123456\",\"fullName\":\"Người Dùng Test\"}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "register"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "TC_AUTH_02 - Đăng nhập thành công",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"TC_AUTH_02 - Status code là 200\", function () { pm.response.to.have.status(200); });",
+                  "let res = pm.response.json();",
+                  "pm.test(\"TC_AUTH_02 - Phản hồi có chứa token\", function() { pm.expect(res.token || (res.data && res.data.token)).to.exist; });",
+                  "if(res.token || (res.data && res.data.token)) { pm.environment.set(\"token\", res.token || res.data.token); }"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"username\":\"{{loginUsername}}\",\"password\":\"123456\"}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "TC_AUTH_09 - Google Login (Mock)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"TC_AUTH_09 - Google login trả về 200\", function () { pm.response.to.have.status(200); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"name\":\"Test google\",\"email\":\"googletest@example.com\"}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/google",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "google"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "TC_USER_05 - Đổi mật khẩu thành công",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"TC_USER_05 - Đổi mật khẩu thành công (200)\", function () { pm.response.to.have.status(200); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"oldPassword\":\"123456\",\"newPassword\":\"newpassword123\"}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/users/change-password",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "users",
+                "change-password"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}
