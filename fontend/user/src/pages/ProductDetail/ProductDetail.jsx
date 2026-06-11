@@ -454,7 +454,9 @@ const ProductDetail = () => {
                             {r.createdAt ? new Date(r.createdAt).toLocaleDateString('vi-VN') : ''}
                           </span>
                         </div>
-                        <p>{r.comment}</p>
+                        {/* Cố ý dùng dangerouslySetInnerHTML → Stored XSS (OWASP A07) */}
+                        {/* Payload mẫu: <img src=x onerror="alert(document.cookie)"> */}
+                        <p dangerouslySetInnerHTML={{ __html: r.comment }} />
                       </div>
                     </div>
                   ))}

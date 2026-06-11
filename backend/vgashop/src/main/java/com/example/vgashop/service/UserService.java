@@ -19,6 +19,11 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import jakarta.persistence.EntityManager;
+import org.springframework.beans.factory.annotation.Autowired;
+import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
 
 import java.util.stream.Collectors;
 
@@ -27,6 +32,9 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final BCryptPasswordEncoder passwordEncoder;
+
+    @Autowired
+    private EntityManager entityManager;
 
     public UserService(UserRepository userRepository) {
         this.userRepository = userRepository;
@@ -209,5 +217,86 @@ public class UserService {
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy người dùng với ID " + id));
         user.setDeleted(true);
         userRepository.save(user);
+    }
+
+    // ============================================================
+    // [OWASP A03] Các method SQL Injection – chỉ dùng đào tạo bảo mật
+    // ============================================================
+
+    /**
+     * Lấy thông tin của người dùng theo username bằng native SQL nối chuỗi.
+     * Payload dump toàn bộ user: username = ' OR '1'='1
+     * Payload lấy user cụ thể: username = admin' OR '1'='1' AND username='victim
+     * Payload UNION: username = ' UNION SELECT id,username,password,full_name,email,address,avatar,role,status,deleted,created_at,updated_at,phone,gender,dob FROM users--
+     */
+    @SuppressWarnings("unchecked")
+    public List<Map<String, Object>> getUserInfoVulnerable(String username) {
+        // Cố ý nối chuỗi username vào SQL → SQL Injection
+        String sql = "SELECT id, username, email, full_name, phone, role, status, created_at "
+                   + "FROM users WHERE username = '" + username + "'";
+        List<Object[]> rows = entityManager.createNativeQuery(sql).getResultList();
+        List<Map<String, Object>> result = new java.util.ArrayList<>();
+        for (Object[] row : rows) {
+            Map<String, Object> map = new HashMap<>();
+            map.put("id",         row[0]);
+            map.put("username",   row[1]);
+            map.put("email",      row[2]);
+            map.put("full_name",  row[3]);
+            map.put("phone",      row[4]);
+            map.put("role",       row[5]);
+            map.put("status",     row[6]);
+            map.put("created_at", row[7]);
+            result.add(map);
+        }
+        return result;
+    }
+
+    /**
+     * Lấy danh sách tài khoản ADMIN bằng native SQL nối chuỗi.
+     * Payload leo thậng quyền: role = 'USER' OR '1'='1
+     * Payload UNION dump password: role = 'ADMIN' UNION SELECT id,username,password,email,5,6,7,8 FROM users--
+     */
+    @SuppressWarnings("unchecked")
+    public List<Map<String, Object>> getAdminListVulnerable(String role) {
+        // Cố ý nối chuỗi role vào SQL → SQL Injection
+        String sql = "SELECT id, username, email, full_name, role, status, created_at "
+                   + "FROM users WHERE role = '" + role + "' AND deleted = false";
+        List<Object[]> rows = entityManager.createNativeQuery(sql).getResultList();
+        List<Map<String, Object>> result = new java.util.ArrayList<>();
+        for (Object[] row : rows) {
+            Map<String, Object> map = new HashMap<>();
+            map.put("id",         row[0]);
+            map.put("username",   row[1]);
+            map.put("email",      row[2]);
+            map.put("full_name",  row[3]);
+            map.put("role",       row[4]);
+            map.put("status",     row[5]);
+            map.put("created_at", row[6]);
+            result.add(map);
+        }
+        return result;
+    }
+
+    /**
+     * Thống kê tài khoản theo trạng thái (active/inactive) bằng native SQL nối chuỗi.
+     * Payload Boolean-based blind: status = '1' AND SLEEP(5)--  (MySQL time-based)
+     * Payload dump dữ liệu: status = '1' UNION SELECT count(*),username,password,4,5,6,7 FROM users--
+     */
+    @SuppressWarnings("unchecked")
+    public List<Map<String, Object>> getAccountStatsByStatusVulnerable(String status) {
+        // Cố ý nối chuỗi status vào SQL → SQL Injection (Boolean-based + Time-based Blind)
+        String sql = "SELECT role, COUNT(*) as total, SUM(CASE WHEN status = true THEN 1 ELSE 0 END) as active_count "
+                   + "FROM users WHERE deleted = false AND status = " + status
+                   + " GROUP BY role";
+        List<Object[]> rows = entityManager.createNativeQuery(sql).getResultList();
+        List<Map<String, Object>> result = new java.util.ArrayList<>();
+        for (Object[] row : rows) {
+            Map<String, Object> map = new HashMap<>();
+            map.put("role",         row[0]);
+            map.put("total",        row[1]);
+            map.put("active_count", row[2]);
+            result.add(map);
+        }
+        return result;
     }
 }

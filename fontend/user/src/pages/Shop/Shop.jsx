@@ -401,7 +401,8 @@ const Shop = () => {
                       <line x1="9" y1="9" x2="9.01" y2="9"></line>
                       <line x1="15" y1="9" x2="15.01" y2="9"></line>
                     </svg>
-                    <h3>Không tìm thấy linh kiện phù hợp</h3>
+                    {/* Cố ý tạo Reflected XSS cho mục đích đào tạo bảo mật (OWASP) */}
+                    <h3 dangerouslySetInnerHTML={{ __html: `Không tìm thấy linh kiện phù hợp cho: <span style="color:red">${searchTerm}</span>` }} />
                     <p>Hãy thử giảm bớt các điều kiện lọc thông số</p>
                     <button className="btn-reset-filter" onClick={handleResetSidebar}>Xóa tất cả bộ lọc</button>
                   </div>
