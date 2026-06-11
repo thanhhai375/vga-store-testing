@@ -1,0 +1,384 @@
+{
+  "info": {
+    "_postman_id": "2b69c99a-79e1-4d3a-8d89-db5f4926306e",
+    "name": "VGA AUTH USER - BVA Testing",
+    "description": "Collection kiểm thử Boundary Value Analysis cho User Profile & Addresses của VGA Store",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "54946849"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "userId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "addressId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "TC_ID",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "expectedStatus",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "description",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "1. 🔑 Setup - Authentication (Chạy trước)",
+      "description": "Các request chuẩn bị: Login/Register để lấy token",
+      "item": [
+        {
+          "name": "TC_SETUP_01 - Register Account",
+          "event": [
+            {
+              "listen": "pre-request",
+              "script": {
+                "exec": [
+                  "pm.environment.set('signupUsername', 'testuser_' + Date.now());",
+                  "pm.environment.set('signupEmail', 'testuser_' + Date.now() + '@testmail.com');",
+                  "pm.environment.set('signupPassword', 'Test@123456');"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('[SETUP] Register thành công', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "let res = pm.response.json();",
+                  "pm.test('[SETUP] Response có chứa user info', function() {",
+                  "    pm.expect(res).to.have.property('success').equal(true);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\\n  \\\"email\\\": \\\"{{signupEmail}}\\\",\\n  \\\"username\\\": \\\"{{signupUsername}}\\\",\\n  \\\"password\\\": \\\"{{signupPassword}}\\\",\\n  \\\"fullName\\\": \\\"Test User BVA\\\"\\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "register"]
+            }
+          }
+        },
+        {
+          "name": "TC_SETUP_02 - Login Account (Lấy Token)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('[SETUP] Login thành công', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "let res = pm.response.json();",
+                  "",
+                  "let token = res.data?.accessToken || res.data?.token || res.token;",
+                  "let userId = res.data?.user?.id || res.data?.id;",
+                  "",
+                  "pm.test('[SETUP] Response có chứa accessToken', function() {",
+                  "    pm.expect(token).to.exist;",
+                  "});",
+                  "",
+                  "if(token) {",
+                  "    pm.environment.set('token', token);",
+                  "    pm.environment.set('userId', userId);",
+                  "    console.log('✓ Token saved: ' + token.substring(0, 20) + '...');",
+                  "    console.log('✓ UserId saved: ' + userId);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\\n  \\\"username\\\": \\\"{{signupUsername}}\\\",\\n  \\\"password\\\": \\\"{{signupPassword}}\\\"\\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "login"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. 👤 User Profile - BVA Tests (PUT /api/users/profile)",
+      "description": "Boundary Value Analysis tests cho User Profile Update",
+      "item": [
+        {
+          "name": "BVA - Get Current Profile (Base Request)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('GET Profile thành công', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "let res = pm.response.json();",
+                  "pm.test('Response chứa user data', function() {",
+                  "    pm.expect(res.data).to.have.property('id');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/users/profile",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "profile"]
+            }
+          }
+        },
+        {
+          "name": "BVA - Update Profile (Data-Driven từ CSV)",
+          "event": [
+            {
+              "listen": "pre-request",
+              "script": {
+                "exec": [
+                  "console.log('Test Case: ' + pm.environment.get('TC_ID'));",
+                  "console.log('Input fullName: ' + pm.environment.get('fullName'));",
+                  "console.log('Input phone: ' + pm.environment.get('phone'));",
+                  "console.log('Input dob: ' + pm.environment.get('dob'));",
+                  "console.log('Expected Status: ' + pm.environment.get('expectedStatus'));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "let expectedStatus = parseInt(pm.environment.get('expectedStatus')) || 200;",
+                  "let testId = pm.environment.get('TC_ID');",
+                  "let description = pm.environment.get('description');",
+                  "let actualStatus = pm.response.code;",
+                  "",
+                  "pm.test('[' + testId + '] Status code là ' + expectedStatus, function () {",
+                  "    pm.response.to.have.status(expectedStatus);",
+                  "});",
+                  "",
+                  "if(expectedStatus === 200) {",
+                  "    pm.test('[' + testId + '] Response có success flag', function() {",
+                  "        let res = pm.response.json();",
+                  "        pm.expect(res).to.have.property('success').equal(true);",
+                  "        pm.expect(res.data).to.have.property('id');",
+                  "    });",
+                  "}",
+                  "",
+                  "if(actualStatus === expectedStatus) {",
+                  "    console.log('✓ ' + testId + ' PASS - ' + description);",
+                  "} else {",
+                  "    console.log('✗ ' + testId + ' FAIL - Expected: ' + expectedStatus + ', Got: ' + actualStatus);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\\n  \\\"fullName\\\": \\\"{{fullName}}\\\",\\n  \\\"phone\\\": \\\"{{phone}}\\\",\\n  \\\"dob\\\": \\\"{{dob}}\\\",\\n  \\\"gender\\\": \\\"{{gender}}\\\"\\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/users/profile",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "profile"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. 📍 User Addresses - BVA Tests (POST /api/users/addresses)",
+      "description": "Boundary Value Analysis tests cho Address Management",
+      "item": [
+        {
+          "name": "BVA - Add Address (Data-Driven từ CSV)",
+          "event": [
+            {
+              "listen": "pre-request",
+              "script": {
+                "exec": [
+                  "console.log('Test Case: ' + pm.environment.get('TC_ID'));",
+                  "console.log('Input recipientName: ' + pm.environment.get('recipientName'));",
+                  "console.log('Input phone: ' + pm.environment.get('phone'));",
+                  "console.log('Input detailedAddress: ' + pm.environment.get('detailedAddress'));",
+                  "console.log('Expected Status: ' + pm.environment.get('expectedStatus'));",
+                  "",
+                  "let isDefaultStr = pm.environment.get('isDefault') || 'false';",
+                  "let isDefaultBool = (isDefaultStr === 'true' || isDefaultStr === true);",
+                  "pm.environment.set('isDefaultBool', isDefaultBool);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "let expectedStatus = parseInt(pm.environment.get('expectedStatus')) || 200;",
+                  "let testId = pm.environment.get('TC_ID');",
+                  "let description = pm.environment.get('description');",
+                  "let actualStatus = pm.response.code;",
+                  "",
+                  "pm.test('[' + testId + '] Status code là ' + expectedStatus, function () {",
+                  "    pm.response.to.have.status(expectedStatus);",
+                  "});",
+                  "",
+                  "if(expectedStatus === 200) {",
+                  "    pm.test('[' + testId + '] Response có success flag', function() {",
+                  "        let res = pm.response.json();",
+                  "        pm.expect(res).to.have.property('success').equal(true);",
+                  "        pm.expect(res.data).to.have.property('addresses');",
+                  "    });",
+                  "",
+                  "    let res = pm.response.json();",
+                  "    if(res.data?.addresses && res.data.addresses.length > 0) {",
+                  "        let lastAddr = res.data.addresses[res.data.addresses.length - 1];",
+                  "        pm.environment.set('addressId', lastAddr.id);",
+                  "    }",
+                  "}",
+                  "",
+                  "if(expectedStatus === 400) {",
+                  "    pm.test('[' + testId + '] Response chứa error message', function() {",
+                  "        let res = pm.response.json();",
+                  "        pm.expect(res).to.have.property('success').equal(false);",
+                  "    });",
+                  "}",
+                  "",
+                  "if(actualStatus === expectedStatus) {",
+                  "    console.log('✓ ' + testId + ' PASS - ' + description);",
+                  "} else {",
+                  "    console.log('✗ ' + testId + ' FAIL - Expected: ' + expectedStatus + ', Got: ' + actualStatus);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\\n  \\\"recipientName\\\": \\\"{{recipientName}}\\\",\\n  \\\"phone\\\": \\\"{{phone}}\\\",\\n  \\\"detailedAddress\\\": \\\"{{detailedAddress}}\\\",\\n  \\\"isDefault\\\": {{isDefault}}\\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/users/addresses",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "addresses"]
+            }
+          }
+        },
+        {
+          "name": "BVA - List All Addresses",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('GET Addresses thành công', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "let res = pm.response.json();",
+                  "pm.test('Response chứa addresses list', function() {",
+                  "    pm.expect(res.data).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/users/profile",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "profile"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
