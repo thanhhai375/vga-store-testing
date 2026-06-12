@@ -15,8 +15,6 @@ import com.example.vgashop.exception.DuplicateResourceException;
 import com.example.vgashop.exception.ResourceNotFoundException;
 import com.example.vgashop.repository.ProductRepository;
 import com.example.vgashop.dto.ProductImageDTO;
-import org.springframework.beans.factory.annotation.Autowired;
-import jakarta.persistence.EntityManager;
 
 @Service
 public class ProductService {
@@ -76,18 +74,6 @@ public class ProductService {
             return productRepository.findAll(pageable);
         }
         return productRepository.findByNameContaining(keyWord, pageable);
-    }
-
-    @Autowired
-    private EntityManager entityManager;
-
-    // Vulnerable search method for SQL Injection training (OWASP)
-    @SuppressWarnings("unchecked")
-    public List<Product> searchProductsVulnerable(String keyword) {
-        if (keyword == null) keyword = "";
-        // Cố ý tạo SQL Injection bằng cách cộng chuỗi trực tiếp
-        String query = "SELECT * FROM products WHERE name LIKE '%" + keyword + "%' AND deleted = false";
-        return entityManager.createNativeQuery(query, Product.class).getResultList();
     }
 
 
