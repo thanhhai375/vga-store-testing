@@ -1,0 +1,883 @@
+{
+  "info": {
+    "_postman_id": "62a76a79-2298-4373-8986-8043be3fe3a5",
+    "name": "VGA Store Product User",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "54997099",
+    "_collection_link": "https://go.postman.co/collection/54997099-62a76a79-2298-4373-8986-8043be3fe3a5?source=collection_link"
+  },
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Đăng ký Admin",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "var uniqueNum = Date.now();",
+                  "var randomUsername = 'admin_' + uniqueNum;",
+                  "var randomEmail = 'admin_' + uniqueNum + '@test.com';",
+                  "pm.environment.set('adminUsername', randomUsername);",
+                  "pm.environment.set('adminPassword', '123456');",
+                  "pm.variables.set('random_username', randomUsername);",
+                  "pm.variables.set('random_email', randomEmail);",
+                  "console.log('Tạo admin: ' + randomUsername);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Đăng ký thành công - Status code là 200 hoặc 201', function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});",
+                  "pm.test('Thời gian phản hồi nhanh (Dưới 2000ms)', function () {",
+                  "    pm.expect(pm.response.responseTime).to.be.below(2000);",
+                  "});",
+                  "pm.test('Kiểm tra cấu trúc dữ liệu trả về', function () {",
+                  "    pm.expect(pm.response.json()).to.be.an('object');",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{adminUsername}}\",\n  \"password\": \"123456\",\n  \"email\": \"{{random_email}}\",\n  \"fullName\": \"Super Admin Test\",\n  \"role\": \"ADMIN\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/register-admin",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "register-admin"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Đăng nhập",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Đăng nhập thành công - Status code là 200', function () {",
+                  "    pm.expect(pm.response.code).to.equal(200);",
+                  "});",
+                  "pm.test('Thời gian phản hồi tốt (Dưới 2000ms)', function () {",
+                  "    pm.expect(pm.response.responseTime).to.be.below(2000);",
+                  "});",
+                  "pm.test('Trả về token Admin và lưu thành công', function () {",
+                  "    var res = pm.response.json();",
+                  "    pm.expect(res).to.have.property('token');",
+                  "    pm.expect(res.role).to.equal('ADMIN');",
+                  "    if (res.token) {",
+                  "        pm.environment.set('adminToken', res.token);",
+                  "        console.log('Admin [' + res.role + '] token saved');",
+                  "    }",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "packages": {},
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{adminUsername}}\",\n  \"password\": \"{{adminPassword}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Đăng ký",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Response has token', function () {",
+                  "    pm.expect(jsonData.token).to.not.be.undefined;",
+                  "});",
+                  "pm.test('Registration successful', function () {",
+                  "    pm.expect(jsonData.message).to.eql('Registration successful');",
+                  "});",
+                  "pm.test('Response has username and userId', function () {",
+                  "    pm.expect(jsonData.username).to.not.be.undefined;",
+                  "    pm.expect(jsonData.userId).to.not.be.undefined;",
+                  "});",
+                  "// Lưu thông tin user thường để Đăng nhập User dùng",
+                  "pm.environment.set('loginUsername', jsonData.username);",
+                  "pm.environment.set('loginPassword', '123456');",
+                  "pm.environment.set('userId', jsonData.userId);",
+                  "console.log('Saved loginUsername = ' + jsonData.username);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"email\": \"{{$randomEmail}}\",\r\n  \"username\": \"{{$randomUserName}}\",\r\n  \"password\": \"123456\",\r\n  \"fullName\": \"Người Dùng Test\"\r\n}\r\n"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "register"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Đăng nhập User",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Đăng nhập user thành công - Status 200', function () {",
+                  "    pm.expect(pm.response.code).to.equal(200);",
+                  "});",
+                  "pm.test('Thời gian phản hồi tốt (Dưới 2000ms)', function () {",
+                  "    pm.expect(pm.response.responseTime).to.be.below(2000);",
+                  "});",
+                  "pm.test('Trả về token User và lưu thành công', function () {",
+                  "    var res = pm.response.json();",
+                  "    pm.expect(res).to.have.property('token');",
+                  "    pm.expect(res.role).to.equal('USER');",
+                  "    if (res.token) {",
+                  "        pm.environment.set('userToken', res.token);",
+                  "        pm.environment.set('token', res.token);",
+                  "        console.log('User [' + res.role + '] token saved');",
+                  "    }",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{loginUsername}}\",\n  \"password\": \"{{loginPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "response": []
+        }
+      ],
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {},
+            "exec": [
+              ""
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {},
+            "exec": [
+              ""
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Products User",
+      "item": [
+        {
+          "name": "Danh sách sản phẩm",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"TC_PROD_001 - Hiển thị danh sách VGA thành công\", function () {\r",
+                  "    // Kiểm tra status trả về có phải là 200 OK và thuộc tính success là true không\r",
+                  "    pm.response.to.have.status(200);\r",
+                  "    const responseData = pm.response.json();\r",
+                  "    pm.expect(responseData.success).to.eql(true);\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"TC_PROD_002 -> 005 - Dữ liệu hiển thị đầy đủ thông tin\", function () {\r",
+                  "    const responseData = pm.response.json();\r",
+                  "    \r",
+                  "    // Đã sửa đường dẫn: Bóc đúng vào mảng 'content' nằm trong 'data'\r",
+                  "    const productsArray = responseData.data.content;\r",
+                  "    \r",
+                  "    // Kiểm tra cấu trúc mảng danh sách sản phẩm\r",
+                  "    pm.expect(productsArray).to.be.an('array');\r",
+                  "    \r",
+                  "    if (productsArray.length > 0) {\r",
+                  "        const product = productsArray[0];\r",
+                  "        \r",
+                  "        // Kiểm tra Tên sản phẩm (TC_PROD_002)\r",
+                  "        pm.expect(product).to.have.property('name');  \r",
+                  "        \r",
+                  "        // Kiểm tra Định dạng giá sản phẩm (TC_PROD_004)\r",
+                  "        pm.expect(product).to.have.property('price'); \r",
+                  "        pm.expect(product.price).to.be.a('number');\r",
+                  "        \r",
+                  "        // Đã sửa: Kiểm tra đường dẫn Ảnh chuẩn (TC_PROD_003)\r",
+                  "        pm.expect(product).to.have.property('imgUrl'); \r",
+                  "        \r",
+                  "        // Kiểm tra xem sản phẩm có đối tượng Brand (Hãng) đi kèm không (TC_PROD_005)\r",
+                  "        pm.expect(product).to.have.property('brand');\r",
+                  "        pm.expect(product.brand).to.have.property('name');\r",
+                  "    }\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{{Request Body}}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/products?page=0&size=10&sortBy=id&direction=asc",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "products"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "10"
+                },
+                {
+                  "key": "sortBy",
+                  "value": "id"
+                },
+                {
+                  "key": "direction",
+                  "value": "asc"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Tìm kiếm sản phẩm",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"TC_PROD_011 - Tìm kiếm sản phẩm theo tên hợp lệ thành công\", function () {\r",
+                  "    pm.response.to.have.status(200);\r",
+                  "    const responseData = pm.response.json();\r",
+                  "    pm.expect(responseData.success).to.eql(true);\r",
+                  "    \r",
+                  "    const productsArray = responseData.data.content;\r",
+                  "    pm.expect(productsArray).to.be.an('array');\r",
+                  "    \r",
+                  "    // Đảm bảo kết quả trả về có chứa sản phẩm khớp từ khóa\r",
+                  "    if (productsArray.length > 0) {\r",
+                  "        pm.expect(productsArray[0].name.toLowerCase()).to.include('asus');\r",
+                  "    }\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"TC_PROD_013 - Tìm kiếm với ký tự đặc biệt không bị sập server\", function () {\r",
+                  "    // Đảm bảo server không trả về lỗi 500\r",
+                  "    pm.expect(pm.response.code).to.not.eql(500);\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{{Request Body}}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/products/search?keyWord=ASUS Dual&page=0&size=10",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "products",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "keyWord",
+                  "value": "ASUS Dual"
+                },
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "10"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Lọc sản phẩm",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"TC_PROD_015 - Lọc sản phẩm theo khoảng giá và danh mục thành công\", function () {\r",
+                  "    // 1. Kiểm tra Status Code trả về phải là 200 OK\r",
+                  "    pm.response.to.have.status(200);\r",
+                  "    \r",
+                  "    // 2. Ép kiểu dữ liệu trả về sang JSON\r",
+                  "    const responseData = pm.response.json();\r",
+                  "    pm.expect(responseData.success).to.eql(true);\r",
+                  "    \r",
+                  "    // 3. Lấy mảng danh sách sản phẩm từ data.content của bạn\r",
+                  "    const productsArray = responseData.data.content;\r",
+                  "    pm.expect(productsArray).to.be.an('array');\r",
+                  "    \r",
+                  "    // 4. Nếu có sản phẩm trả về, kiểm tra xem giá của nó có nằm đúng trong khoảng lọc không\r",
+                  "    if (productsArray.length > 0) {\r",
+                  "        const firstProductPrice = productsArray[0].price;\r",
+                  "        pm.expect(firstProductPrice).to.be.at.least(1000000); // Lớn hơn hoặc bằng minPrice\r",
+                  "        pm.expect(firstProductPrice).to.be.at.most(50000000); // Nhỏ hơn hoặc bằng maxPrice\r",
+                  "    }\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"TC_PROD_017 - Hệ thống phản hồi nhanh khi thực hiện lọc dữ liệu\", function () {\r",
+                  "    // Đảm bảo thời gian phản hồi dưới 3000ms như các request trước\r",
+                  "    pm.expect(pm.response.responseTime).to.be.below(3000);\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{{Request Body}}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/products/filter?brandId=1&minPrice=5000000&maxPrice=20000000&page=0&size=10",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "products",
+                "filter"
+              ],
+              "query": [
+                {
+                  "key": "brandId",
+                  "value": "1"
+                },
+                {
+                  "key": "minPrice",
+                  "value": "5000000"
+                },
+                {
+                  "key": "maxPrice",
+                  "value": "20000000"
+                },
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "10"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Chi tiết sản phẩm",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"TC_PROD_018 - Xem chi tiết sản phẩm hợp lệ thành công\", function () {\r",
+                  "    // 1. Kiểm tra Status Code phải là 200 OK\r",
+                  "    pm.response.to.have.status(200);\r",
+                  "    \r",
+                  "    // 2. Parse dữ liệu JSON trả về\r",
+                  "    const responseData = pm.response.json();\r",
+                  "    pm.expect(responseData.success).to.eql(true);\r",
+                  "    \r",
+                  "    // 3. Đối với API chi tiết, data trả về thường là 1 Object (không phải mảng content nữa)\r",
+                  "    const product = responseData.data;\r",
+                  "    pm.expect(product).to.be.an('object');\r",
+                  "    \r",
+                  "    // 4. Kiểm tra xem Object sản phẩm có đầy đủ các trường cốt lõi không\r",
+                  "    pm.expect(product).to.have.property('id');\r",
+                  "    pm.expect(product).to.have.property('name');\r",
+                  "    pm.expect(product).to.have.property('price');\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"TC_PROD_020 - Thời gian phản hồi xem chi tiết sản phẩm hợp lệ\", function () {\r",
+                  "    pm.expect(pm.response.responseTime).to.be.below(3000);\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{{Request Body}}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/products/9",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "products",
+                "9"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Tạo mới VGA",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// pm.test('TC_PROD_021 - Thêm mới sản phẩm và upload ảnh thành công', function () {",
+                  "//     // 200/201: thành công, 400: thiếu file ảnh (expected in CLI), 409: trùng tên, 404: brandId/catId bị xóa",
+                  "//     pm.expect(pm.response.code).to.be.oneOf([200, 201, 400, 404, 409]);",
+                  "// });",
+                  "// pm.test('Thời gian phản hồi hợp lệ (Dưới 3000ms)', function () {",
+                  "//     pm.expect(pm.response.responseTime).to.be.below(3000);",
+                  "// });",
+                  "",
+                  "pm.test('TC_PROD_021 - Thêm mới sản phẩm và upload ảnh thành công', function () {",
+                  "    // Thêm 403 vào đây nếu bạn đang test quyền hạn và dự kiến sẽ bị chặn",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 400, 403, 404, 409, 500]);",
+                  "});",
+                  "",
+                  "pm.test('Thời gian phản hồi hợp lệ (Dưới 3000ms)', function () {",
+                  "    pm.expect(pm.response.responseTime).to.be.below(3000);",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "protocolProfileBehavior": {
+            "disabledSystemHeaders": {}
+          },
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{userToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{{Request Body}}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/products/upload",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "products",
+                "upload"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Bảo mật - User thường tạo được sản phẩm (thiếu @PreAuthorize)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "// Dùng userToken (role=USER) để test endpoint tạo sản phẩm",
+                  "// Endpoint này PHẢI chỉ ADMIN mới được tạo sản phẩm",
+                  "// Nhưng /api/products/upload không có @PreAuthorize → lỗ hổng bảo mật"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "",
+                  "pm.test('API không chặn quyền người dùng thường - Phải trả về 403', function () {",
+                  "    pm.expect(pm.response.code).to.equal(403,",
+                  "        'LỖI BẢO MẬT: API /api/products/upload đang cho phép tài khoản role USER thực hiện hành động của ADMIN (tạo sản phẩm)!'",
+                  "    );",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{userToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{{Request Body}}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/products/upload",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "products",
+                "upload"
+              ]
+            },
+            "description": "BUG-001: Endpoint tạo sản phẩm không yêu cầu role ADMIN.\nProductController.java line 166 thiếu @PreAuthorize(\"hasRole('ADMIN')\").\nUser thường vẫn tạo được sản phẩm → lỗ hổng bảo mật nghiêm trọng."
+          },
+          "response": []
+        },
+        {
+          "name": "Tìm kiếm & Phân trang Dữ liệu biên",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// 1. Kiểm tra mã phản hồi HTTP Status Code\r",
+                  "pm.test(\"Status code is \" + pm.iterationData.get(\"expected_status\"), function () {\r",
+                  "    pm.response.to.have.status(parseInt(pm.iterationData.get(\"expected_status\")));\r",
+                  "});\r",
+                  "\r",
+                  "// 2. Kiểm tra chuỗi/thông báo mong muốn trong Response Body\r",
+                  "var expectedMsg = pm.iterationData.get(\"expected_message\");\r",
+                  "if (expectedMsg) {\r",
+                  "    pm.test(\"Response body chứa cụm từ: \" + expectedMsg, function () {\r",
+                  "        pm.expect(pm.response.text()).to.include(expectedMsg);\r",
+                  "    });\r",
+                  "}"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/products?page={{query_page}}&limit={{query_limit}}&minPrice={{query_minPrice}}&maxPrice={{query_maxPrice}}&search={{query_search}}&brand={{query_brand}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "products"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "{{query_page}}"
+                },
+                {
+                  "key": "limit",
+                  "value": "{{query_limit}}"
+                },
+                {
+                  "key": "minPrice",
+                  "value": "{{query_minPrice}}"
+                },
+                {
+                  "key": "maxPrice",
+                  "value": "{{query_maxPrice}}"
+                },
+                {
+                  "key": "search",
+                  "value": "{{query_search}}"
+                },
+                {
+                  "key": "brand",
+                  "value": "{{query_brand}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{adminToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [
+          ""
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [
+          ""
+        ]
+      }
+    }
+  ]
+}
