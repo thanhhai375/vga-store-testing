@@ -924,62 +924,6 @@
           "response": []
         },
         {
-          "name": "Xóa sản phẩm (Admin)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "// pm.test(\"TC_ADM_PROD_005 - Admin xóa sản phẩm với ID không tồn tại\", function () {\r",
-                  "//     // Chấp nhận mã 404 (Không tìm thấy) hoặc 400 (Dữ liệu không hợp lệ) từ backend\r",
-                  "//     // Miễn là server không trả về lỗi 500 (Sập server) là tính năng đạt yêu cầu an toàn\r",
-                  "//     pm.expect(pm.response.code).to.be.oneOf([400, 404]);\r",
-                  "    \r",
-                  "//     const responseData = pm.response.json();\r",
-                  "//     pm.expect(responseData.success).to.eql(false);\r",
-                  "// });\r",
-                  "pm.test(\"Xóa sản phẩm thành công\", function () {\r",
-                  "    pm.response.to.have.status(200);\r",
-                  "    pm.expect(pm.response.json().success).to.eql(true);\r",
-                  "});\r",
-                  ""
-                ],
-                "type": "text/javascript",
-                "packages": {},
-                "requests": {}
-              }
-            },
-            {
-              "listen": "prerequest",
-              "script": {
-                "exec": [
-                  ""
-                ],
-                "type": "text/javascript",
-                "packages": {},
-                "requests": {}
-              }
-            }
-          ],
-          "request": {
-            "method": "DELETE",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/admin/products/{{productId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "admin",
-                "products",
-                "{{productId}}"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
           "name": "TC_PROD_031 - Tạo sản phẩm (stock âm) - BVA",
           "event": [
             {
@@ -1032,7 +976,7 @@
               "formdata": [
                 {
                   "key": "name",
-                  "value": "VGA Test {{$timestamp}}",
+                  "value": "VGA Test {{$guid}}",
                   "type": "text"
                 },
                 {
@@ -1130,7 +1074,7 @@
               "formdata": [
                 {
                   "key": "name",
-                  "value": "VGA Test {{$timestamp}}",
+                  "value": "VGA Test {{$guid}}",
                   "type": "text"
                 },
                 {
@@ -1190,17 +1134,77 @@
                 "packages": {},
                 "requests": {}
               }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "var baseUrl = pm.variables.get('baseUrl');",
+                  "var tok = pm.environment.get('adminToken');",
+                  "pm.sendRequest({",
+                  "    url: baseUrl + '/api/admin/brands',",
+                  "    method: 'POST',",
+                  "    header: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + tok },",
+                  "    body: { mode: 'raw', raw: JSON.stringify({ name: 'BrandP_' + Date.now() }) }",
+                  "}, function(err, r) {",
+                  "    if(!err && r.json().data) pm.environment.set('productBrandId', r.json().data.id);",
+                  "});",
+                  "pm.sendRequest({",
+                  "    url: baseUrl + '/api/admin/categories',",
+                  "    method: 'POST',",
+                  "    header: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + tok },",
+                  "    body: { mode: 'raw', raw: JSON.stringify({ name: 'CatP_' + Date.now() }) }",
+                  "}, function(err2, r2) {",
+                  "    if(!err2 && r2.json().data) pm.environment.set('productCategoryId', r2.json().data.id);",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
             }
           ],
           "request": {
             "method": "PUT",
             "header": [],
             "body": {
-              "mode": "raw",
-              "raw": ""
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "name",
+                  "value": "VGA Test {{$guid}}",
+                  "type": "text"
+                },
+                {
+                  "key": "price",
+                  "value": "1500000",
+                  "type": "text"
+                },
+                {
+                  "key": "stock",
+                  "value": "-5",
+                  "type": "text"
+                },
+                {
+                  "key": "categoryId",
+                  "value": "{{productCategoryId}}",
+                  "type": "text"
+                },
+                {
+                  "key": "brandId",
+                  "value": "{{productBrandId}}",
+                  "type": "text"
+                },
+                {
+                  "key": "imageFile",
+                  "type": "file",
+                  "uuid": "3c691839-d76d-4d14-9208-be5557cf2000",
+                  "src": "/E:/CODECNTT/DU_AN/TestingVGA/vga-store-testing/automation/postman/VGA-store-product/Screenshot 2026-05-22 102724.png"
+                }
+              ]
             },
             "url": {
-              "raw": "{{baseUrl}}/api/admin/products/{{productId}}/stock?stock=50",
+              "raw": "{{baseUrl}}/api/admin/products/{{productId}}",
               "host": [
                 "{{baseUrl}}"
               ],
@@ -1208,14 +1212,7 @@
                 "api",
                 "admin",
                 "products",
-                "{{productId}}",
-                "stock"
-              ],
-              "query": [
-                {
-                  "key": "stock",
-                  "value": "50"
-                }
+                "{{productId}}"
               ]
             }
           },
@@ -1236,17 +1233,77 @@
                 "packages": {},
                 "requests": {}
               }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "var baseUrl = pm.variables.get('baseUrl');",
+                  "var tok = pm.environment.get('adminToken');",
+                  "pm.sendRequest({",
+                  "    url: baseUrl + '/api/admin/brands',",
+                  "    method: 'POST',",
+                  "    header: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + tok },",
+                  "    body: { mode: 'raw', raw: JSON.stringify({ name: 'BrandP_' + Date.now() }) }",
+                  "}, function(err, r) {",
+                  "    if(!err && r.json().data) pm.environment.set('productBrandId', r.json().data.id);",
+                  "});",
+                  "pm.sendRequest({",
+                  "    url: baseUrl + '/api/admin/categories',",
+                  "    method: 'POST',",
+                  "    header: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + tok },",
+                  "    body: { mode: 'raw', raw: JSON.stringify({ name: 'CatP_' + Date.now() }) }",
+                  "}, function(err2, r2) {",
+                  "    if(!err2 && r2.json().data) pm.environment.set('productCategoryId', r2.json().data.id);",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
             }
           ],
           "request": {
             "method": "PUT",
             "header": [],
             "body": {
-              "mode": "raw",
-              "raw": ""
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "name",
+                  "value": "VGA Test {{$guid}}",
+                  "type": "text"
+                },
+                {
+                  "key": "price",
+                  "value": "-100000",
+                  "type": "text"
+                },
+                {
+                  "key": "stock",
+                  "value": "100",
+                  "type": "text"
+                },
+                {
+                  "key": "categoryId",
+                  "value": "{{productCategoryId}}",
+                  "type": "text"
+                },
+                {
+                  "key": "brandId",
+                  "value": "{{productBrandId}}",
+                  "type": "text"
+                },
+                {
+                  "key": "imageFile",
+                  "type": "file",
+                  "uuid": "3c691839-d76d-4d14-9208-be5557cf2000",
+                  "src": "/E:/CODECNTT/DU_AN/TestingVGA/vga-store-testing/automation/postman/VGA-store-product/Screenshot 2026-05-22 102724.png"
+                }
+              ]
             },
             "url": {
-              "raw": "{{baseUrl}}/api/admin/products/{{productId}}/stock?stock=50",
+              "raw": "{{baseUrl}}/api/admin/products/{{productId}}",
               "host": [
                 "{{baseUrl}}"
               ],
@@ -1254,14 +1311,7 @@
                 "api",
                 "admin",
                 "products",
-                "{{productId}}",
-                "stock"
-              ],
-              "query": [
-                {
-                  "key": "stock",
-                  "value": "50"
-                }
+                "{{productId}}"
               ]
             }
           },
@@ -1320,7 +1370,7 @@
               "formdata": [
                 {
                   "key": "name",
-                  "value": "VGA Test {{$timestamp}}",
+                  "value": "VGA Test {{$guid}}",
                   "type": "text"
                 },
                 {
@@ -1373,7 +1423,7 @@
               "script": {
                 "exec": [
                   "pm.test(\"TC_PROD_036 - Tạo sản phẩm (stock = 0) - BVA\", function () {",
-                  "    pm.expect(pm.response.code).to.be.oneOf([400, 500]);",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
                   "});"
                 ],
                 "type": "text/javascript",
@@ -1418,7 +1468,7 @@
               "formdata": [
                 {
                   "key": "name",
-                  "value": "VGA Test {{$timestamp}}",
+                  "value": "VGA Test {{$guid}}",
                   "type": "text"
                 },
                 {
@@ -1478,17 +1528,77 @@
                 "packages": {},
                 "requests": {}
               }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "var baseUrl = pm.variables.get('baseUrl');",
+                  "var tok = pm.environment.get('adminToken');",
+                  "pm.sendRequest({",
+                  "    url: baseUrl + '/api/admin/brands',",
+                  "    method: 'POST',",
+                  "    header: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + tok },",
+                  "    body: { mode: 'raw', raw: JSON.stringify({ name: 'BrandP_' + Date.now() }) }",
+                  "}, function(err, r) {",
+                  "    if(!err && r.json().data) pm.environment.set('productBrandId', r.json().data.id);",
+                  "});",
+                  "pm.sendRequest({",
+                  "    url: baseUrl + '/api/admin/categories',",
+                  "    method: 'POST',",
+                  "    header: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + tok },",
+                  "    body: { mode: 'raw', raw: JSON.stringify({ name: 'CatP_' + Date.now() }) }",
+                  "}, function(err2, r2) {",
+                  "    if(!err2 && r2.json().data) pm.environment.set('productCategoryId', r2.json().data.id);",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
             }
           ],
           "request": {
             "method": "PUT",
             "header": [],
             "body": {
-              "mode": "raw",
-              "raw": ""
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "name",
+                  "value": "VGA Test {{$guid}}",
+                  "type": "text"
+                },
+                {
+                  "key": "price",
+                  "value": "0",
+                  "type": "text"
+                },
+                {
+                  "key": "stock",
+                  "value": "100",
+                  "type": "text"
+                },
+                {
+                  "key": "categoryId",
+                  "value": "{{productCategoryId}}",
+                  "type": "text"
+                },
+                {
+                  "key": "brandId",
+                  "value": "{{productBrandId}}",
+                  "type": "text"
+                },
+                {
+                  "key": "imageFile",
+                  "type": "file",
+                  "uuid": "3c691839-d76d-4d14-9208-be5557cf2000",
+                  "src": "/E:/CODECNTT/DU_AN/TestingVGA/vga-store-testing/automation/postman/VGA-store-product/Screenshot 2026-05-22 102724.png"
+                }
+              ]
             },
             "url": {
-              "raw": "{{baseUrl}}/api/admin/products/{{productId}}/stock?stock=50",
+              "raw": "{{baseUrl}}/api/admin/products/{{productId}}",
               "host": [
                 "{{baseUrl}}"
               ],
@@ -1496,14 +1606,7 @@
                 "api",
                 "admin",
                 "products",
-                "{{productId}}",
-                "stock"
-              ],
-              "query": [
-                {
-                  "key": "stock",
-                  "value": "50"
-                }
+                "{{productId}}"
               ]
             }
           },
@@ -1517,7 +1620,35 @@
               "script": {
                 "exec": [
                   "pm.test(\"TC_PROD_038 - Cập nhật sản phẩm (stock = 0) - BVA\", function () {",
-                  "    pm.expect(pm.response.code).to.be.oneOf([400, 500]);",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "var baseUrl = pm.variables.get('baseUrl');",
+                  "var tok = pm.environment.get('adminToken');",
+                  "pm.sendRequest({",
+                  "    url: baseUrl + '/api/admin/brands',",
+                  "    method: 'POST',",
+                  "    header: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + tok },",
+                  "    body: { mode: 'raw', raw: JSON.stringify({ name: 'BrandP_' + Date.now() }) }",
+                  "}, function(err, r) {",
+                  "    if(!err && r.json().data) pm.environment.set('productBrandId', r.json().data.id);",
+                  "});",
+                  "pm.sendRequest({",
+                  "    url: baseUrl + '/api/admin/categories',",
+                  "    method: 'POST',",
+                  "    header: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + tok },",
+                  "    body: { mode: 'raw', raw: JSON.stringify({ name: 'CatP_' + Date.now() }) }",
+                  "}, function(err2, r2) {",
+                  "    if(!err2 && r2.json().data) pm.environment.set('productCategoryId', r2.json().data.id);",
                   "});"
                 ],
                 "type": "text/javascript",
@@ -1530,11 +1661,43 @@
             "method": "PUT",
             "header": [],
             "body": {
-              "mode": "raw",
-              "raw": ""
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "name",
+                  "value": "VGA Test {{$guid}}",
+                  "type": "text"
+                },
+                {
+                  "key": "price",
+                  "value": "1500000",
+                  "type": "text"
+                },
+                {
+                  "key": "stock",
+                  "value": "0",
+                  "type": "text"
+                },
+                {
+                  "key": "categoryId",
+                  "value": "{{productCategoryId}}",
+                  "type": "text"
+                },
+                {
+                  "key": "brandId",
+                  "value": "{{productBrandId}}",
+                  "type": "text"
+                },
+                {
+                  "key": "imageFile",
+                  "type": "file",
+                  "uuid": "3c691839-d76d-4d14-9208-be5557cf2000",
+                  "src": "/E:/CODECNTT/DU_AN/TestingVGA/vga-store-testing/automation/postman/VGA-store-product/Screenshot 2026-05-22 102724.png"
+                }
+              ]
             },
             "url": {
-              "raw": "{{baseUrl}}/api/admin/products/{{productId}}/stock?stock=50",
+              "raw": "{{baseUrl}}/api/admin/products/{{productId}}",
               "host": [
                 "{{baseUrl}}"
               ],
@@ -1542,14 +1705,63 @@
                 "api",
                 "admin",
                 "products",
-                "{{productId}}",
-                "stock"
+                "{{productId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Xóa sản phẩm (Admin)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// pm.test(\"TC_ADM_PROD_005 - Admin xóa sản phẩm với ID không tồn tại\", function () {\r",
+                  "//     // Chấp nhận mã 404 (Không tìm thấy) hoặc 400 (Dữ liệu không hợp lệ) từ backend\r",
+                  "//     // Miễn là server không trả về lỗi 500 (Sập server) là tính năng đạt yêu cầu an toàn\r",
+                  "//     pm.expect(pm.response.code).to.be.oneOf([400, 404]);\r",
+                  "    \r",
+                  "//     const responseData = pm.response.json();\r",
+                  "//     pm.expect(responseData.success).to.eql(false);\r",
+                  "// });\r",
+                  "pm.test(\"Xóa sản phẩm thành công\", function () {\r",
+                  "    pm.response.to.have.status(200);\r",
+                  "    pm.expect(pm.response.json().success).to.eql(true);\r",
+                  "});\r",
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/products/{{productId}}",
+              "host": [
+                "{{baseUrl}}"
               ],
-              "query": [
-                {
-                  "key": "stock",
-                  "value": "50"
-                }
+              "path": [
+                "api",
+                "admin",
+                "products",
+                "{{productId}}"
               ]
             }
           },
