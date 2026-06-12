@@ -1,0 +1,31 @@
+tc_id,summary,method,url,body_productId,body_quantity,body_cartItemId,headers_auth,expected_status,expected_message
+TC_CART_01,Thêm sản phẩm vào giỏ thành công (quantity=1 - biên dưới),POST,{{baseUrl}}/api/cart,1,1,,Bearer {{token}},200,Thêm vào giỏ thành công
+TC_CART_02,Thêm cùng sản phẩm nhiều lần (cộng số lượng),POST,{{baseUrl}}/api/cart,1,1,,Bearer {{token}},200,Cập nhật số lượng thành công
+TC_CART_03,Thêm sản phẩm vượt tồn kho (quantity=999999),POST,{{baseUrl}}/api/cart,1,999999,,Bearer {{token}},400,Sản phẩm không đủ số lượng trong kho
+TC_CART_04,Thêm sản phẩm với productId rỗng,POST,{{baseUrl}}/api/cart,,1,,Bearer {{token}},400,Product ID không được để trống
+TC_CART_05,Thêm sản phẩm với quantity = 0,POST,{{baseUrl}}/api/cart,1,0,,Bearer {{token}},400,Số lượng phải lớn hơn hoặc bằng 1
+TC_CART_06,Thêm sản phẩm với quantity âm (-1),POST,{{baseUrl}}/api/cart,1,-1,,Bearer {{token}},400,Số lượng phải lớn hơn hoặc bằng 1
+TC_CART_07,Thêm sản phẩm không tồn tại (productId=99999),POST,{{baseUrl}}/api/cart,99999,1,,Bearer {{token}},404,Không tìm thấy sản phẩm
+TC_CART_08,Xem giỏ hàng khi chưa có sản phẩm (giỏ rỗng - biên),GET,{{baseUrl}}/api/cart,,,,Bearer {{token}},200,totalItems=0
+TC_CART_09,Xem giỏ hàng khi có sản phẩm,GET,{{baseUrl}}/api/cart,,,,Bearer {{token}},200,
+TC_CART_10,Cập nhật tăng số lượng (quantity=2 - valid),PUT,{{baseUrl}}/api/cart/{{cartItemId}},,2,{{cartItemId}},Bearer {{token}},200,Cập nhật số lượng thành công
+TC_CART_11,Cập nhật giảm số lượng về 1 (biên dưới),PUT,{{baseUrl}}/api/cart/{{cartItemId}},,1,{{cartItemId}},Bearer {{token}},200,Cập nhật số lượng thành công
+TC_CART_12,Cập nhật số lượng bằng 0 (invalid - below min),PUT,{{baseUrl}}/api/cart/{{cartItemId}},,0,{{cartItemId}},Bearer {{token}},400,Số lượng phải lớn hơn hoặc bằng 1
+TC_CART_13,Cập nhật số lượng âm (-1),PUT,{{baseUrl}}/api/cart/{{cartItemId}},,-1,{{cartItemId}},Bearer {{token}},400,Số lượng phải lớn hơn hoặc bằng 1
+TC_CART_14,Cập nhật số lượng vượt tồn kho (quantity=999999),PUT,{{baseUrl}}/api/cart/{{cartItemId}},,999999,{{cartItemId}},Bearer {{token}},400,Vượt quá số lượng tồn kho
+TC_CART_15,Cập nhật item không tồn tại (cartItemId=99999),PUT,{{baseUrl}}/api/cart/99999,,1,99999,Bearer {{token}},404,Không tìm thấy item trong giỏ
+TC_CART_16,Xóa một sản phẩm khỏi giỏ (cartItemId hợp lệ),DELETE,{{baseUrl}}/api/cart/{{cartItemId}},,,{{cartItemId}},Bearer {{token}},200,Xóa item thành công
+TC_CART_17,Xóa item không tồn tại (cartItemId=99999),DELETE,{{baseUrl}}/api/cart/99999,,,99999,Bearer {{token}},404,Không tìm thấy item trong giỏ
+TC_CART_18,Xóa toàn bộ giỏ hàng (có sản phẩm),DELETE,{{baseUrl}}/api/cart,,,,Bearer {{token}},200,Xóa toàn bộ giỏ hàng thành công
+TC_CART_19,Xóa toàn bộ giỏ hàng khi giỏ rỗng (biên),DELETE,{{baseUrl}}/api/cart,,,,Bearer {{token}},200,totalItems=0
+TC_CART_20,Thêm sản phẩm hợp lệ (1 < quantity < stock),POST,{{baseUrl}}/api/cart,1,2,,Bearer {{token}},201,Thêm vào giỏ thành công
+TC_CART_21,Thêm lại sản phẩm sau khi xóa sạch,POST,{{baseUrl}}/api/cart,1,1,,Bearer {{token}},200,Thêm vào giỏ thành công
+TC_CART_22,Thêm sản phẩm với quantity = stock (biên trên - mở rộng),POST,{{baseUrl}}/api/cart,1,{{stock}},,Bearer {{token}},201,Thêm vào giỏ thành công
+TC_CART_23,Thêm sản phẩm thiếu quantity (quantity omitted - mở rộng),POST,{{baseUrl}}/api/cart,1,,,Bearer {{token}},400,Số lượng không được để trống
+TC_CART_24,Thêm sản phẩm với quantity là số thực (1.5 - mở rộng),POST,{{baseUrl}}/api/cart,1,1.5,,Bearer {{token}},400,Số lượng phải là số nguyên
+TC_CART_25,Thêm sản phẩm với quantity là chuỗi (\"hai\" - mở rộng),POST,{{baseUrl}}/api/cart,1,hai,,Bearer {{token}},400,Số lượng phải là số nguyên
+TC_CART_26,Cập nhật quantity = stock (biên trên - mở rộng),PUT,{{baseUrl}}/api/cart/{{cartItemId}},,{{stock}},{{cartItemId}},Bearer {{token}},200,Cập nhật số lượng thành công
+TC_CART_27,Cập nhật với cartItemId không hợp lệ (id=\"abc\" - mở rộng),PUT,{{baseUrl}}/api/cart/abc,,1,abc,Bearer {{token}},400,cartItemId không hợp lệ
+TC_CART_28,Xóa với cartItemId không hợp lệ (id=\"abc\" - mở rộng),DELETE,{{baseUrl}}/api/cart/abc,,,abc,Bearer {{token}},400,cartItemId không hợp lệ
+TC_CART_29,Xem giỏ hàng không có Authorization header (mở rộng),GET,{{baseUrl}}/api/cart,,,,,401,Unauthorized
+TC_CART_30,Xem giỏ hàng với token hết hạn/sai (mở rộng),GET,{{baseUrl}}/api/cart,,,,Bearer {{expiredToken}},401,Token không hợp lệ hoặc đã hết hạn
