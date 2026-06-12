@@ -1,6 +1,0 @@
-TC_ID,recipientName,phone,detailedAddress,isDefault,expectedStatus
-TC_ADDR_01,Tu Minh Von,0342475759,45 Go Vap TPHCM,true,200
-TC_ADDR_02,,0342475759,,false,400
-TC_ADDR_03,Tu Minh Von,abcxyz,45 Go Vap TPHCM,false,400
-TC_ADDR_04,,,,,200
-TC_ADDR_05,,,,,404
