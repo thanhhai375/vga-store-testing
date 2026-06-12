@@ -25,3 +25,7 @@ TC_PROD_027;Product;PUT;/api/products/{id};Cập nhật thông tin sản phẩm 
 TC_PROD_028;Product;PUT;/api/products/{id};Cập nhật sản phẩm không tồn tại;Tài khoản Admin đã đăng nhập;1. Gửi request cập nhật cho ID giả;id=99999, Body sửa đổi;Hệ thống trả về lỗi không tìm thấy sản phẩm 404;Medium;Not Run
 TC_PROD_029;Product;DELETE;/api/products/{id};Xóa sản phẩm thành công;Tài khoản Admin, sản phẩm có sẵn;1. Gửi request xóa theo ID;id=1;Sản phẩm bị xóa khỏi hệ thống, trả về code 200;High;Not Run
 TC_PROD_030;Product;DELETE;/api/products/{id};Xóa sản phẩm không có quyền (User thường);Tài khoản User thường đăng nhập;1. Gửi request xóa sản phẩm bằng token user;id=1;Hệ thống từ chối, báo lỗi Forbidden 403;High;Not Run
+TC_PROD_031;Product;POST;/api/products;Thêm mới sản phẩm có giá trị stock âm;Tài khoản Admin đã đăng nhập;1. Gửi request thêm sản phẩm;Body chứa stock = -5;Hệ thống báo lỗi và không tạo sản phẩm;High;Not Run
+TC_PROD_032;Product;POST;/api/products;Thêm mới sản phẩm có giá trị price âm;Tài khoản Admin đã đăng nhập;1. Gửi request thêm sản phẩm;Body chứa price = -100000;Hệ thống báo lỗi và không tạo sản phẩm;High;Not Run
+TC_PROD_033;Product;PUT;/api/products/{id};Cập nhật sản phẩm với stock âm;Tài khoản Admin, sản phẩm có sẵn;1. Gửi request cập nhật sản phẩm;id=1, Body sửa stock = -5;Hệ thống báo lỗi và không cập nhật;High;Not Run
+TC_PROD_034;Product;PUT;/api/products/{id};Cập nhật sản phẩm với price âm;Tài khoản Admin, sản phẩm có sẵn;1. Gửi request cập nhật sản phẩm;id=1, Body sửa price = -100000;Hệ thống báo lỗi và không cập nhật;High;Not Run
