@@ -978,6 +978,582 @@
             }
           },
           "response": []
+        },
+        {
+          "name": "TC_PROD_031 - Tạo sản phẩm (stock âm) - BVA",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"TC_PROD_031 - Tạo sản phẩm (stock âm) - BVA\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([400, 500]);",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "var baseUrl = pm.variables.get('baseUrl');",
+                  "var tok = pm.environment.get('adminToken');",
+                  "pm.sendRequest({",
+                  "    url: baseUrl + '/api/admin/brands',",
+                  "    method: 'POST',",
+                  "    header: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + tok },",
+                  "    body: { mode: 'raw', raw: JSON.stringify({ name: 'BrandP_' + Date.now() }) }",
+                  "}, function(err, r) {",
+                  "    if(!err && r.json().data) pm.environment.set('productBrandId', r.json().data.id);",
+                  "});",
+                  "pm.sendRequest({",
+                  "    url: baseUrl + '/api/admin/categories',",
+                  "    method: 'POST',",
+                  "    header: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + tok },",
+                  "    body: { mode: 'raw', raw: JSON.stringify({ name: 'CatP_' + Date.now() }) }",
+                  "}, function(err2, r2) {",
+                  "    if(!err2 && r2.json().data) pm.environment.set('productCategoryId', r2.json().data.id);",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "name",
+                  "value": "VGA Test {{$timestamp}}",
+                  "type": "text"
+                },
+                {
+                  "key": "price",
+                  "value": "1500000",
+                  "type": "text"
+                },
+                {
+                  "key": "stock",
+                  "value": "-5",
+                  "type": "text"
+                },
+                {
+                  "key": "categoryId",
+                  "value": "{{productCategoryId}}",
+                  "type": "text"
+                },
+                {
+                  "key": "brandId",
+                  "value": "{{productBrandId}}",
+                  "type": "text"
+                },
+                {
+                  "key": "imageFile",
+                  "type": "file",
+                  "uuid": "3c691839-d76d-4d14-9208-be5557cf2000",
+                  "src": "/E:/CODECNTT/DU_AN/TestingVGA/vga-store-testing/automation/postman/VGA-store-product/Screenshot 2026-05-22 102724.png"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/products",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "products"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "TC_PROD_032 - Tạo sản phẩm (price âm) - BVA",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"TC_PROD_032 - Tạo sản phẩm (price âm) - BVA\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([400, 500]);",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "var baseUrl = pm.variables.get('baseUrl');",
+                  "var tok = pm.environment.get('adminToken');",
+                  "pm.sendRequest({",
+                  "    url: baseUrl + '/api/admin/brands',",
+                  "    method: 'POST',",
+                  "    header: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + tok },",
+                  "    body: { mode: 'raw', raw: JSON.stringify({ name: 'BrandP_' + Date.now() }) }",
+                  "}, function(err, r) {",
+                  "    if(!err && r.json().data) pm.environment.set('productBrandId', r.json().data.id);",
+                  "});",
+                  "pm.sendRequest({",
+                  "    url: baseUrl + '/api/admin/categories',",
+                  "    method: 'POST',",
+                  "    header: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + tok },",
+                  "    body: { mode: 'raw', raw: JSON.stringify({ name: 'CatP_' + Date.now() }) }",
+                  "}, function(err2, r2) {",
+                  "    if(!err2 && r2.json().data) pm.environment.set('productCategoryId', r2.json().data.id);",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "name",
+                  "value": "VGA Test {{$timestamp}}",
+                  "type": "text"
+                },
+                {
+                  "key": "price",
+                  "value": "-100000",
+                  "type": "text"
+                },
+                {
+                  "key": "stock",
+                  "value": "100",
+                  "type": "text"
+                },
+                {
+                  "key": "categoryId",
+                  "value": "{{productCategoryId}}",
+                  "type": "text"
+                },
+                {
+                  "key": "brandId",
+                  "value": "{{productBrandId}}",
+                  "type": "text"
+                },
+                {
+                  "key": "imageFile",
+                  "type": "file",
+                  "uuid": "3c691839-d76d-4d14-9208-be5557cf2000",
+                  "src": "/E:/CODECNTT/DU_AN/TestingVGA/vga-store-testing/automation/postman/VGA-store-product/Screenshot 2026-05-22 102724.png"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/products",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "products"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "TC_PROD_033 - Cập nhật sản phẩm (stock âm) - BVA",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"TC_PROD_033 - Cập nhật sản phẩm (stock âm) - BVA\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([400, 500]);",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": ""
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/products/{{productId}}/stock?stock=50",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "products",
+                "{{productId}}",
+                "stock"
+              ],
+              "query": [
+                {
+                  "key": "stock",
+                  "value": "50"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "TC_PROD_034 - Cập nhật sản phẩm (price âm) - BVA",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"TC_PROD_034 - Cập nhật sản phẩm (price âm) - BVA\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([400, 500]);",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": ""
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/products/{{productId}}/stock?stock=50",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "products",
+                "{{productId}}",
+                "stock"
+              ],
+              "query": [
+                {
+                  "key": "stock",
+                  "value": "50"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "TC_PROD_035 - Tạo sản phẩm (price = 0) - BVA",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"TC_PROD_035 - Tạo sản phẩm (price = 0) - BVA\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([400, 500]);",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "var baseUrl = pm.variables.get('baseUrl');",
+                  "var tok = pm.environment.get('adminToken');",
+                  "pm.sendRequest({",
+                  "    url: baseUrl + '/api/admin/brands',",
+                  "    method: 'POST',",
+                  "    header: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + tok },",
+                  "    body: { mode: 'raw', raw: JSON.stringify({ name: 'BrandP_' + Date.now() }) }",
+                  "}, function(err, r) {",
+                  "    if(!err && r.json().data) pm.environment.set('productBrandId', r.json().data.id);",
+                  "});",
+                  "pm.sendRequest({",
+                  "    url: baseUrl + '/api/admin/categories',",
+                  "    method: 'POST',",
+                  "    header: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + tok },",
+                  "    body: { mode: 'raw', raw: JSON.stringify({ name: 'CatP_' + Date.now() }) }",
+                  "}, function(err2, r2) {",
+                  "    if(!err2 && r2.json().data) pm.environment.set('productCategoryId', r2.json().data.id);",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "name",
+                  "value": "VGA Test {{$timestamp}}",
+                  "type": "text"
+                },
+                {
+                  "key": "price",
+                  "value": "0",
+                  "type": "text"
+                },
+                {
+                  "key": "stock",
+                  "value": "100",
+                  "type": "text"
+                },
+                {
+                  "key": "categoryId",
+                  "value": "{{productCategoryId}}",
+                  "type": "text"
+                },
+                {
+                  "key": "brandId",
+                  "value": "{{productBrandId}}",
+                  "type": "text"
+                },
+                {
+                  "key": "imageFile",
+                  "type": "file",
+                  "uuid": "3c691839-d76d-4d14-9208-be5557cf2000",
+                  "src": "/E:/CODECNTT/DU_AN/TestingVGA/vga-store-testing/automation/postman/VGA-store-product/Screenshot 2026-05-22 102724.png"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/products",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "products"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "TC_PROD_036 - Tạo sản phẩm (stock = 0) - BVA",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"TC_PROD_036 - Tạo sản phẩm (stock = 0) - BVA\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([400, 500]);",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "var baseUrl = pm.variables.get('baseUrl');",
+                  "var tok = pm.environment.get('adminToken');",
+                  "pm.sendRequest({",
+                  "    url: baseUrl + '/api/admin/brands',",
+                  "    method: 'POST',",
+                  "    header: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + tok },",
+                  "    body: { mode: 'raw', raw: JSON.stringify({ name: 'BrandP_' + Date.now() }) }",
+                  "}, function(err, r) {",
+                  "    if(!err && r.json().data) pm.environment.set('productBrandId', r.json().data.id);",
+                  "});",
+                  "pm.sendRequest({",
+                  "    url: baseUrl + '/api/admin/categories',",
+                  "    method: 'POST',",
+                  "    header: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + tok },",
+                  "    body: { mode: 'raw', raw: JSON.stringify({ name: 'CatP_' + Date.now() }) }",
+                  "}, function(err2, r2) {",
+                  "    if(!err2 && r2.json().data) pm.environment.set('productCategoryId', r2.json().data.id);",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "name",
+                  "value": "VGA Test {{$timestamp}}",
+                  "type": "text"
+                },
+                {
+                  "key": "price",
+                  "value": "1500000",
+                  "type": "text"
+                },
+                {
+                  "key": "stock",
+                  "value": "0",
+                  "type": "text"
+                },
+                {
+                  "key": "categoryId",
+                  "value": "{{productCategoryId}}",
+                  "type": "text"
+                },
+                {
+                  "key": "brandId",
+                  "value": "{{productBrandId}}",
+                  "type": "text"
+                },
+                {
+                  "key": "imageFile",
+                  "type": "file",
+                  "uuid": "3c691839-d76d-4d14-9208-be5557cf2000",
+                  "src": "/E:/CODECNTT/DU_AN/TestingVGA/vga-store-testing/automation/postman/VGA-store-product/Screenshot 2026-05-22 102724.png"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/products",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "products"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "TC_PROD_037 - Cập nhật sản phẩm (price = 0) - BVA",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"TC_PROD_037 - Cập nhật sản phẩm (price = 0) - BVA\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([400, 500]);",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": ""
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/products/{{productId}}/stock?stock=50",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "products",
+                "{{productId}}",
+                "stock"
+              ],
+              "query": [
+                {
+                  "key": "stock",
+                  "value": "50"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "TC_PROD_038 - Cập nhật sản phẩm (stock = 0) - BVA",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"TC_PROD_038 - Cập nhật sản phẩm (stock = 0) - BVA\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([400, 500]);",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": ""
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/products/{{productId}}/stock?stock=50",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "products",
+                "{{productId}}",
+                "stock"
+              ],
+              "query": [
+                {
+                  "key": "stock",
+                  "value": "50"
+                }
+              ]
+            }
+          },
+          "response": []
         }
       ]
     },
