@@ -386,12 +386,12 @@ pipeline {
         stage('Run API Tests (Newman/Postman)') {
     steps {
         dir('automation') {
-            sh '''
+            sh '''#!/bin/bash
             rm -f ../error_reason*.txt
             failed=0
 
             # 1. Tìm tất cả file Collection trong mọi thư mục con
-            find . -name "*.postman_collection.json" | while read -r test_file; do
+            while read -r test_file; do
                 dir_name=$(dirname "$test_file")
                 base_test_name=$(basename "$test_file")
                 
@@ -438,7 +438,7 @@ pipeline {
                             failed=1
                         }
                 fi
-            done
+            done < <(find . -name "*.postman_collection.json")
 
             if [ $failed -eq 1 ]; then exit 1; fi
             '''
