@@ -384,78 +384,198 @@ pipeline {
             }
         }
         stage('Run API Tests (Newman/Postman)') {
-    steps {
-        dir('automation') {
-            sh '''#!/bin/bash
-            rm -f ../error_reason*.txt
-            failed=0
+            steps {
+                dir('automation') {
+                    sh '''#!/bin/bash
+                    rm -f ../error_reason*.txt
+                    failed=0
 
-            # 1. Tìm tất cả file Collection trong mọi thư mục con
-            while read -r test_file; do
-                dir_name=$(dirname "$test_file")
-                base_test_name=$(basename "$test_file")
-                
-                # Tìm tất cả file CSV trong cùng thư mục đó
-                csv_files=("$dir_name"/*.csv)
-                
-                # Kiểm tra xem có file CSV nào không (dùng [ -f ] kiểm tra phần tử đầu tiên)
-                if [ -f "${csv_files[0]}" ]; then
-                    for csv_file in "${csv_files[@]}"; do
-                        base_csv_name=$(basename "$csv_file")
-                        json_report="report-${base_test_name}-${base_csv_name}.json"
-                        
-                        echo "▶️ ĐANG CHẠY: $test_file VỚI DATA: $base_csv_name"
-                        
-                        docker run --rm \
-                            --network vga-store-testing_vga-network \
-                            --volumes-from vga_jenkins \
-                            -w "$(pwd)" \
-                            postman/newman run "$test_file" \
-                            -d "$csv_file" \
-                            -e "postman/env/VGA_Store_Environment.postman_environment.json" \
-                            --env-var "baseUrl=http://backend:8080" \
-                            --reporters cli,json \
-                            --reporter-json-export "$json_report" > newman_log.txt 2>&1 || {
-                                echo "❌ LỖI Ở: $test_file - Data: $base_csv_name"
-                                failed=1
-                            }
-                    done
-                else
-                    # Nếu không có CSV, chạy Collection bình thường
-                    echo "⚠️ KHÔNG CÓ CSV, chạy đơn lẻ: $test_file"
-                    json_report="report-${base_test_name}.json"
-                    
-                    docker run --rm \
-                        --network vga-store-testing_vga-network \
-                        --volumes-from vga_jenkins \
-                        -w "$(pwd)" \
-                        postman/newman run "$test_file" \
-                        -e "postman/env/VGA_Store_Environment.postman_environment.json" \
-                        --env-var "baseUrl=http://backend:8080" \
-                        --reporters cli,json \
-                        --reporter-json-export "$json_report" > newman_log.txt 2>&1 || {
-                            echo "❌ LỖI Ở: $test_file"
-                            failed=1
-                        }
-                fi
-            done < <(find . -name "*.postman_collection.json")
-
-            if [ $failed -eq 1 ]; then exit 1; fi
-            '''
+                    # Tạo script Node.js siêu ngắn để bóc tách chính xác Testcase nào lỗi từ file JSON
+                    cat << 'EOF' > parse_errors.js
+const fs = require('fs');
+const testFile = process.argv[2];
+const jsonName = process.argv[3];
+try {
+  const baseName = require('path').basename(testFile);
+  const outName = '../error_reason_' + baseName.replace(/\\s+/g, '_') + '.txt';
+  const data = JSON.parse(fs.readFileSync(jsonName));
+  let hasError = false;
+  data.run.executions.forEach(exec => {
+    if (exec.assertions) {
+      exec.assertions.forEach(assert => {
+        if (assert.error) {
+          if (!hasError) {
+             fs.appendFileSync(outName, '❌ FILE: ' + testFile + '\\n');
+             hasError = true;
+          }
+          const errMsg = assert.error.message.replace(/\\r?\\n/g, ' ');
+          fs.appendFileSync(outName, '  - Testcase: ' + exec.item.name + '\\n    Lỗi: ' + errMsg + '\\n\\n');
         }
+      });
     }
+  });
+} catch (e) {
+  const baseName = require('path').basename(testFile);
+  const outName = '../error_reason_' + baseName.replace(/\\s+/g, '_') + '.txt';
+  fs.appendFileSync(outName, '❌ FILE: ' + testFile + '\\n  - Lỗi không xác định (xem log Jenkins): ' + e.message + '\\n\\n');
 }
+EOF
+
+                    # 1. Tìm tất cả file Collection trong mọi thư mục con
+                    while read -r test_file; do
+                        dir_name=$(dirname "$test_file")
+                        base_test_name=$(basename "$test_file")
+                        
+                        # Tìm tất cả file CSV trong cùng thư mục đó
+                        csv_files=("$dir_name"/*.csv)
+                        
+                        # Kiểm tra xem có file CSV nào không (dùng [ -f ] kiểm tra phần tử đầu tiên)
+                        if [ -f "${csv_files[0]}" ]; then
+                            for csv_file in "${csv_files[@]}"; do
+                                base_csv_name=$(basename "$csv_file")
+                                json_report="report-${base_test_name}-${base_csv_name}.json"
+                                
+                                echo "▶️ ĐANG CHẠY: $test_file VỚI DATA: $base_csv_name"
+                                
+                                docker run --rm \
+                                    --network vga-store-testing_vga-network \
+                                    --volumes-from vga_jenkins \
+                                    -w "$(pwd)" \
+                                    postman/newman run "$test_file" \
+                                    -d "$csv_file" \
+                                    -e "postman/env/VGA_Store_Environment.postman_environment.json" \
+                                    --env-var "baseUrl=http://backend:8080" \
+                                    --reporters cli,json \
+                                    --reporter-json-export "$json_report" > newman_log.txt 2>&1 || {
+                                        echo "❌ LỖI Ở: $test_file - Data: $base_csv_name"
+                                        node parse_errors.js "$test_file" "$json_report"
+                                        failed=1
+                                    }
+                            done
+                        else
+                            # Nếu không có CSV, chạy Collection bình thường
+                            echo "⚠️ KHÔNG CÓ CSV, chạy đơn lẻ: $test_file"
+                            json_report="report-${base_test_name}.json"
+                            
+                            docker run --rm \
+                                --network vga-store-testing_vga-network \
+                                --volumes-from vga_jenkins \
+                                -w "$(pwd)" \
+                                postman/newman run "$test_file" \
+                                -e "postman/env/VGA_Store_Environment.postman_environment.json" \
+                                --env-var "baseUrl=http://backend:8080" \
+                                --reporters cli,json \
+                                --reporter-json-export "$json_report" > newman_log.txt 2>&1 || {
+                                    echo "❌ LỖI Ở: $test_file"
+                                    node parse_errors.js "$test_file" "$json_report"
+                                    failed=1
+                                }
+                        fi
+                    done < <(find . -name "*.postman_collection.json")
+
+                    if [ $failed -eq 1 ]; then exit 1; fi
+                    '''
+                }
+            }
+        }
     }
     post {
         failure {
+            echo '❌ Ối, Test thất bại rồi! Đang gọi API tự động tạo ticket Bug trên Jira...'
             script {
-                def errorFiles = sh(script: "ls error_reason_*.txt 2>/dev/null || true", returnStdout: true).trim().split('\n')
-                for (file in errorFiles) {
-                    if (!file.trim()) continue
-                    // Logic tạo Jira (như code gốc của bạn đã rất ổn)
-                    echo "Đang xử lý báo cáo lỗi từ: ${file}"
+                def branchName = sh(script: "git rev-parse --abbrev-ref HEAD", returnStdout: true).trim()
+                if (branchName == "HEAD") {
+                    branchName = env.GIT_BRANCH ?: "Unknown Branch"
+                }
+
+                // Tìm tất cả các file lỗi được sinh ra
+                def errorFilesStr = sh(script: "ls error_reason_*.txt 2>/dev/null || true", returnStdout: true).trim()
+
+                if (errorFilesStr) {
+                    def errorFiles = errorFilesStr.split('\n')
+                    for (int i = 0; i < errorFiles.length; i++) {
+                        def file = errorFiles[i].trim()
+                        if (!file) continue
+                        
+                        def errorReason = readFile(file).trim()
+                        def lines = errorReason.split('\n')
+                        def summaryTitle = lines[0].take(200).replace('"', "'")
+                        def culprit = sh(script: "git log -1 --pretty=format:'%an <%ae>'", returnStdout: true).trim()
+
+                        // Lấy tên file bị lỗi và người sửa cuối
+                        def fileLine = lines.find { it.startsWith('❌ FILE: ') }
+                        if (fileLine) {
+                            def failedFile = fileLine.replace('❌ FILE: ', '').trim()
+                            def fileAuthor = sh(script: "git log -1 --pretty=format:'%an <%ae>' -- \"automation/${failedFile}\"", returnStdout: true).trim()
+                            if (fileAuthor) {
+                                culprit = fileAuthor
+                            }
+                        }
+
+                        // CÔNG THỨC LÀM SẠCH CHUẨN JSON
+                        errorReason = errorReason.replace('\\', '\\\\')
+                                                 .replace('"', '\\"')
+                                                 .replace('\t', '    ')
+                                                 .replace('\r', '')
+                                                 .replace('\n', '\\n')
+
+                        def bugSummary = "[Bug Tự Động] ${summaryTitle}"
+                        def bugDescription = "Hệ thống CI/CD Jenkins vừa quét và phát hiện lỗi mới.\\n\\n**1. Nhánh bị lỗi (Branch):** ${branchName}\\n\\n**2. Các Testcase rớt & Lý do lỗi:**\\n{code}\\n${errorReason}\\n{code}\\n\\n**3. Thủ phạm tình nghi (Người sửa file cuối):** ${culprit}\\n\\n**4. Xem thêm:** Vui lòng kiểm tra màn hình Jenkins Console (Build #${env.BUILD_NUMBER}) để biết toàn bộ quá trình chạy."
+
+                        def payload = """
+                        {
+                            "fields": {
+                                "project": { "key": "${JIRA_PROJECT_KEY}" },
+                                "summary": "${bugSummary}",
+                                "description": "${bugDescription}",
+                                "issuetype": { "name": "Bug" }
+                            }
+                        }
+                        """
+
+                        writeFile file: "jira_payload_${i}.json", text: payload
+
+                        sh """
+                        curl -s -X POST -u "${JIRA_USER}:${JIRA_TOKEN}" \\
+                        -H "Content-Type: application/json" \\
+                        -d @jira_payload_${i}.json \\
+                        ${JIRA_URL}/rest/api/2/issue/
+                        """
+                        echo "✅ Đã tạo Jira ticket cho file ${file}"
+                    }
+                } else {
+                    // Nếu pipeline sập nhưng không có file lỗi (ví dụ sập do build docker lỗi)
+                    def culprit = sh(script: "git log -1 --pretty=format:'%an <%ae>'", returnStdout: true).trim()
+                    def summaryTitle = "Lỗi Build/Deploy Môi trường Server"
+                    def errorReason = "Lỗi khởi động môi trường Server (Pipeline sập trước khi kịp chạy Test). Vui lòng kiểm tra log Jenkins."
+
+                    def bugSummary = "[Bug Tự Động] ${summaryTitle}"
+                    def bugDescription = "Hệ thống CI/CD Jenkins vừa quét và phát hiện lỗi.\\n\\n**1. Nhánh bị lỗi (Branch):** ${branchName}\\n\\n**2. Lý do lỗi:**\\n{code}\\n${errorReason}\\n{code}\\n\\n**3. Thủ phạm tình nghi:** ${culprit}\\n\\n**4. Xem thêm:** Vui lòng kiểm tra màn hình Jenkins Console (Build #${env.BUILD_NUMBER}) để biết toàn bộ quá trình chạy."
+
+                    def payload = """
+                    {
+                        "fields": {
+                            "project": { "key": "${JIRA_PROJECT_KEY}" },
+                            "summary": "${bugSummary}",
+                            "description": "${bugDescription}",
+                            "issuetype": { "name": "Bug" }
+                        }
+                    }
+                    """
+
+                    writeFile file: 'jira_payload.json', text: payload
+
+                    sh """
+                    curl -s -X POST -u "${JIRA_USER}:${JIRA_TOKEN}" \\
+                    -H "Content-Type: application/json" \\
+                    -d @jira_payload.json \\
+                    ${JIRA_URL}/rest/api/2/issue/
+                    """
                 }
             }
+        }
+        success {
+            echo '🎉 Tuyệt vời! Mọi test case đều pass và Deploy thành công.'
         }
     }
 }
