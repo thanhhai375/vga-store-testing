@@ -193,12 +193,8 @@ try {
         });
         fs.appendFileSync(outName, '\\n' + '='.repeat(50) + '\\n\\n');
       }
-    });
-  } catch (e) {
-    const baseName = path.basename(testFile);
-    const outName = '../error_reason_' + baseName.replace(/\\s+/g, '_') + '.txt';
-    fs.appendFileSync(outName, '❌ FILE: ' + testFile + '\\n  - Lỗi không xác định (xem log Jenkins): ' + e.message + '\\n\\n');
-  }
+    }
+  });
 } catch (e) {
   const baseName = path.basename(testFile);
   const outName = '../error_reason_' + baseName.replace(/\\s+/g, '_') + '.txt';
