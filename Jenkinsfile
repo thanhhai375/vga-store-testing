@@ -34,14 +34,31 @@ options {
                     chmod +x docker-compose
                 fi
 
-                # "BẮN TỈA": Chỉ tắt và dọn dẹp các app, TUYỆT ĐỐI để Jenkins được sống
-                ./docker-compose -p vga-store-testing rm -f -s db backend admin-frontend user-frontend
-                
-                # Xóa sạch data cũ của Database để đảm bảo môi trường test luôn mới tinh (Fresh DB)
-                docker run --rm -v vga-store-testing_pgdata:/dbdata alpine sh -c "rm -rf /dbdata/*"
+                # Đảm bảo container Jenkins được kết nối vào network của dự án để gọi được API
+                docker network connect vga-store-testing_vga-network vga_jenkins || true
 
-                # Khởi tạo lại App
-                ./docker-compose -p vga-store-testing up -d --build db backend admin-frontend user-frontend
+                # Kiểm tra xem các container chính (backend và db) có đang hoạt động sẵn hay không
+                backend_running=$(docker ps --filter "name=vga_backend" --filter "status=running" -q)
+                db_running=$(docker ps --filter "name=vga_db" --filter "status=running" -q)
+
+                if [ -n "$backend_running" ] && [ -n "$db_running" ]; then
+                    echo "⚡ Phát hiện các container (Backend & DB) đã hoạt động sẵn!"
+                    echo "⚡ BỎ QUA các bước: Tắt app, Dọn dẹp DB và Build lại từ đầu để tối ưu thời gian chạy (Tiết kiệm ~3-5 phút)!"
+                else
+                    echo "⚠️ Phát hiện hệ thống chưa chạy hoặc đang bị tắt. Tiến hành dựng mới..."
+                    
+                    # "BẮN TỈA": Chỉ tắt và dọn dẹp các app, TUYỆT ĐỐI để Jenkins được sống
+                    ./docker-compose -p vga-store-testing rm -f -s db backend admin-frontend user-frontend
+                    
+                    # Xóa sạch data cũ của Database để đảm bảo môi trường test luôn mới tinh (Fresh DB)
+                    docker run --rm -v vga-store-testing_pgdata:/dbdata alpine sh -c "rm -rf /dbdata/*"
+
+                    # Khởi tạo lại App
+                    ./docker-compose -p vga-store-testing up -d --build db backend admin-frontend user-frontend
+
+                    # Kết nối lại mạng
+                    docker network connect vga-store-testing_vga-network vga_jenkins || true
+                fi
                 '''
 
                 echo '✅ Triển khai thành công! Đang đợi Backend (Spring Boot) khởi động hoàn tất...'
