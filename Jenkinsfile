@@ -43,7 +43,17 @@ options {
 
                 if [ -n "$backend_running" ] && [ -n "$db_running" ]; then
                     echo "⚡ Phát hiện các container (Backend & DB) đã hoạt động sẵn!"
-                    echo "⚡ BỎ QUA các bước: Tắt app, Dọn dẹp DB và Build lại từ đầu để tối ưu thời gian chạy (Tiết kiệm ~3-5 phút)!"
+                    echo "⚡ BỎ QUA các bước build lại từ đầu."
+                    echo "🧹 Đang dọn dẹp Database (Wipe DB) để tránh lỗi trùng lặp dữ liệu (Email is already in use)..."
+                    
+                    # Tắt và xóa nhanh container db và backend
+                    ./docker-compose -p vga-store-testing rm -f -s db backend
+                    
+                    # Xóa sạch data cũ của Database
+                    docker run --rm -v vga-store-testing_pgdata:/dbdata alpine sh -c "rm -rf /dbdata/*"
+                    
+                    # Khởi động lại db và backend (không dùng --build) để hệ thống chạy SQL init tự động
+                    ./docker-compose -p vga-store-testing up -d db backend
                 else
                     echo "⚠️ Phát hiện hệ thống chưa chạy hoặc đang bị tắt. Tiến hành dựng mới..."
                     
