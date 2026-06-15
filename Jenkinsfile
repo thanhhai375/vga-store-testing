@@ -178,7 +178,7 @@ EOF
                                 }
                             cat newman_log.txt
                         fi
-                    done < <(find . -name "*.postman_collection.json")
+                    done < <(find . -name "*.postman_collection.json" | sort)
 
                     # Nếu có bất kỳ file nào failed thì đánh sập pipeline
                     if [ $failed -eq 1 ]; then
