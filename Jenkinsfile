@@ -108,7 +108,7 @@ const jsonName = process.argv[3];
 
 try {
   const baseName = path.basename(testFile);
-  const outName = '../error_reason_' + baseName.replace(/\s+/g, '_') + '.txt';
+  const outName = '../error_reason_' + baseName.replace(/\\s+/g, '_') + '.txt';
   const data = JSON.parse(fs.readFileSync(jsonName));
   let hasError = false;
 
@@ -117,7 +117,7 @@ try {
       const failedAsserts = exec.assertions.filter(a => a.error);
       if (failedAsserts.length > 0) {
         if (!hasError) {
-          fs.appendFileSync(outName, '❌ FILE: ' + testFile + '\n\n');
+          fs.appendFileSync(outName, '❌ FILE: ' + testFile + '\\n\\n');
           hasError = true;
         }
 
@@ -177,32 +177,32 @@ try {
           }
         }
 
-        fs.appendFileSync(outName, '  - Request: ' + method + ' ' + reqUrl + ' (Iteration: ' + iteration + ')\n');
+        fs.appendFileSync(outName, '  - Request: ' + method + ' ' + reqUrl + ' (Iteration: ' + iteration + ')\\n');
         if (reqBody) {
-          fs.appendFileSync(outName, '    Request Body:\n' + reqBody.split('\n').map(l => '      ' + l).join('\n') + '\n');
+          fs.appendFileSync(outName, '    Request Body:\\n' + reqBody.split('\\n').map(l => '      ' + l).join('\\n') + '\\n');
         }
-        fs.appendFileSync(outName, '    Response Status: ' + statusCode + '\n');
+        fs.appendFileSync(outName, '    Response Status: ' + statusCode + '\\n');
         if (respBody) {
-          fs.appendFileSync(outName, '    Response Body:\n' + respBody.split('\n').map(l => '      ' + l).join('\n') + '\n');
+          fs.appendFileSync(outName, '    Response Body:\\n' + respBody.split('\\n').map(l => '      ' + l).join('\\n') + '\\n');
         }
 
         failedAsserts.forEach(assert => {
           const assertName = assert.assertion || 'Unnamed assertion';
-          const errMsg = assert.error.message.replace(/[\r\n]+/g, ' ');
-          fs.appendFileSync(outName, '    * Failure: ' + assertName + '\n      Error details: ' + errMsg + '\n');
+          const errMsg = assert.error.message.replace(/[\\r\\n]+/g, ' ');
+          fs.appendFileSync(outName, '    * Failure: ' + assertName + '\\n      Error details: ' + errMsg + '\\n');
         });
-        fs.appendFileSync(outName, '\n' + '='.repeat(50) + '\n\n');
+        fs.appendFileSync(outName, '\\n' + '='.repeat(50) + '\\n\\n');
       }
     });
   } catch (e) {
     const baseName = path.basename(testFile);
-    const outName = '../error_reason_' + baseName.replace(/\s+/g, '_') + '.txt';
-    fs.appendFileSync(outName, '❌ FILE: ' + testFile + '\n  - Lỗi không xác định (xem log Jenkins): ' + e.message + '\n\n');
+    const outName = '../error_reason_' + baseName.replace(/\\s+/g, '_') + '.txt';
+    fs.appendFileSync(outName, '❌ FILE: ' + testFile + '\\n  - Lỗi không xác định (xem log Jenkins): ' + e.message + '\\n\\n');
   }
 } catch (e) {
   const baseName = path.basename(testFile);
-  const outName = '../error_reason_' + baseName.replace(/\s+/g, '_') + '.txt';
-  fs.appendFileSync(outName, '❌ FILE: ' + testFile + '\n  - Lỗi không xác định (xem log Jenkins): ' + e.message + '\n\n');
+  const outName = '../error_reason_' + baseName.replace(/\\s+/g, '_') + '.txt';
+  fs.appendFileSync(outName, '❌ FILE: ' + testFile + '\\n  - Lỗi không xác định (xem log Jenkins): ' + e.message + '\\n\\n');
 }
 EOF
 
