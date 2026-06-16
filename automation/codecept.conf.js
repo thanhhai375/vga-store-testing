@@ -13,8 +13,8 @@ exports.config = {
   output: './E2E/output',
   helpers: {
     Playwright: {
-      url: 'http://localhost',
-      show: true,
+      url: 'http://localhost:5173',
+      show: false,
       browser: 'chromium'
     }
   },

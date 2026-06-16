@@ -11,6 +11,9 @@
   "license": "ISC",
   "type": "commonjs",
   "devDependencies": {
-    "cypress": "^15.15.0"
+    "@codeceptjs/configure": "^4.0.0-beta.4",
+    "codeceptjs": "^4.0.7",
+    "cypress": "^15.15.0",
+    "playwright": "^1.61.0"
   }
 }
