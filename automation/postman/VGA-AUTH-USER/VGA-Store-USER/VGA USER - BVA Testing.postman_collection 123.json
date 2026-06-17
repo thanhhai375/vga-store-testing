@@ -1,0 +1,299 @@
+{
+  "info": {
+    "_postman_id": "7fa5c53b-9368-4226-b9aa-81a393cf9881",
+    "name": "VGA USER - BVA Testing (Fixed)",
+    "description": "Collection kiểm kiểm thử Boundary Value Analysis sử dụng Data-Driven từ file CSV cho User Profile & Addresses của VGA Store",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "01. Auth (Pre-requisite)",
+      "item": [
+        {
+          "name": "Đăng ký",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "pm.test('Status code is 200 hoặc 201', function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});",
+                  "if (pm.response.code === 200 || pm.response.code === 201) {",
+                  "    pm.environment.set('loginUsername', jsonData.username || pm.variables.get('currentUsername'));",
+                  "    pm.environment.set('loginPassword', '123456');",
+                  "    if(jsonData.userId) { pm.environment.set('userId', jsonData.userId); }",
+                  "    console.log('Đăng ký thành công, chuẩn bị đăng nhập.');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "// Tạo username ngẫu nhiên để không bị trùng lặp khi chạy lại nhiều lần",
+                  "var randomUser = 'testuser_' + Math.floor(Math.random() * 1000000);",
+                  "pm.variables.set('currentUsername', randomUser);",
+                  "pm.variables.set('currentEmail', randomUser + '@gmail.com');"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{currentEmail}}\",\n  \"username\": \"{{currentUsername}}\",\n  \"password\": \"123456\",\n  \"fullName\": \"Người Dùng Test BVA\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "register"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Đăng nhập User",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Đăng nhập user thành công - Status 200', function () {",
+                  "    pm.expect(pm.response.code).to.equal(200);",
+                  "});",
+                  "var res = pm.response.json();",
+                  "pm.test('Trả về token thành công', function () {",
+                  "    pm.expect(res).to.have.property('token');",
+                  "});",
+                  "if (res.token) {",
+                  "    pm.environment.set('token', res.token);",
+                  "    console.log('Đã cập nhật Token mới vào biến môi trường: Bearer ' + res.token);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{loginUsername}}\",\n  \"password\": \"{{loginPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "login"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "02. User Profile BVA",
+      "item": [
+        {
+          "name": "BVA - Update Profile (Data-Driven từ CSV)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "// Tạo một chuỗi 8 số ngẫu nhiên để tránh trùng lặp dữ liệu",
+                  "const randomDigits = Math.floor(10000000 + Math.random() * 90000000).toString();",
+                  "let finalPhone = \"09\" + randomDigits;",
+                  "",
+                  "const tcId = pm.iterationData.get('tc_id');",
+                  "",
+                  "// Thay đổi định dạng phone động dựa theo từng mã kịch bản Test Case",
+                  "if (tcId === \"TC_PF_003\") {",
+                  "    finalPhone = \"03\" + randomDigits;",
+                  "} else if (tcId === \"TC_PF_007\") {",
+                  "    finalPhone = \"\";",
+                  "} else if (tcId === \"TC_PF_008\") {",
+                  "    finalPhone = \"09\" + Math.floor(100000 + Math.random() * 900000).toString();",
+                  "} else if (tcId === \"TC_PF_009\") {",
+                  "    finalPhone = \"09\" + randomDigits + \"5\";",
+                  "} else if (tcId === \"TC_PF_010\") {",
+                  "    finalPhone = \"19\" + randomDigits;",
+                  "}",
+                  "",
+                  "pm.variables.set(\"dynamicPhone\", finalPhone);"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// Lấy data kỳ vọng từ file CSV",
+                  "const tcId = pm.iterationData.get('tc_id') || 'Unknown';",
+                  "const description = pm.iterationData.get('description') || '';",
+                  "const expectedStatus = parseInt(pm.iterationData.get('expectedStatus'), 10);",
+                  "const expectedMessage = pm.iterationData.get('expectedMessage');",
+                  "",
+                  "// 1. Kiểm tra Status Code",
+                  "pm.test(`[${tcId}] Kịch bản: ${description} - Khớp Status ${expectedStatus}`, function () {",
+                  "    pm.expect(pm.response.code).to.eql(expectedStatus);",
+                  "});",
+                  "",
+                  "// 2. Kiểm tra Message lỗi hoặc thành công nếu có trong CSV",
+                  "if (expectedMessage) {",
+                  "    let responseData = {};",
+                  "    try { responseData = pm.response.json(); } catch(e) {}",
+                  "    ",
+                  "    pm.test(`[${tcId}] Kiểm tra thông điệp phản hồi chứa: \"${expectedMessage}\"`, function () {",
+                  "        const actualMessage = responseData.message || responseData.error || (responseData.data && responseData.data.message) || '';",
+                  "        pm.expect(actualMessage.toLowerCase()).to.include(expectedMessage.toLowerCase());",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"{{fullName}}\",\n  \"phone\": \"{{dynamicPhone}}\",\n  \"dob\": \"{{dob}}\",\n  \"gender\": \"{{gender}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/users/profile",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "profile"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "03. User Addresses BVA",
+      "item": [
+        {
+          "name": "BVA - Add Address (Data-Driven từ CSV)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "// Xử lý chuyển đổi kiểu dữ liệu boolean từ file CSV cho trường isDefault",
+                  "let isDefaultCsv = (pm.iterationData.get('isDefault') + '').toLowerCase().trim();",
+                  "if (isDefaultCsv === 'true' || isDefaultCsv === '1') {",
+                  "    pm.variables.set('isDefaultBool', true);",
+                  "} else {",
+                  "    pm.variables.set('isDefaultBool', false);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const tcId = pm.iterationData.get('tc_id') || 'Unknown';",
+                  "const description = pm.iterationData.get('description') || '';",
+                  "const expectedStatus = parseInt(pm.iterationData.get('expectedStatus'), 10);",
+                  "const expectedMessage = pm.iterationData.get('expectedMessage');",
+                  "",
+                  "pm.test(`[${tcId}] Kịch bản: ${description} - Khớp Status ${expectedStatus}`, function () {",
+                  "    pm.expect(pm.response.code).to.eql(expectedStatus);",
+                  "});",
+                  "",
+                  "if (expectedMessage) {",
+                  "    let responseData = {};",
+                  "    try { responseData = pm.response.json(); } catch(e) {}",
+                  "    ",
+                  "    pm.test(`[${tcId}] Kiểm tra thông điệp phản hồi chứa: \"${expectedMessage}\"`, function () {",
+                  "        const actualMessage = responseData.message || responseData.error || (responseData.data && responseData.data.message) || '';",
+                  "        pm.expect(actualMessage.toLowerCase()).to.include(expectedMessage.toLowerCase());",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"recipientName\": \"{{recipientName}}\",\n  \"phone\": \"{{phone}}\",\n  \"detailedAddress\": \"{{detailedAddress}}\",\n  \"isDefault\": {{isDefaultBool}}\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/users/addresses",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "addresses"]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080"
+    }
+  ]
+}
