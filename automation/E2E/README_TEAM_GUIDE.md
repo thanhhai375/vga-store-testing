@@ -63,5 +63,5 @@ cd automation
   ```bash
   npx codeceptjs run --steps
   ```
-
+ npx codeceptjs run --grep "Authentication" --steps
 Chúc các bạn code test vui vẻ và không bao giờ gặp thông báo đỏ chót trên Jenkins! 🎉

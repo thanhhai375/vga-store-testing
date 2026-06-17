@@ -2,6 +2,11 @@ Feature('Login - Authentication');
 
 Before(({ I }) => {
   I.amOnPage('/');
+  // Xóa session cũ để đảm bảo luôn ở trạng thái Guest (chưa đăng nhập)
+  I.executeScript(() => localStorage.clear());
+  I.clearCookie();
+  I.refreshPage(); // Reload lại trang để áp dụng trạng thái Guest
+
   I.waitForElement('button[title="Đăng nhập"]', 10);
   I.forceClick('button[title="Đăng nhập"]');
   I.waitForVisible('.auth-submit-btn', 5); // Đợi form hiển thị
@@ -21,13 +26,16 @@ loginData.add(['L-006', 'ab', '123456', 'Invalid username or password']);
 loginData.add(['L-010', 'hai123', '12345', 'Invalid username or password']);
 loginData.add(['L-013', 'usernotexist999', '123456', 'Invalid username or password']);
 
+// Test Cases: Khoảng trắng và Ký tự đặc biệt
+loginData.add(['L-014', '   ', '123456', 'Tên đăng nhập không được trống']); // Chỉ chứa khoảng trắng
+loginData.add(['L-015', 'hai 123', '123456', 'Invalid username or password']); // Chứa khoảng trắng ở giữa username
+loginData.add(['L-016', 'hai!@#', '123456', 'Invalid username or password']); // Username chứa ký tự đặc biệt
+loginData.add(['L-017', 'hai123', '   ', 'Mật khẩu không được trống']); // Mật khẩu chỉ chứa khoảng trắng
+loginData.add(['L-018', "' OR 1=1 --", '123456', 'Invalid username or password']); // Chứa ký tự đặc biệt (Dạng SQL Injection)
+
 Data(loginData).Scenario('Kiểm thử Đăng nhập các trường hợp lỗi', ({ I, current }) => {
-  if (current.username) {
-    I.fillField('input[placeholder="Nhập tài khoản hoặc email"]', current.username);
-  }
-  if (current.password) {
-    I.fillField('input[placeholder="Nhập mật khẩu"]', current.password);
-  }
+  I.fillField('input[placeholder="Nhập tài khoản hoặc email"]', current.username);
+  I.fillField('input[placeholder="Nhập mật khẩu"]', current.password);
   
   I.forceClick('.auth-submit-btn');
   I.waitForText(current.expectedMessage, 5); // Đợi tối đa 5s để Toast hoặc Error hiển thị
@@ -39,7 +47,7 @@ Scenario('L-001: Đăng nhập thành công', ({ I }) => {
   I.fillField('input[placeholder="Nhập mật khẩu"]', 'hai123'); // Mật khẩu đúng
   I.forceClick('.auth-submit-btn');
   
-  // Kiểm tra xem đã đăng nhập thành công chưa (có thể là thấy avatar, tên user, hoặc thông báo thành công)
-  // I.see('Đăng nhập thành công'); 
-  // I.seeElement('.user-avatar');
+  // Kiểm tra xem đã đăng nhập thành công chưa
+  I.waitForText('Đăng nhập thành công', 5); 
+  I.dontSeeElement('.auth-modal'); // Đảm bảo form đăng nhập đã đóng
 });

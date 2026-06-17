@@ -2,6 +2,11 @@ Feature('Register - Authentication');
 
 Before(({ I }) => {
   I.amOnPage('/');
+  // Xóa session cũ để đảm bảo luôn ở trạng thái Guest
+  I.executeScript(() => localStorage.clear());
+  I.clearCookie();
+  I.refreshPage();
+
   // Mở modal Đăng nhập/Đăng ký từ Header
   I.waitForElement('button[title="Đăng nhập"]', 10); 
   I.forceClick('button[title="Đăng nhập"]');
@@ -28,12 +33,19 @@ registerData.add(['R-006', 'ab', 'r006_short_user@gmail.com', 'pass123456', 'Use
 registerData.add(['R-010', 'r010_user', 'invalidgmail', 'pass123456', 'User Name', 'Email không hợp lệ']);
 registerData.add(['R-012', 'hai123', 'r012_taken@gmail.com', 'pass123456', 'Another User', 'Username is already taken']);
 
+// Test Cases: Khoảng trắng và Ký tự đặc biệt
+registerData.add(['R-013', '   ', 'r013_space@gmail.com', 'pass123456', 'User Name', 'Tên đăng nhập từ 3-50 ký tự']); // Chỉ chứa khoảng trắng
+registerData.add(['R-014', 'user name', 'r014_space@gmail.com', 'pass123456', 'User Name', 'Tên đăng nhập từ 3-50 ký tự']); // Chứa khoảng trắng ở giữa
+registerData.add(['R-015', 'user!@#$', 'r015_special@gmail.com', 'pass123456', 'User Name', 'Tên đăng nhập từ 3-50 ký tự']); // Chứa ký tự đặc biệt
+registerData.add(['R-016', 'validuser', 'r016_special@gmail.com', 'pass 123', 'User Name', 'Mật khẩu ít nhất 6 ký tự']); // Mật khẩu chứa khoảng trắng (tùy vào rule của backend)
+registerData.add(['R-017', '<script>alert(1)</script>', 'r017_xss@gmail.com', 'pass123456', 'User Name', 'Tên đăng nhập từ 3-50 ký tự']); // Thẻ HTML/XSS
+
 Data(registerData).Scenario('Kiểm thử Đăng ký các trường hợp lỗi', ({ I, current }) => {
   // Điền form dựa trên placeholder đã update chuẩn UI
-  if (current.username) I.fillField('input[placeholder="Nhập tên đăng nhập"]', current.username);
-  if (current.email) I.fillField('input[placeholder="Nhập email của bạn"]', current.email);
-  if (current.password) I.fillField('input[placeholder="Nhập mật khẩu"]', current.password);
-  if (current.fullName) I.fillField('input[placeholder="Nhập họ và tên của bạn"]', current.fullName);
+  I.fillField('input[placeholder="Nhập tên đăng nhập"]', current.username);
+  I.fillField('input[placeholder="Nhập email của bạn"]', current.email);
+  I.fillField('input[placeholder="Nhập mật khẩu"]', current.password);
+  I.fillField('input[placeholder="Nhập họ và tên của bạn"]', current.fullName);
   
   I.forceClick('.auth-submit-btn'); // Cần đổi selector nếu nút Đăng ký class khác
   I.waitForText(current.expectedMessage, 5); // Đợi tối đa 5s để Toast hoặc Error hiển thị
@@ -50,5 +62,6 @@ Scenario('R-001: Đăng ký thành công', ({ I }) => {
   I.fillField('input[placeholder="Nhập họ và tên của bạn"]', 'Test User');
   
   I.forceClick('.auth-submit-btn');
-  // I.see('Đăng ký thành công');
+  I.waitForText('Đăng ký thành công', 5);
+  I.dontSeeElement('.auth-modal');
 });
