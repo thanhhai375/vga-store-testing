@@ -3,8 +3,13 @@
 module.exports = function() {
   return actor({
 
-    // Define custom steps here, use 'this' to access default methods of I.
-    // It is recommended to place a general 'login' function here.
+    loginAsAdmin: function(username = 'hai123', password = 'hai123') {
+      this.amOnPage('/login');
+      this.fillField('username', username);
+      this.fillField('password', password);
+      this.click('Đăng nhập');
+      this.wait(2);
+    }
 
   });
 }
