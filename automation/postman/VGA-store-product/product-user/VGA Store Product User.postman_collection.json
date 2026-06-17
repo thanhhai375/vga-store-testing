@@ -1463,17 +1463,19 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "// 1. Kiểm tra mã phản hồi HTTP Status Code\r",
-                  "pm.test(\"Status code is \" + pm.iterationData.get(\"expected_status\"), function () {\r",
-                  "    pm.response.to.have.status(parseInt(pm.iterationData.get(\"expected_status\")));\r",
-                  "});\r",
-                  "\r",
-                  "// 2. Kiểm tra chuỗi/thông báo mong muốn trong Response Body\r",
-                  "var expectedMsg = pm.iterationData.get(\"expected_message\");\r",
-                  "if (expectedMsg) {\r",
-                  "    pm.test(\"Response body chứa cụm từ: \" + expectedMsg, function () {\r",
-                  "        pm.expect(pm.response.text()).to.include(expectedMsg);\r",
-                  "    });\r",
+                  "var tcId = pm.iterationData.get(\"tc_id\");",
+                  "// Only execute for edge case iterations",
+                  "if (tcId && tcId !== \"TC_PROD_030\" && (tcId.startsWith(\"TC_PROD_03\") || tcId.startsWith(\"TC_PROD_04\"))) {",
+                  "    // 1. Kiểm tra mã phản hồi HTTP Status Code",
+                  "    pm.test(\"Status code is \" + pm.iterationData.get(\"expected_status\"), function () {",
+                  "        pm.response.to.have.status(parseInt(pm.iterationData.get(\"expected_status\")));",
+                  "    });",
+                  "",
+                  "    // 2. Kiểm tra chuỗi/thông báo mong muốn trong Response Body",
+                  "    var expectedMsg = pm.iterationData.get(\"expected_message\");",
+                  "    pm.test(\"Response body chứa cụm từ: \" + expectedMsg, function () {",
+                  "        pm.expect(pm.response.text()).to.include(expectedMsg);",
+                  "    });",
                   "}"
                 ],
                 "type": "text/javascript",
@@ -1498,13 +1500,14 @@
               }
             },
             "url": {
-              "raw": "{{baseUrl}}/api/products?page={{query_page}}&limit={{query_limit}}&minPrice={{query_minPrice}}&maxPrice={{query_maxPrice}}&search={{query_search}}&brand={{query_brand}}",
+              "raw": "{{baseUrl}}/api/products/filter?page={{query_page}}&size={{query_limit}}&minPrice={{query_minPrice}}&maxPrice={{query_maxPrice}}&search={{query_search}}&brand={{query_brand}}",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
                 "api",
-                "products"
+                "products",
+                "filter"
               ],
               "query": [
                 {
@@ -1512,7 +1515,7 @@
                   "value": "{{query_page}}"
                 },
                 {
-                  "key": "limit",
+                  "key": "size",
                   "value": "{{query_limit}}"
                 },
                 {

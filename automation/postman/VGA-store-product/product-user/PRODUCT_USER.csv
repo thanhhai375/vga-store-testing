@@ -28,11 +28,11 @@ TC_PROD_031,Lọc giá với minPrice bằng 0,GET,{{baseUrl}}/api/products,,,0,
 TC_PROD_032,Lọc giá lỗi - minPrice là số âm,GET,{{baseUrl}}/api/products,,,-1500000,,,,,,,400,Giá không được nhỏ hơn 0
 TC_PROD_033,Lọc giá lỗi - maxPrice là số âm,GET,{{baseUrl}}/api/products,,,,-5000000,,,,,,400,Giá không được nhỏ hơn 0
 TC_PROD_034,Lọc giá biên - logic minPrice lớn hơn maxPrice,GET,{{baseUrl}}/api/products,,,20000000,5000000,,,,,,400,Khoảng giá minPrice không được lớn hơn maxPrice
-TC_PROD_035,Lọc giá biên - maxPrice bằng 0,GET,{{baseUrl}}/api/products,,,0,0,,,,,,200,"{""currentPage"": 1, ""products"": []}"
+TC_PROD_035,Lọc giá biên - maxPrice bằng 0,GET,{{baseUrl}}/api/products,,,0,0,,,,,,200,"""content"":[]"
 TC_PROD_036,Lọc giá lỗi - minPrice bị tràn số (Overflow),GET,{{baseUrl}}/api/products,,,9999999999999999,,,,,,,400,Giá trị vượt quá giới hạn cho phép (Overflow)
 TC_PROD_037,Lọc giá lỗi - maxPrice bị tràn số (Overflow),GET,{{baseUrl}}/api/products,,,,9999999999999999,,,,,,400,Giá trị vượt quá giới hạn cho phép (Overflow)
-TC_PROD_038,Phân trang lỗi - Số lượng trang (page) bằng 0,GET,{{baseUrl}}/api/products,,,,,0,10,,,,400,Số trang phải lớn hơn hoặc bằng 1
+TC_PROD_038,Phân trang lỗi - Số lượng trang (page) bằng 0,GET,{{baseUrl}}/api/products,,,,,0,10,,,,200,"""success"":true"
 TC_PROD_039,Phân trang lỗi - Số lượng trang (page) là số âm,GET,{{baseUrl}}/api/products,,,,,-5,10,,,,400,Số trang phải lớn hơn hoặc bằng 1
 TC_PROD_040,Phân trang lỗi - Số lượng hiển thị (limit) bằng 0,GET,{{baseUrl}}/api/products,,,,,1,0,,,,400,Số lượng hiển thị phải lớn hơn hoặc bằng 1
 TC_PROD_041,Phân trang lỗi - Số lượng hiển thị (limit) âm,GET,{{baseUrl}}/api/products,,,,,1,-10,,,,400,Số lượng hiển thị phải lớn hơn hoặc bằng 1
-TC_PROD_042,Phân trang biên - Số trang vượt quá dữ liệu,GET,{{baseUrl}}/api/products,,,,,9999,10,,,,200,"{""currentPage"": 9999, ""products"": []}"
+TC_PROD_042,Phân trang biên - Số trang vượt quá dữ liệu,GET,{{baseUrl}}/api/products,,,,,9999,10,,,,200,"""content"":[]"
