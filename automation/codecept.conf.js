@@ -14,8 +14,14 @@ exports.config = {
   helpers: {
     Playwright: {
       url: 'http://localhost:5173',
-      show: false,
-      browser: 'chromium'
+      show: true,
+      browser: 'chromium',
+      restart: 'session',
+      keepBrowserState: true,
+      keepCookies: true,
+      chromium: {
+        slowMo: 1000 // Chậm lại 1 giây cho mỗi thao tác
+      }
     }
   },
   include: {
