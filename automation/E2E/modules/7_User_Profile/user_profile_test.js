@@ -52,7 +52,7 @@ Before(async ({ I }) => {
         I.say('--> Tiến hành Đăng nhập tài khoản hệ thống...');
         I.forceClick(selectors.navbar.btnDangNhapHeader);
         I.waitForVisible(selectors.authModal.btnSubmit, 5);
-        I.fillField(selectors.authModal.inputTaiKhoanLogin, 'minhvon4'); 
+        I.fillField(selectors.authModal.inputTaiKhoanLogin, 'minhvon5'); 
         I.fillField(selectors.authModal.inputMatKhauLogin, '123456'); 
         I.forceClick(selectors.authModal.btnSubmit);
         I.wait(3); 
