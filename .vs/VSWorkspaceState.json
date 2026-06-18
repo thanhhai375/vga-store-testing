@@ -1,0 +1,11 @@
+{
+  "ExpandedNodes": [
+    "",
+    "\\automation",
+    "\\automation\\postman",
+    "\\automation\\postman\\VGA-store-product",
+    "\\automation\\postman\\VGA-store-product\\product-user"
+  ],
+  "SelectedNode": "\\automation\\postman\\VGA-store-product\\product-user\\VGA Store Product User.postman_collection.json",
+  "PreviewInSolutionExplorer": false
+}
