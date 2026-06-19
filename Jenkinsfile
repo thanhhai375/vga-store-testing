@@ -34,14 +34,41 @@ options {
                     chmod +x docker-compose
                 fi
 
-                # "BẮN TỈA": Chỉ tắt và dọn dẹp các app, TUYỆT ĐỐI để Jenkins được sống
-                ./docker-compose -p vga-store-testing rm -f -s db backend admin-frontend user-frontend
-                
-                # Xóa sạch data cũ của Database để đảm bảo môi trường test luôn mới tinh (Fresh DB)
-                docker run --rm -v vga-store-testing_pgdata:/dbdata alpine sh -c "rm -rf /dbdata/*"
+                # Đảm bảo container Jenkins được kết nối vào network của dự án để gọi được API
+                docker network connect vga-store-testing_vga-network vga_jenkins || true
 
-                # Khởi tạo lại App
-                ./docker-compose -p vga-store-testing up -d --build db backend admin-frontend user-frontend
+                # Kiểm tra xem các container chính (backend và db) có đang hoạt động sẵn hay không
+                backend_running=$(docker ps --filter "name=vga_backend" --filter "status=running" -q)
+                db_running=$(docker ps --filter "name=vga_db" --filter "status=running" -q)
+
+                if [ -n "$backend_running" ] && [ -n "$db_running" ]; then
+                    echo "⚡ Phát hiện các container (Backend & DB) đã hoạt động sẵn!"
+                    echo "⚡ BỎ QUA các bước build lại từ đầu."
+                    echo "🧹 Đang dọn dẹp Database (Wipe DB) để tránh lỗi trùng lặp dữ liệu (Email is already in use)..."
+                    
+                    # Tắt và xóa nhanh container db và backend
+                    ./docker-compose -p vga-store-testing rm -f -s db backend
+                    
+                    # Xóa sạch data cũ của Database
+                    docker run --rm -v vga-store-testing_pgdata:/dbdata alpine sh -c "rm -rf /dbdata/*"
+                    
+                    # Khởi động lại db và backend (không dùng --build) để hệ thống chạy SQL init tự động
+                    ./docker-compose -p vga-store-testing up -d db backend
+                else
+                    echo "⚠️ Phát hiện hệ thống chưa chạy hoặc đang bị tắt. Tiến hành dựng mới..."
+                    
+                    # "BẮN TỈA": Chỉ tắt và dọn dẹp các app, TUYỆT ĐỐI để Jenkins được sống
+                    ./docker-compose -p vga-store-testing rm -f -s db backend admin-frontend user-frontend
+                    
+                    # Xóa sạch data cũ của Database để đảm bảo môi trường test luôn mới tinh (Fresh DB)
+                    docker run --rm -v vga-store-testing_pgdata:/dbdata alpine sh -c "rm -rf /dbdata/*"
+
+                    # Khởi tạo lại App
+                    ./docker-compose -p vga-store-testing up -d --build db backend admin-frontend user-frontend
+
+                    # Kết nối lại mạng
+                    docker network connect vga-store-testing_vga-network vga_jenkins || true
+                fi
                 '''
 
                 echo '✅ Triển khai thành công! Đang đợi Backend (Spring Boot) khởi động hoàn tất...'
@@ -77,158 +104,210 @@ options {
         stage('Run API Tests (Newman/Postman)') {
             steps {
                 dir('automation') {
-                    echo 'Đang chạy API Test tự động cho TỪNG FILE RIÊNG LẺ...'
-                    // sh '''
-                    // # Xóa file lỗi cũ nếu có
-                    // rm -f ../error_reason*.txt
-                    // failed=0
+                    sh '''#!/bin/bash
+                    # Xóa file lỗi cũ nếu có
+                    rm -f ../error_reason*.txt
+                    failed=0
 
-                    // # Quét tất cả các file có đuôi .postman_collection.json trong các thư mục con của postman
-                    // for test_file in postman/*/*.postman_collection.json; do
-                    //     echo "=================================================="
-                    //     echo "▶️ ĐANG CHẠY KỊCH BẢN: $test_file"
-                    //     echo "=================================================="
-
-                    //     # Chạy newman VÀ nạp thêm file Environment vào (như chạy trên máy tính)
-                    //     docker run --rm \
-                    //         --network vga-store-testing_vga-network \
-                    //         --volumes-from vga_jenkins \
-                    //         -w $(pwd) \
-                    //         postman/newman run "$test_file" \
-                    //         -e "postman/env/VGA_Store_Environment.postman_environment.json" \
-                    //         --export-environment "postman/env/VGA_Store_Environment.postman_environment.json" \
-                    //         --env-var "baseUrl=http://backend:8080" \
-                    //         --color off --disable-unicode \
-                    //         --reporters cli,junit,json \
-                    //         --reporter-junit-export "report-$(basename "$test_file").xml" \
-                    //         --reporter-json-export "report-$(basename "$test_file").json" > newman_log.txt 2>&1 || {
-                    sh '''
-    # Xóa file lỗi cũ nếu có
-    rm -f ../error_reason*.txt
-    failed=0
-
-    # Tạo script Node.js siêu ngắn để bóc tách chính xác Testcase nào lỗi từ file JSON
-    cat << 'EOF' > parse_errors.js
+                    # Tạo script Node.js siêu ngắn để bóc tách chính xác Testcase nào lỗi từ file JSON
+                    cat << 'EOF' > parse_errors.js
 const fs = require('fs');
+const path = require('path');
 const testFile = process.argv[2];
 const jsonName = process.argv[3];
+
 try {
-  const baseName = require('path').basename(testFile);
+  const baseName = path.basename(testFile);
   const outName = '../error_reason_' + baseName.replace(/\\s+/g, '_') + '.txt';
   const data = JSON.parse(fs.readFileSync(jsonName));
   let hasError = false;
+
   data.run.executions.forEach(exec => {
     if (exec.assertions) {
-      exec.assertions.forEach(assert => {
-        if (assert.error) {
-          if (!hasError) {
-             fs.appendFileSync(outName, '❌ FILE: ' + testFile + '\\n');
-             hasError = true;
-          }
-          const errMsg = assert.error.message.replace(/\\r?\\n/g, ' ');
-          fs.appendFileSync(outName, '  - Testcase: ' + exec.item.name + '\\n    Lỗi: ' + errMsg + '\\n\\n');
+      const failedAsserts = exec.assertions.filter(a => a.error);
+      if (failedAsserts.length > 0) {
+        if (!hasError) {
+          fs.appendFileSync(outName, '❌ FILE: ' + testFile + '\\n\\n');
+          hasError = true;
         }
-      });
+
+        const iteration = exec.cursor ? (exec.cursor.iteration + 1) : 1;
+        
+        let reqUrl = '';
+        if (exec.request && exec.request.url) {
+          if (typeof exec.request.url === 'string') {
+            reqUrl = exec.request.url;
+          } else if (exec.request.url.raw) {
+            reqUrl = exec.request.url.raw;
+          } else {
+            const proto = exec.request.url.protocol || 'http';
+            const host = Array.isArray(exec.request.url.host) ? exec.request.url.host.join('.') : (exec.request.url.host || '');
+            const port = exec.request.url.port ? ':' + exec.request.url.port : '';
+            const pathStr = Array.isArray(exec.request.url.path) ? exec.request.url.path.join('/') : (exec.request.url.path || '');
+            reqUrl = proto + '://' + host + port + '/' + pathStr;
+          }
+        }
+        
+        const method = exec.request ? exec.request.method : 'N/A';
+        
+        let reqBody = '';
+        if (exec.request && exec.request.body && exec.request.body.raw) {
+          reqBody = exec.request.body.raw;
+          try {
+            const parsed = JSON.parse(reqBody);
+            reqBody = JSON.stringify(parsed, null, 2);
+          } catch (e) {}
+          if (reqBody.length > 300) {
+            reqBody = reqBody.substring(0, 300) + '... [TRUNCATED]';
+          }
+        }
+
+        const statusCode = exec.response ? exec.response.code : 'N/A';
+        let respBody = '';
+        if (exec.response && exec.response.stream) {
+          try {
+            if (exec.response.stream.type === 'Buffer' && Array.isArray(exec.response.stream.data)) {
+              respBody = Buffer.from(exec.response.stream.data).toString('utf8');
+            } else if (Buffer.isBuffer(exec.response.stream)) {
+              respBody = exec.response.stream.toString('utf8');
+            } else if (typeof exec.response.stream === 'string') {
+              respBody = exec.response.stream;
+            }
+          } catch (e) {
+            respBody = '[Error parsing response: ' + e.message + ']';
+          }
+        }
+        if (respBody) {
+          try {
+            const parsed = JSON.parse(respBody);
+            respBody = JSON.stringify(parsed, null, 2);
+          } catch (e) {}
+          if (respBody.length > 300) {
+            respBody = respBody.substring(0, 300) + '... [TRUNCATED]';
+          }
+        }
+
+        fs.appendFileSync(outName, '  - Request: ' + method + ' ' + reqUrl + ' (Iteration: ' + iteration + ')\\n');
+        if (reqBody) {
+          fs.appendFileSync(outName, '    Request Body:\\n' + reqBody.split('\\n').map(l => '      ' + l).join('\\n') + '\\n');
+        }
+        fs.appendFileSync(outName, '    Response Status: ' + statusCode + '\\n');
+        if (respBody) {
+          fs.appendFileSync(outName, '    Response Body:\\n' + respBody.split('\\n').map(l => '      ' + l).join('\\n') + '\\n');
+        }
+
+        failedAsserts.forEach(assert => {
+          const assertName = assert.assertion || 'Unnamed assertion';
+          const errMsg = assert.error.message.replace(/[\\r\\n]+/g, ' ');
+          fs.appendFileSync(outName, '    * Failure: ' + assertName + '\\n      Error details: ' + errMsg + '\\n');
+        });
+        fs.appendFileSync(outName, '\\n' + '='.repeat(50) + '\\n\\n');
+      }
     }
   });
 } catch (e) {
-  const baseName = require('path').basename(testFile);
+  const baseName = path.basename(testFile);
   const outName = '../error_reason_' + baseName.replace(/\\s+/g, '_') + '.txt';
   fs.appendFileSync(outName, '❌ FILE: ' + testFile + '\\n  - Lỗi không xác định (xem log Jenkins): ' + e.message + '\\n\\n');
 }
 EOF
 
-    # Quét tất cả các file có đuôi .postman_collection.json trong các thư mục con
-    for test_file in postman/*/*.postman_collection.json; do
-        dir_name=$(dirname "$test_file")
-        base_test_name=$(basename "$test_file")
-        
-        # Đếm số lượng file CSV
-        csv_count=0
-        for csv_file in "$dir_name"/*.csv; do
-            if [ -f "$csv_file" ]; then
-                csv_count=$((csv_count+1))
-                base_csv_name=$(basename "$csv_file")
-                json_report_name="report-${base_test_name}-${base_csv_name}.json"
-                echo "=================================================="
-                echo "▶️ ĐANG CHẠY KỊCH BẢN: $test_file"
-                echo "📊 Dữ liệu: $base_csv_name"
-                echo "=================================================="
+                    # Quét tất cả các file có đuôi .postman_collection.json trong các thư mục con
+                    while read -r test_file; do
+                        dir_name=$(dirname "$test_file")
+                        base_test_name=$(basename "$test_file")
+                        
+                        # Tìm tất cả file CSV trong cùng thư mục đó
+                        csv_files=("$dir_name"/*.csv)
+                        csv_count=0
+                        
+                        # Kiểm tra xem có file CSV nào không (dùng [ -f ] kiểm tra phần tử đầu tiên)
+                        if [ -f "${csv_files[0]}" ]; then
+                            for csv_file in "${csv_files[@]}"; do
+                                csv_count=$((csv_count+1))
+                                base_csv_name=$(basename "$csv_file")
+                                json_report_name="report-${base_test_name}-${base_csv_name}.json"
+                                echo "=================================================="
+                                echo "▶️ ĐANG CHẠY KỊCH BẢN: $test_file"
+                                echo "📊 Dữ liệu: $base_csv_name"
+                                echo "=================================================="
 
-                docker run --rm \
-                    --network vga-store-testing_vga-network \
-                    --volumes-from vga_jenkins \
-                    -w $(pwd) \
-                    postman/newman run "$test_file" \
-                    -d "$csv_file" \
-                    -e "postman/env/VGA_Store_Environment.postman_environment.json" \
-                    --export-environment "postman/env/VGA_Store_Environment.postman_environment.json" \
-                    --env-var "baseUrl=http://backend:8080" \
-                    --color off --disable-unicode \
-                    --reporters cli,junit,json \
-                    --reporter-junit-export "report-${base_test_name}-${base_csv_name}.xml" \
-                    --reporter-json-export "$json_report_name" > newman_log.txt 2>&1 || {
-                        node parse_errors.js "$test_file" "$json_report_name"
-                        failed=1
-                    }
-                cat newman_log.txt
-            fi
-        done
+                                docker run --rm \
+                                    --network vga-store-testing_vga-network \
+                                    --volumes-from vga_jenkins \
+                                    -w "$(pwd)" \
+                                    postman/newman run "$test_file" \
+                                    -d "$csv_file" \
+                                    -e "postman/env/VGA_Store_Environment.postman_environment.json" \
+                                    --export-environment "postman/env/VGA_Store_Environment.postman_environment.json" \
+                                    --env-var "baseUrl=http://backend:8080" \
+                                    --color off --disable-unicode \
+                                    --reporters cli,junit,json \
+                                    --reporter-junit-export "report-${base_test_name}-${base_csv_name}.xml" \
+                                    --reporter-json-export "$json_report_name" > newman_log.txt 2>&1 || {
+                                        node parse_errors.js "$test_file" "$json_report_name"
+                                        failed=1
+                                    }
+                                cat newman_log.txt
+                            done
+                        fi
 
-        # Nếu không có file CSV nào, chạy kịch bản 1 lần không có data
-        if [ "$csv_count" -eq 0 ]; then
-            json_report_name="report-${base_test_name}.json"
-            echo "=================================================="
-            echo "▶️ ĐANG CHẠY KỊCH BẢN: $test_file"
-            echo "⚠️ Không tìm thấy file CSV, chạy không có dữ liệu."
-            echo "=================================================="
+                        # Nếu không có file CSV nào, chạy kịch bản 1 lần không có data
+                        if [ "$csv_count" -eq 0 ]; then
+                            json_report_name="report-${base_test_name}.json"
+                            echo "=================================================="
+                            echo "▶️ ĐANG CHẠY KỊCH BẢN: $test_file"
+                            echo "⚠️ Không tìm thấy file CSV, chạy không có dữ liệu."
+                            echo "=================================================="
 
-            docker run --rm \
-                --network vga-store-testing_vga-network \
-                --volumes-from vga_jenkins \
-                -w $(pwd) \
-                postman/newman run "$test_file" \
-                -e "postman/env/VGA_Store_Environment.postman_environment.json" \
-                --export-environment "postman/env/VGA_Store_Environment.postman_environment.json" \
-                --env-var "baseUrl=http://backend:8080" \
-                --color off --disable-unicode \
-                --reporters cli,junit,json \
-                --reporter-junit-export "report-${base_test_name}.xml" \
-                --reporter-json-export "$json_report_name" > newman_log.txt 2>&1 || {
-                    node parse_errors.js "$test_file" "$json_report_name"
-                    failed=1
-                }
-            cat newman_log.txt
-        fi
-    done
+                            docker run --rm \
+                                --network vga-store-testing_vga-network \
+                                --volumes-from vga_jenkins \
+                                -w "$(pwd)" \
+                                postman/newman run "$test_file" \
+                                -e "postman/env/VGA_Store_Environment.postman_environment.json" \
+                                --export-environment "postman/env/VGA_Store_Environment.postman_environment.json" \
+                                --env-var "baseUrl=http://backend:8080" \
+                                --color off --disable-unicode \
+                                --reporters cli,junit,json \
+                                --reporter-junit-export "report-${base_test_name}.xml" \
+                                --reporter-json-export "$json_report_name" > newman_log.txt 2>&1 || {
+                                    node parse_errors.js "$test_file" "$json_report_name"
+                                    failed=1
+                                }
+                            cat newman_log.txt
+                        fi
+                    done < <(find . -name "*.postman_collection.json" | sort)
 
-    # Nếu có bất kỳ file nào failed thì đánh sập pipeline
-    if [ $failed -eq 1 ]; then
-        exit 1
-    fi
-    '''
-                }
-            }
-        }
-
-        /* // TẠM THỜI TẮT UI TEST THEO YÊU CẦU ĐỂ FIX SAU
-        stage('Run UI Tests (Cypress)') {
-            agent {
-                docker {
-                    image 'cypress/included:15.15.0'
-                    reuseNode true
-                    args '--ipc=host --network vga-network'
-                }
-            }
-            steps {
-                dir('automation') {
-                    echo 'Đang chạy UI Test tự động bằng Cypress bên trong Docker Container...'
-                    sh 'npm install'
-                    sh 'cypress run || { echo "LỖI TẠI BƯỚC TEST GIAO DIỆN (CYPRESS)" > ../error_reason.txt; exit 1; }'
+                    # Nếu có bất kỳ file nào failed thì đánh sập pipeline
+                    if [ $failed -eq 1 ]; then
+                        exit 1
+                    fi
+                    '''
                 }
             }
         }
-        */
+
+        // stage('Run UI Tests (CodeceptJS)') {
+        //     agent {
+        //         docker {
+        //             // Sử dụng image Playwright của Microsoft đã có sẵn các trình duyệt Chrome/Firefox
+        //             image 'mcr.microsoft.com/playwright:v1.44.0-jammy'
+        //             reuseNode true
+        //             args '--ipc=host --network vga-store-testing_vga-network'
+        //         }
+        //     }
+        //     steps {
+        //         dir('automation') {
+        //             echo 'Đang chạy UI Test tự động bằng CodeceptJS bên trong Docker Container...'
+        //             // Xóa thư mục node_modules cũ để cài lại bản chuẩn trên Linux
+        //             sh 'rm -rf node_modules'
+        //             sh 'npm install'
+        //             sh 'npx playwright install chromium'
+        //             sh 'npx codeceptjs run || { echo "❌ FILE: UI_Test_E2E\\n  - Testcase: Lỗi tại bước test giao diện (CodeceptJS)\\n\\n" > ../error_reason_UI_Test.txt; exit 1; }'
+        //         }
+        //     }
+        // }
     }
 
     post {
@@ -331,3 +410,4 @@ EOF
         }
     }
 }
+

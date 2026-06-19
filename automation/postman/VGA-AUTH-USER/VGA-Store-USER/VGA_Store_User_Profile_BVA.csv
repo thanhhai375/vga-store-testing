@@ -1,0 +1,13 @@
+tc_id,description,fullName,phone,dob,gender,expectedStatus,expectedMessage
+TC_PROFILE_01,Valid profile data with normal values,Nguyen Van A,0901234567,1995-05-10,MALE,200,Profile updated successfully
+TC_PROFILE_02,Boundary fullName min length 1 character,A,0901234567,1995-05-10,MALE,200,Profile updated successfully
+TC_PROFILE_03,Boundary fullName empty,,0901234567,1995-05-10,MALE,400,Full name is required
+TC_PROFILE_04,Boundary fullName too long,Nguyen Van An Nguyen Van An Nguyen Van An Nguyen Van An Nguyen Van An Nguyen Van An Nguyen Van An Nguyen Van An Nguyen Van An Nguyen Van An Nguyen Van An,0901234567,1995-05-10,MALE,400,Full name exceeds maximum length
+TC_PROFILE_05,Boundary phone below minimum digits,Nguyen Van A,090123456,1995-05-10,MALE,400,Phone must be 10 digits
+TC_PROFILE_06,Boundary phone valid 10 digits,Nguyen Van A,0901234567,1995-05-10,MALE,200,Profile updated successfully
+TC_PROFILE_07,Boundary phone above maximum digits,Nguyen Van A,09012345678,1995-05-10,MALE,400,Phone must be 10 digits
+TC_PROFILE_08,Phone contains non-digit characters,Nguyen Van A,09012abc567,1995-05-10,MALE,400,Phone must contain digits only
+TC_PROFILE_09,Boundary dob empty,Nguyen Van A,0901234567,,MALE,400,Dob is required
+TC_PROFILE_10,Invalid dob format,Nguyen Van A,0901234567,1995/05/10,MALE,400,Dob format invalid
+TC_PROFILE_11,Boundary gender empty,Nguyen Van A,0901234567,1995-05-10,,400,Gender is required
+TC_PROFILE_12,Invalid gender value,Nguyen Van A,0901234567,1995-05-10,OTHER,400,Gender invalid

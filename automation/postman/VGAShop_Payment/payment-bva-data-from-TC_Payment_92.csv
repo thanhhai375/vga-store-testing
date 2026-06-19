@@ -1,0 +1,9 @@
+﻿tcId,testCase,fullName,phone,shippingAddress,address,note,productId,quantity,itemsJson,expectedStatus,expectedNote
+TC_BVA_PAYMENT_01,Phone 9 số - dưới biên hợp lệ,Nguyễn Văn C,090123456,"123 ABC, TP.HCM",hcm,BVA phone 9 digits,10,1,"[{""productId"":10,""quantity"":1}]",400,Backend nên chặn số điện thoại dưới 10 số
+TC_BVA_PAYMENT_02,Phone 10 số - đúng biên hợp lệ,Nguyễn Văn C,0901234567,"123 ABC, TP.HCM",hcm,BVA valid phone 10 digits,10,1,"[{""productId"":10,""quantity"":1}]",200,"Số điện thoại hợp lệ, tạo đơn thành công"
+TC_BVA_PAYMENT_03,Phone 11 số - trên biên hợp lệ,Nguyễn Văn C,09012345678,"123 ABC, TP.HCM",hcm,BVA phone 11 digits,10,1,"[{""productId"":10,""quantity"":1}]",400,Backend nên chặn số điện thoại quá 10 số
+TC_BVA_PAYMENT_04,Quantity = 0 - dưới biên,Nguyễn Văn C,0901234567,"123 ABC, TP.HCM",hcm,BVA quantity zero,10,0,"[{""productId"":10,""quantity"":0}]",400,Backend nên chặn quantity bằng 0
+TC_BVA_PAYMENT_05,Quantity = 1 - đúng biên hợp lệ,Nguyễn Văn C,0901234567,"123 ABC, TP.HCM",hcm,BVA quantity one,10,1,"[{""productId"":10,""quantity"":1}]",200,"Quantity hợp lệ, tạo đơn thành công"
+TC_BVA_PAYMENT_06,Quantity = -1 - dưới biên âm,Nguyễn Văn C,0901234567,"123 ABC, TP.HCM",hcm,BVA negative quantity,10,-1,"[{""productId"":10,""quantity"":-1}]",400,Backend nên chặn quantity âm
+TC_BVA_PAYMENT_07,FullName rỗng - dưới biên,,0901234567,"123 ABC, TP.HCM",hcm,BVA empty fullName,10,1,"[{""productId"":10,""quantity"":1}]",400,Backend nên chặn họ tên rỗng
+TC_BVA_PAYMENT_08,Items rỗng - giỏ hàng không có sản phẩm,Nguyễn Văn C,0901234567,"123 ABC, TP.HCM",hcm,BVA empty items,,,[],400,Backend nên chặn items rỗng
