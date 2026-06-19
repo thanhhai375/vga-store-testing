@@ -55,7 +55,7 @@ const Users = () => {
     );
     if (!confirmed) return;
     try {
-      await userService.toggleStatus(u.id);
+      await userService.toggleStatus(u.id || u.userId);
       toastSuccess(
         u.status
           ? `Đã khóa tài khoản "${u.username}" thành công!`
@@ -141,7 +141,7 @@ const Users = () => {
                 ) : users.map((u, index) => {
                   const protected_ = isProtected(u);
                   return (
-                    <tr key={u.id}>
+                    <tr key={u.id || u.userId || index}>
                       <td>{page * SIZE + index + 1}</td>
                       <td style={{ fontWeight: 600, color: 'var(--text-primary)' }}>
                         {u.username}
