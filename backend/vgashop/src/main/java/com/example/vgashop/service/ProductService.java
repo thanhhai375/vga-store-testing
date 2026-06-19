@@ -139,13 +139,10 @@ public class ProductService {
         minPrice = (minPrice == null) ? 0.0 : minPrice;
         maxPrice = (maxPrice == null) ? Double.MAX_VALUE : maxPrice;
 
-        // Sort sort;
-
-        // if (direction.equalsIgnoreCase("desc")) {
-        //     sort = Sort.by(sortBy).descending();
-        // } else {
-        //     sort = Sort.by(sortBy).ascending();
-        // }
+        // Additional validation for price range
+        if (minPrice > maxPrice) {
+            throw new IllegalArgumentException("Khoảng giá minPrice không được lớn hơn maxPrice");
+        }
 
         Sort sort = direction.equalsIgnoreCase("desc")
         ? Sort.by(sortBy).descending() : Sort.by(sortBy).ascending();
