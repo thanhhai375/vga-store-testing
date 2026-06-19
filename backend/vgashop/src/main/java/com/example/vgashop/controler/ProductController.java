@@ -89,7 +89,7 @@ public class ProductController {
     ) {
         // Validation for pagination
         if (page < 0) {
-            throw new IllegalArgumentException("Số trang phải lớn hơn hoặc bằng 0");
+            throw new IllegalArgumentException("Số trang phải lớn hơn hoặc bằng 1");
         }
         if (size < 1) {
             throw new IllegalArgumentException("Số lượng hiển thị phải lớn hơn hoặc bằng 1");
@@ -103,11 +103,11 @@ public class ProductController {
             throw new IllegalArgumentException("Giá không được nhỏ hơn 0");
         }
 
-        // Check for overflow (values too large)
-        if (minPrice != null && minPrice > Double.MAX_VALUE) {
+        // Check for overflow (Infinity values)
+        if (minPrice != null && Double.isInfinite(minPrice)) {
             throw new IllegalArgumentException("Giá trị vượt quá giới hạn cho phép (Overflow)");
         }
-        if (maxPrice != null && maxPrice > Double.MAX_VALUE) {
+        if (maxPrice != null && Double.isInfinite(maxPrice)) {
             throw new IllegalArgumentException("Giá trị vượt quá giới hạn cho phép (Overflow)");
         }
 

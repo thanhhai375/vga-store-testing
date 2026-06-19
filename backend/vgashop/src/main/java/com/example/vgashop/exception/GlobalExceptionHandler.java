@@ -7,6 +7,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -141,6 +142,22 @@ public class GlobalExceptionHandler {
         ApiResponse<Object> response = ApiResponse.error("Lỗi ràng buộc dữ liệu: " + msg);
         ex.printStackTrace();
         return new ResponseEntity<>(response, HttpStatus.CONFLICT);
+    }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ApiResponse<Object>> handleMethodArgumentTypeMismatch(MethodArgumentTypeMismatchException ex) {
+        String paramName = ex.getName();
+        String message = "Giá trị vượt quá giới hạn cho phép (Overflow)";
+        
+        // Check if the error is related to price parameters
+        if ("minPrice".equals(paramName) || "maxPrice".equals(paramName)) {
+            ApiResponse<Object> response = ApiResponse.error(message);
+            return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+        }
+        
+        // Generic message for other type mismatch errors
+        ApiResponse<Object> response = ApiResponse.error("Tham số '" + paramName + "' không hợp lệ");
+        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(Exception.class)
