@@ -100,6 +100,41 @@ public class ProductService {
 
         // Process
 
+        if (minPrice != null && minPrice < 0) {
+            throw new IllegalArgumentException("Giá không được nhỏ hơn 0");
+        }
+        if (maxPrice != null && maxPrice < 0) {
+            throw new IllegalArgumentException("Giá không được nhỏ hơn 0");
+        }
+        if (minPrice != null && maxPrice != null && minPrice > maxPrice) {
+            throw new IllegalArgumentException("Khoảng giá minPrice không được lớn hơn maxPrice");
+        }
+        if (minPrice != null && minPrice > 10000000000.0) {
+            throw new IllegalArgumentException("Giá trị vượt quá giới hạn cho phép (Overflow)");
+        }
+        if (maxPrice != null && maxPrice > 10000000000.0) {
+            throw new IllegalArgumentException("Giá trị vượt quá giới hạn cho phép (Overflow)");
+        }
+        if (page < 0) {
+            throw new IllegalArgumentException("Số trang phải lớn hơn hoặc bằng 1");
+        }
+        if (size < 1) {
+            throw new IllegalArgumentException("Số lượng hiển thị phải lớn hơn hoặc bằng 1");
+        }
+
+
+        // if (keyWord == null) {
+        //     keyWord = "";
+        // }
+
+        // if (minPrice == null) {
+        //     minPrice = 0.0;
+        // }
+
+        // if (maxPrice == null) {
+        //     maxPrice = Double.MAX_VALUE;
+        // }
+
         keyWord = (keyWord == null) ? "" : keyWord;
         minPrice = (minPrice == null) ? 0.0 : minPrice;
         maxPrice = (maxPrice == null) ? Double.MAX_VALUE : maxPrice;
