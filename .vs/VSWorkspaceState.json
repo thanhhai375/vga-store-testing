@@ -2,10 +2,13 @@
   "ExpandedNodes": [
     "",
     "\\automation",
+    "\\automation\\E2E",
+    "\\automation\\E2E\\modules",
+    "\\automation\\E2E\\modules\\4_Product\u0026Category_Management",
     "\\automation\\postman",
     "\\automation\\postman\\VGA-store-product",
     "\\automation\\postman\\VGA-store-product\\product-user"
   ],
-  "SelectedNode": "\\automation\\postman\\VGA-store-product\\product-user\\VGA Store Product User.postman_collection.json",
+  "SelectedNode": "\\automation\\E2E\\modules\\4_Product\u0026Category_Management\\Category_Management_test.js",
   "PreviewInSolutionExplorer": false
 }
