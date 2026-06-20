@@ -40,7 +40,7 @@
               "RelativeDocumentMoniker": "automation\\E2E\\modules\\4_Product\u0026Category_Management\\Category_Management_test.js",
               "ToolTip": "D:\\Ki\u1EC3m ch\u1EE9ng ph\u1EA7n m\u1EC1m\\test\\vga-store-testing\\automation\\E2E\\modules\\4_Product\u0026Category_Management\\Category_Management_test.js",
               "RelativeToolTip": "automation\\E2E\\modules\\4_Product\u0026Category_Management\\Category_Management_test.js",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAwAAAATAAAAAAAAAA==",
+              "ViewState": "AgIAAA8AAAAAAAAAAAAAAAwAAAATAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001646|",
               "WhenOpened": "2026-06-19T11:48:15.256Z",
               "EditorCaption": ""
@@ -55,8 +55,7 @@
               "RelativeToolTip": "automation\\E2E\\modules\\4_Product\u0026Category_Management\\product_test.js",
               "ViewState": "AgIAAAsAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001646|",
-              "WhenOpened": "2026-06-19T11:09:06.9Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-06-19T11:09:06.9Z"
             },
             {
               "$type": "Document",
@@ -68,8 +67,7 @@
               "RelativeToolTip": "automation\\postman\\env\\VGA_Store_Environment.postman_environment.json",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001642|",
-              "WhenOpened": "2026-06-11T16:14:30.052Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-06-11T16:14:30.052Z"
             },
             {
               "$type": "Document",
@@ -81,8 +79,7 @@
               "RelativeToolTip": "automation\\postman\\VGA-store-product\\product-user\\VGA Store Product User.postman_collection.json",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAAcAAAAEAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001642|",
-              "WhenOpened": "2026-06-11T16:03:52.132Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-06-11T16:03:52.132Z"
             },
             {
               "$type": "Bookmark",

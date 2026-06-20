@@ -3,12 +3,12 @@
   "WorkspaceRootPath": "D:\\Ki\u1EC3m ch\u1EE9ng ph\u1EA7n m\u1EC1m\\test\\vga-store-testing\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|D:\\Ki\u1EC3m ch\u1EE9ng ph\u1EA7n m\u1EC1m\\test\\vga-store-testing\\automation\\E2E\\modules\\4_Product\u0026Category_Management\\Category_Management_test.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}",
-      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:automation\\E2E\\modules\\4_Product\u0026Category_Management\\Category_Management_test.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}"
-    },
-    {
       "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|D:\\Ki\u1EC3m ch\u1EE9ng ph\u1EA7n m\u1EC1m\\test\\vga-store-testing\\automation\\E2E\\modules\\4_Product\u0026Category_Management\\product_test.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}",
       "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:automation\\E2E\\modules\\4_Product\u0026Category_Management\\product_test.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|D:\\Ki\u1EC3m ch\u1EE9ng ph\u1EA7n m\u1EC1m\\test\\vga-store-testing\\automation\\E2E\\modules\\4_Product\u0026Category_Management\\Category_Management_test.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:automation\\E2E\\modules\\4_Product\u0026Category_Management\\Category_Management_test.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|D:\\Ki\u1EC3m ch\u1EE9ng ph\u1EA7n m\u1EC1m\\test\\vga-store-testing\\automation\\postman\\VGA-store-product\\product-user\\VGA Store Product User.postman_collection.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}",
@@ -26,7 +26,7 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 1,
+          "SelectedChildIndex": 2,
           "Children": [
             {
               "$type": "Bookmark",
@@ -34,7 +34,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 0,
+              "DocumentIndex": 1,
               "Title": "Category_Management_test.js",
               "DocumentMoniker": "D:\\Ki\u1EC3m ch\u1EE9ng ph\u1EA7n m\u1EC1m\\test\\vga-store-testing\\automation\\E2E\\modules\\4_Product\u0026Category_Management\\Category_Management_test.js",
               "RelativeDocumentMoniker": "automation\\E2E\\modules\\4_Product\u0026Category_Management\\Category_Management_test.js",
@@ -47,15 +47,16 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 1,
+              "DocumentIndex": 0,
               "Title": "product_test.js",
               "DocumentMoniker": "D:\\Ki\u1EC3m ch\u1EE9ng ph\u1EA7n m\u1EC1m\\test\\vga-store-testing\\automation\\E2E\\modules\\4_Product\u0026Category_Management\\product_test.js",
               "RelativeDocumentMoniker": "automation\\E2E\\modules\\4_Product\u0026Category_Management\\product_test.js",
               "ToolTip": "D:\\Ki\u1EC3m ch\u1EE9ng ph\u1EA7n m\u1EC1m\\test\\vga-store-testing\\automation\\E2E\\modules\\4_Product\u0026Category_Management\\product_test.js",
               "RelativeToolTip": "automation\\E2E\\modules\\4_Product\u0026Category_Management\\product_test.js",
-              "ViewState": "AgIAAAsAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "ViewState": "AgIAANwAAAAAAAAAAAAAAOgAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001646|",
-              "WhenOpened": "2026-06-19T11:09:06.9Z"
+              "WhenOpened": "2026-06-19T11:09:06.9Z",
+              "EditorCaption": ""
             },
             {
               "$type": "Document",
