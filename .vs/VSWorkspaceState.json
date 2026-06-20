@@ -4,11 +4,12 @@
     "\\automation",
     "\\automation\\E2E",
     "\\automation\\E2E\\modules",
+    "\\automation\\E2E\\modules\\1_Authentication",
     "\\automation\\E2E\\modules\\4_Product\u0026Category_Management",
     "\\automation\\postman",
     "\\automation\\postman\\VGA-store-product",
     "\\automation\\postman\\VGA-store-product\\product-user"
   ],
-  "SelectedNode": "\\automation\\E2E\\modules\\4_Product\u0026Category_Management\\Category_Management_test.js",
+  "SelectedNode": "\\automation",
   "PreviewInSolutionExplorer": false
 }

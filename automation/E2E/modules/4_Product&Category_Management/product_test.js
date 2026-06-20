@@ -159,8 +159,8 @@ Scenario('TC_PROD_018: Lọc sản phẩm theo hãng Intel Arc', async ({ I }) =
   // label thực tế: "Card Đồ Họa Intel Arc"
   I.forceClick('//label[contains(@class,"filter-checkbox") and contains(.,"Intel")]');
   I.wait(2);
-  // Intel Arc có thể không có sản phẩm → kiểm tra không bị lỗi hệ thống
-  I.seeElement('.shop-product-grid');
+  // Intel Arc có thể không có sản phẩm → kiểm tra không crash, trang vẫn render
+  I.seeElement('.shop-layout');
 });
 
 Scenario('TC_PROD_019: Kết hợp lọc AMD + sắp xếp giá thấp đến cao', async ({ I }) => {
@@ -187,15 +187,15 @@ Scenario('TC_PROD_020: Xem chi tiết sản phẩm VGA', ({ I }) => {
 });
 
 Scenario('TC_PROD_021: Kiểm tra thông số kỹ thuật VGA trong trang chi tiết', ({ I }) => {
-  // Kỳ vọng: Bảng specs-table hiển thị
-  I.amOnPage('/product/1');
+  // Kỳ vọng: Bảng specs-table hiển thị — dùng ID sản phẩm thực tế (ID=2)
+  I.amOnPage('/product/2');
   I.waitForElement('.product-detail-page', 10);
   I.seeElement('.specs-table');
 });
 
 Scenario('TC_PROD_022: Kiểm tra hình ảnh trong trang chi tiết sản phẩm', ({ I }) => {
   // Kỳ vọng: Ảnh chính hiển thị, không broken
-  I.amOnPage('/product/1');
+  I.amOnPage('/product/2');
   I.waitForElement('.product-detail-page', 10);
   I.seeElement('.main-image-box img');
 
@@ -209,7 +209,7 @@ Scenario('TC_PROD_022: Kiểm tra hình ảnh trong trang chi tiết sản phẩ
 
 Scenario('TC_PROD_023: Kiểm tra giá trong trang chi tiết sản phẩm', ({ I }) => {
   // Kỳ vọng: Giá hiển thị đúng định dạng tiền tệ
-  I.amOnPage('/product/1');
+  I.amOnPage('/product/2');
   I.waitForElement('.product-detail-page', 10);
   I.seeElement('.current-price');
 
