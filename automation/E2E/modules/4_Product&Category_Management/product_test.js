@@ -10,7 +10,7 @@
 Feature('Product - Hiển thị, Tìm kiếm & Lọc sản phẩm (User)');
 
 Before(({ I }) => {
-  I.amOnPage('/products');
+  I.amOnPage('http://localhost:5173/products');
   I.waitForElement('.product-card', 15);
 });
 
@@ -188,14 +188,14 @@ Scenario('TC_PROD_020: Xem chi tiết sản phẩm VGA', ({ I }) => {
 
 Scenario('TC_PROD_021: Kiểm tra thông số kỹ thuật VGA trong trang chi tiết', ({ I }) => {
   // Kỳ vọng: Bảng specs-table hiển thị
-  I.amOnPage('/product/1');
+  I.amOnPage('http://localhost:5173/product/1');
   I.waitForElement('.product-detail-page', 10);
   I.seeElement('.specs-table');
 });
 
 Scenario('TC_PROD_022: Kiểm tra hình ảnh trong trang chi tiết sản phẩm', ({ I }) => {
   // Kỳ vọng: Ảnh chính hiển thị, không broken
-  I.amOnPage('/product/1');
+  I.amOnPage('http://localhost:5173/product/1');
   I.waitForElement('.product-detail-page', 10);
   I.seeElement('.main-image-box img');
 
@@ -209,7 +209,7 @@ Scenario('TC_PROD_022: Kiểm tra hình ảnh trong trang chi tiết sản phẩ
 
 Scenario('TC_PROD_023: Kiểm tra giá trong trang chi tiết sản phẩm', ({ I }) => {
   // Kỳ vọng: Giá hiển thị đúng định dạng tiền tệ
-  I.amOnPage('/product/1');
+  I.amOnPage('http://localhost:5173/product/1');
   I.waitForElement('.product-detail-page', 10);
   I.seeElement('.current-price');
 
@@ -223,7 +223,7 @@ Scenario('TC_PROD_023: Kiểm tra giá trong trang chi tiết sản phẩm', ({ 
 
 Scenario('TC_PROD_024: Truy cập sản phẩm không tồn tại → hiển thị thông báo lỗi', ({ I }) => {
   // Kỳ vọng: App hiển thị component .detail-error (không tìm thấy sản phẩm)
-  I.amOnPage('/product/99999');
+  I.amOnPage('http://localhost:5173/product/99999');
   I.waitForElement('.detail-error', 10);
   I.seeElement('.detail-error');
 });

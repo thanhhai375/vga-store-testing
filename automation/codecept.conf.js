@@ -20,7 +20,7 @@ exports.config = {
       keepBrowserState: true,
       keepCookies: true,
       chromium: {
-        slowMo: 1000 // Chậm lại 1 giây cho mỗi thao tác
+        slowMo: 0 // Đã tắt slowMo để test chạy nhanh hơn (trước đó là 1000ms = 1s/thao tác)
       }
     }
   },

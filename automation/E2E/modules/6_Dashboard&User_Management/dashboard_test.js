@@ -5,7 +5,7 @@ Before(({ I }) => {
 });
 
 Scenario('Hiển thị đầy đủ thông tin thống kê trên Dashboard', ({ I }) => {
-  I.amOnPage('/');
+  I.amOnPage('http://localhost:5174/');
   
   // Verify Dashboard title
   I.see('VGA Store Performance Dashboard');
@@ -30,7 +30,7 @@ Scenario('Hiển thị đầy đủ thông tin thống kê trên Dashboard', ({ 
 });
 
 Scenario('Thao tác Lọc thời gian trên Dashboard', ({ I }) => {
-  I.amOnPage('/');
+  I.amOnPage('http://localhost:5174/');
   
   // Verify default is today
   I.seeElement('select.dash-filter-select');
@@ -47,7 +47,7 @@ Scenario('Thao tác Lọc thời gian trên Dashboard', ({ I }) => {
 });
 
 Scenario('Điều hướng từ Dashboard sang Quản lý Đơn hàng', ({ I }) => {
-  I.amOnPage('/');
+  I.amOnPage('http://localhost:5174/');
   I.see('Xem tất cả ›');
   I.click('Xem tất cả ›');
   

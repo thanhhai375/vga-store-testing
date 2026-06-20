@@ -2,7 +2,7 @@ Feature('Admin Order Management');
 
 BeforeSuite(({ I }) => {
 
-    I.amOnPage('/login');
+    I.amOnPage('http://localhost:5174/login');
 
     I.waitForElement(
         'input[placeholder="Nhập tên đăng nhập"]',
@@ -27,7 +27,7 @@ BeforeSuite(({ I }) => {
 
 Scenario('ORD_01 - Hiển thị trang quản lý đơn hàng', ({ I }) => {
 
-    I.amOnPage('/orders');
+    I.amOnPage('http://localhost:5174/orders');
 
     I.wait(3);
 
@@ -39,7 +39,7 @@ Scenario('ORD_01 - Hiển thị trang quản lý đơn hàng', ({ I }) => {
 
 Scenario('ORD_02 - Hiển thị dropdown trạng thái', ({ I }) => {
 
-    I.amOnPage('/orders');
+    I.amOnPage('http://localhost:5174/orders');
 
     I.wait(2);
 
@@ -49,7 +49,7 @@ Scenario('ORD_02 - Hiển thị dropdown trạng thái', ({ I }) => {
 
 Scenario('ORD_03 - Lọc trạng thái Chờ xử lý', ({ I }) => {
 
-    I.amOnPage('/orders');
+    I.amOnPage('http://localhost:5174/orders');
 
     I.selectOption('select', 'Chờ xử lý');
 
@@ -59,7 +59,7 @@ Scenario('ORD_03 - Lọc trạng thái Chờ xử lý', ({ I }) => {
 
 Scenario('ORD_04 - Kiểm tra đơn hàng Chờ xử lý', ({ I }) => {
 
-    I.amOnPage('/orders');
+    I.amOnPage('http://localhost:5174/orders');
 
     I.wait(3);
 
@@ -69,7 +69,7 @@ Scenario('ORD_04 - Kiểm tra đơn hàng Chờ xử lý', ({ I }) => {
 
 Scenario('ORD_05 - Xác nhận thanh toán', ({ I }) => {
 
-    I.amOnPage('/orders');
+    I.amOnPage('http://localhost:5174/orders');
 
     I.wait(3);
 
@@ -87,7 +87,7 @@ Scenario('ORD_05 - Xác nhận thanh toán', ({ I }) => {
 
 Scenario('ORD_06 - Kiểm tra đơn đã chuyển sang Đã xác nhận', ({ I }) => {
 
-    I.amOnPage('/orders');
+    I.amOnPage('http://localhost:5174/orders');
 
     I.wait(3);
 
@@ -97,7 +97,7 @@ Scenario('ORD_06 - Kiểm tra đơn đã chuyển sang Đã xác nhận', ({ I }
 
 Scenario('ORD_07 - Lọc trạng thái Đã xác nhận', ({ I }) => {
 
-    I.amOnPage('/orders');
+    I.amOnPage('http://localhost:5174/orders');
 
     I.selectOption('select', 'Đã xác nhận');
 
@@ -107,7 +107,7 @@ Scenario('ORD_07 - Lọc trạng thái Đã xác nhận', ({ I }) => {
 
 Scenario('ORD_08 - Chuyển trạng thái sang Đang giao', ({ I }) => {
 
-    I.amOnPage('/orders');
+    I.amOnPage('http://localhost:5174/orders');
 
     I.waitForElement('tbody tr', 10);
 
@@ -122,7 +122,7 @@ Scenario('ORD_08 - Chuyển trạng thái sang Đang giao', ({ I }) => {
 
 Scenario('ORD_09 - Kiểm tra đơn đã chuyển sang Đang giao', ({ I }) => {
 
-    I.amOnPage('/orders');
+    I.amOnPage('http://localhost:5174/orders');
 
     I.wait(3);
 
@@ -132,7 +132,7 @@ Scenario('ORD_09 - Kiểm tra đơn đã chuyển sang Đang giao', ({ I }) => {
 
 Scenario('ORD_10 - Lọc trạng thái Đang giao', ({ I }) => {
 
-    I.amOnPage('/orders');
+    I.amOnPage('http://localhost:5174/orders');
 
     I.selectOption('select', 'Đang giao');
 
@@ -142,7 +142,7 @@ Scenario('ORD_10 - Lọc trạng thái Đang giao', ({ I }) => {
 
 Scenario('ORD_11 - Chuyển trạng thái sang Hoàn thành', ({ I }) => {
 
-    I.amOnPage('/orders');
+    I.amOnPage('http://localhost:5174/orders');
 
     I.waitForElement('tbody tr', 10);
 
@@ -157,7 +157,7 @@ Scenario('ORD_11 - Chuyển trạng thái sang Hoàn thành', ({ I }) => {
 
 Scenario('ORD_12 - Kiểm tra đơn đã chuyển sang Hoàn thành', ({ I }) => {
 
-    I.amOnPage('/orders');
+    I.amOnPage('http://localhost:5174/orders');
 
     I.wait(3);
 
@@ -167,7 +167,7 @@ Scenario('ORD_12 - Kiểm tra đơn đã chuyển sang Hoàn thành', ({ I }) =>
 
 Scenario('ORD_13 - Lọc trạng thái Hoàn thành', ({ I }) => {
 
-    I.amOnPage('/orders');
+    I.amOnPage('http://localhost:5174/orders');
 
     I.selectOption('select', 'Hoàn thành');
 
@@ -177,7 +177,7 @@ Scenario('ORD_13 - Lọc trạng thái Hoàn thành', ({ I }) => {
 
 Scenario('ORD_14 - Lọc trạng thái Đã hủy', ({ I }) => {
 
-    I.amOnPage('/orders');
+    I.amOnPage('http://localhost:5174/orders');
 
     I.selectOption('select', 'Đã hủy');
 
@@ -187,7 +187,7 @@ Scenario('ORD_14 - Lọc trạng thái Đã hủy', ({ I }) => {
 
 Scenario('ORD_15 - Refresh trang đơn hàng', ({ I }) => {
 
-    I.amOnPage('/orders');
+    I.amOnPage('http://localhost:5174/orders');
 
     I.refreshPage();
 
@@ -199,7 +199,7 @@ Scenario('ORD_15 - Refresh trang đơn hàng', ({ I }) => {
 
 Scenario('ORD_16 - Scroll trang đơn hàng', ({ I }) => {
 
-    I.amOnPage('/orders');
+    I.amOnPage('http://localhost:5174/orders');
 
     I.scrollPageToBottom();
 
@@ -213,7 +213,7 @@ Scenario('ORD_16 - Scroll trang đơn hàng', ({ I }) => {
 
 Scenario('ORD_17 - Screenshot Order Management', ({ I }) => {
 
-    I.amOnPage('/orders');
+    I.amOnPage('http://localhost:5174/orders');
 
     I.wait(3);
 

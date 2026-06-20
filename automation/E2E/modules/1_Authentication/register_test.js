@@ -1,7 +1,7 @@
 Feature('Register - Authentication');
 
 Before(({ I }) => {
-  I.amOnPage('/');
+  I.amOnPage('http://localhost:5173/');
   // Xóa session cũ để đảm bảo luôn ở trạng thái Guest
   I.executeScript(() => localStorage.clear());
   I.clearCookie();

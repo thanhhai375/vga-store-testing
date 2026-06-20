@@ -6,9 +6,9 @@ const TEST_USER = 'thanh123';
 const TEST_PASSWORD = 'thanh123';
 
 const ROUTE = {
-products: '/products',
-cart: '/cart',
-checkout: '/checkout',
+products: 'http://localhost:5173/products',
+cart: 'http://localhost:5173/cart',
+checkout: 'http://localhost:5173/checkout',
 };
 
 const EL = {
@@ -91,9 +91,9 @@ await I.waitForNumberOfTabs(1, 5);
 * * Đăng nhập lại bằng tài khoản test.
     */
     async function loginBeforeEachTest(I) {
-  I.amOnPage('/');
+  I.amOnPage('http://localhost:5173/');
 
-  // X�a to�n b? phi�n dang nh?p cu d? m?i test dang nh?p l?i.
+  // Xa ton b? phin dang nh?p cu d? m?i test dang nh?p l?i.
   I.clearCookie();
 
   await I.executeScript(() => {
