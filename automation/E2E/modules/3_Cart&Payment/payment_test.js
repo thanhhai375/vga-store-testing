@@ -1,4 +1,4 @@
-﻿// ==============================================================
+// ==============================================================
 // MODULE: 3_Cart&Payment — FE Payment
 // Framework: CodeceptJS + Playwright
 // File: automation/E2E/modules/3_Cart&Payment/payment_test.js
