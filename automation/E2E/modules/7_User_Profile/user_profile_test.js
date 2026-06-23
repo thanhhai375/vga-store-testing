@@ -48,7 +48,7 @@ Before(async ({ I }) => {
     if (isLoggedOut > 0) {
         I.forceClick(selectors.navbar.btnDangNhapHeader);
         I.waitForVisible(selectors.authModal.btnSubmit, 10);
-        I.fillField(selectors.authModal.inputTaiKhoanLogin, 'minhvon8'); 
+        I.fillField(selectors.authModal.inputTaiKhoanLogin, 'minhvon9'); 
         I.fillField(selectors.authModal.inputMatKhauLogin, '123456'); 
         I.forceClick(selectors.authModal.btnSubmit);
         I.wait(5); // Đợi redirect sau login
