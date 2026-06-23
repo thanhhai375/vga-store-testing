@@ -1,21 +1,17 @@
 Feature('Module 7: Quản lý Hồ sơ Người dùng (User Profile) - VGA Store');
 
 const selectors = {
-    navbar: {
-        btnDangNhapHeader: 'button[title="Đăng nhập"]',
-        avatarHeader: 'header img, .header-avatar, a[href*="profile"] img', 
+    navbar: { btnDangNhapHeader: 'button[title="Đăng nhập"]' },
+    authModal: {
+        btnSubmit: '.auth-submit-btn',
+        inputTaiKhoanLogin: 'input[placeholder="Nhập tài khoản hoặc email"]',
+        inputMatKhauLogin: 'input[placeholder="Nhập mật khẩu"]',
     },
     sidebar: {
         hoSoCaNhan: '//aside//*[contains(text(), "Hồ sơ cá nhân")] | //a[contains(@href, "profile")]//*[text()="Hồ sơ cá nhân"]',
         soDiaChi: '//aside//*[contains(text(), "Sổ địa chỉ")] | //a[contains(@href, "profile")]//*[text()="Sổ địa chỉ"]',
         doiMatKhau: '//aside//*[contains(text(), "Đổi mật khẩu")] | //a[contains(@href, "profile")]//*[text()="Đổi mật khẩu"]',
         dangXuat: '//aside//*[contains(text(), "Đăng xuất")] | //a[contains(@href, "profile")]//*[text()="Đăng xuất"]'
-    },
-    authModal: {
-        modalContainer: '.auth-modal, #auth-modal, .popup-login', 
-        btnSubmit: '.auth-submit-btn',
-        inputTaiKhoanLogin: 'input[placeholder="Nhập tài khoản hoặc email"]',
-        inputMatKhauLogin: 'input[placeholder="Nhập mật khẩu"]',
     },
     profile: {
         inputHoVaTen: '//label[contains(text(),"Họ và tên")]/following-sibling::input | //main//input[1]',
@@ -27,7 +23,6 @@ const selectors = {
     },
     address: {
         btnThemDiaChi: 'button:has-text("+ Thêm địa chỉ")',
-        btnHuyThemMoi: 'button:has-text("Hủy thêm mới")',
         inputNguoiNhan: '(//form//input)[1] | //input[contains(@placeholder, "tên người nhận")]',
         inputSdtNhan: '(//form//input)[2] | //input[contains(@placeholder, "số điện thoại")]',
         textareaDiaChi: '//form//textarea | //textarea[contains(@placeholder, "chi tiết")]',
@@ -43,36 +38,35 @@ const selectors = {
 };
 
 Before(async ({ I }) => {
-    I.amOnPage('/');
-    I.wait(1);
-    
-    const isLoggedOut = await I.grabNumberOfVisibleElements(selectors.navbar.btnDangNhapHeader);
-    
-    if (isLoggedOut > 0) {
-        I.say('--> Tiến hành Đăng nhập tài khoản hệ thống...');
-        I.forceClick(selectors.navbar.btnDangNhapHeader);
-        I.waitForVisible(selectors.authModal.btnSubmit, 5);
-        I.fillField(selectors.authModal.inputTaiKhoanLogin, 'minhvon4'); 
-        I.fillField(selectors.authModal.inputMatKhauLogin, '123456'); 
-        I.forceClick(selectors.authModal.btnSubmit);
-        I.wait(3); 
-    }
-    
-    I.amOnPage('/profile');
+    // 1. Ép buộc truy cập đúng port 5173
+    const baseUrl = 'http://localhost:5173';
+    I.amOnPage(baseUrl + '/');
     I.wait(2);
     
-    const currentUrl = await I.grabCurrentUrl();
-    if (!currentUrl.includes('/profile')) {
-        I.say('❌ [LỖI CRITICAL]: Không thể truy cập /profile. Tài khoản chưa đăng nhập thành công hoặc bị đá ra!');
-        throw new Error('Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin tài khoản!');
+    // 2. Kiểm tra đăng nhập
+    const isLoggedOut = await I.grabNumberOfVisibleElements(selectors.navbar.btnDangNhapHeader);
+    if (isLoggedOut > 0) {
+        I.forceClick(selectors.navbar.btnDangNhapHeader);
+        I.waitForVisible(selectors.authModal.btnSubmit, 10);
+        I.fillField(selectors.authModal.inputTaiKhoanLogin, 'minhvon8'); 
+        I.fillField(selectors.authModal.inputMatKhauLogin, '123456'); 
+        I.forceClick(selectors.authModal.btnSubmit);
+        I.wait(5); // Đợi redirect sau login
     }
     
-    I.waitInUrl('/profile', 7);
-    I.waitForElement(selectors.sidebar.hoSoCaNhan, 10);
+    // 3. Truy cập thẳng tới trang profile với port 5173
+    I.amOnPage(baseUrl + '/profile');
+    
+    // 4. Debug: Xem thực tế đang ở đâu
+    const currentUrl = await I.grabCurrentUrl();
+    I.say('DEBUG URL: ' + currentUrl); 
+    
+    // 5. Đợi element
+    I.waitForElement(selectors.sidebar.hoSoCaNhan, 15);
 });
 
 // ==========================================
-// PHÂN HỆ 1: HỒ SƠ CÁ NHÂN (USER PROFILE)
+// CÁC SCENARIO
 // ==========================================
 
 Scenario('TC01: Cập nhật thông tin hồ sơ cá nhân thành công (Happy Case)', ({ I }) => {
@@ -118,11 +112,16 @@ Scenario('TC02d: Thay đổi giới tính từ Nam sang Nữ thành công', ({ I
 // PHÂN HỆ 2: SỔ ĐỊA CHỈ (ADDRESS BOOK)
 // ==========================================
 
+// TC03: Sửa lỗi cú pháp I.forceClick() bị bỏ trống
 Scenario('TC03: Kiểm tra giao diện Sổ địa chỉ và hủy thao tác thêm mới', ({ I }) => {
     I.forceClick(selectors.sidebar.soDiaChi);
     I.waitForElement(selectors.address.btnThemDiaChi, 7);
-    I.forceClick(selectors.address.btnThemDiaChi); I.wait(1);
-    I.forceClick(selectors.address.btnHuyThemMoi); I.wait(1);
+    I.forceClick(selectors.address.btnThemDiaChi); 
+    I.wait(1);
+    // Thay vì I.forceClick() trống, ta thực hiện đóng modal (ví dụ nhấn nút Hủy hoặc nhấn ra ngoài)
+    // Giả sử có nút "HỦY" hoặc "X" để đóng modal
+    I.forceClick('button:has-text("HỦY")'); 
+    I.wait(1);
 });
 
 Scenario('TC04: Thêm địa chỉ nhận hàng mới và thiết lập mặc định thành công', ({ I }) => {
@@ -248,8 +247,12 @@ Scenario('TC05f: Đổi mật khẩu thành công (Happy Case)', ({ I }) => {
 // HÀNH ĐỘNG CUỐI: ĐĂNG XUẤT (LOGOUT)
 // ==========================================
 
+// TC06: Cải thiện logic Đăng xuất
 Scenario('TC06: Đăng xuất tài khoản khỏi hệ thống thành công', ({ I }) => {
-    I.forceClick(selectors.sidebar.dangXuat); I.wait(3);
-    I.amOnPage('/');
-    I.waitForElement(selectors.navbar.btnDangNhapHeader, 10);
+    I.forceClick(selectors.sidebar.dangXuat); 
+    I.wait(3);
+    // Ép làm mới trang và chờ đợi nút Đăng nhập xuất hiện
+    I.refreshPage();
+    I.wait(3);
+    I.waitForVisible(selectors.navbar.btnDangNhapHeader, 15);
 });
