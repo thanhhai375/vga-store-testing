@@ -288,26 +288,30 @@ EOF
             }
         }
 
-        // stage('Run UI Tests (CodeceptJS)') {
-        //     agent {
-        //         docker {
-        //             // Sử dụng image Playwright của Microsoft đã có sẵn các trình duyệt Chrome/Firefox
-        //             image 'mcr.microsoft.com/playwright:v1.44.0-jammy'
-        //             reuseNode true
-        //             args '--ipc=host --network vga-store-testing_vga-network'
-        //         }
-        //     }
-        //     steps {
-        //         dir('automation') {
-        //             echo 'Đang chạy UI Test tự động bằng CodeceptJS bên trong Docker Container...'
-        //             // Xóa thư mục node_modules cũ để cài lại bản chuẩn trên Linux
-        //             sh 'rm -rf node_modules'
-        //             sh 'npm install'
-        //             sh 'npx playwright install chromium'
-        //             sh 'npx codeceptjs run || { echo "❌ FILE: UI_Test_E2E\\n  - Testcase: Lỗi tại bước test giao diện (CodeceptJS)\\n\\n" > ../error_reason_UI_Test.txt; exit 1; }'
-        //         }
-        //     }
-        // }
+        stage('Run UI Tests (CodeceptJS)') {
+            agent {
+                docker {
+                    // Sử dụng image Playwright của Microsoft đã có sẵn các trình duyệt Chrome/Firefox
+                    image 'mcr.microsoft.com/playwright:v1.44.0-jammy'
+                    reuseNode true
+                    args '--ipc=host --network vga-store-testing_vga-network'
+                }
+            }
+            environment {
+                HEADLESS = 'true'
+                FE_URL = 'http://admin-frontend'
+            }
+            steps {
+                dir('automation') {
+                    echo 'Đang chạy UI Test tự động bằng CodeceptJS bên trong Docker Container...'
+                    // Xóa thư mục node_modules cũ để cài lại bản chuẩn trên Linux
+                    sh 'rm -rf node_modules'
+                    sh 'npm install'
+                    sh 'npx playwright install chromium'
+                    sh 'npx codeceptjs run --steps || { echo "❌ FILE: UI_Test_E2E\\n  - Testcase: Lỗi tại bước test giao diện (CodeceptJS)\\n\\n" > ../error_reason_UI_Test.txt; exit 1; }'
+                }
+            }
+        }
     }
 
     post {
