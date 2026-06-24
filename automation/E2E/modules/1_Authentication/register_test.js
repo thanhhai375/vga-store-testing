@@ -1,15 +1,15 @@
 Feature('Register - Authentication');
 
 const SELECTORS = {
-  openAuthButton: '[data-testid="open-auth-button"], button[title="Đăng nhập"]',
-  modal: '[data-testid="auth-modal"], .auth-modal',
-  loginTab: '[data-testid="auth-login-tab"], .auth-tab:nth-child(1)',
-  registerTab: '[data-testid="auth-register-tab"], .auth-tab:nth-child(2)',
-  username: '[data-testid="register-username-input"], input[placeholder="Nhập tên đăng nhập"]',
-  fullName: '[data-testid="register-full-name-input"], input[placeholder="Nhập họ và tên của bạn"]',
-  email: '[data-testid="register-email-input"], input[placeholder="Nhập email của bạn"]',
-  password: '[data-testid="register-password-input"], input[placeholder="Nhập mật khẩu"]',
-  loginUsername: '[data-testid="login-username-input"], input[placeholder="Nhập tài khoản hoặc email"]',
+  openAuthButton: 'button[title="Đăng nhập"]',
+  modal: '.auth-modal',
+  loginTab: '.auth-tab:nth-child(1)',
+  registerTab: '.auth-tab:nth-child(2)',
+  username: 'input[placeholder="Nhập tên đăng nhập"]',
+  fullName: 'input[placeholder="Nhập họ và tên của bạn"]',
+  email: 'input[placeholder="Nhập email của bạn"]',
+  password: 'input[placeholder="Nhập mật khẩu"]',
+  loginUsername: 'input[placeholder="Nhập tài khoản hoặc email"]',
   submit: '.auth-submit-btn'
 };
 
