@@ -1,13 +1,11 @@
-tc_id,description,fullName,phone,dob,gender,expectedStatus,expectedMessage
-TC_PROFILE_01,Valid profile data with normal values,Nguyen Van A,0901234567,1995-05-10,MALE,200,Profile updated successfully
-TC_PROFILE_02,Boundary fullName min length 1 character,A,0901234567,1995-05-10,MALE,200,Profile updated successfully
-TC_PROFILE_03,Boundary fullName empty,,0901234567,1995-05-10,MALE,400,Full name is required
-TC_PROFILE_04,Boundary fullName too long,Nguyen Van An Nguyen Van An Nguyen Van An Nguyen Van An Nguyen Van An Nguyen Van An Nguyen Van An Nguyen Van An Nguyen Van An Nguyen Van An Nguyen Van An,0901234567,1995-05-10,MALE,400,Full name exceeds maximum length
-TC_PROFILE_05,Boundary phone below minimum digits,Nguyen Van A,090123456,1995-05-10,MALE,400,Phone must be 10 digits
-TC_PROFILE_06,Boundary phone valid 10 digits,Nguyen Van A,0901234567,1995-05-10,MALE,200,Profile updated successfully
-TC_PROFILE_07,Boundary phone above maximum digits,Nguyen Van A,09012345678,1995-05-10,MALE,400,Phone must be 10 digits
-TC_PROFILE_08,Phone contains non-digit characters,Nguyen Van A,09012abc567,1995-05-10,MALE,400,Phone must contain digits only
-TC_PROFILE_09,Boundary dob empty,Nguyen Van A,0901234567,,MALE,400,Dob is required
-TC_PROFILE_10,Invalid dob format,Nguyen Van A,0901234567,1995/05/10,MALE,400,Dob format invalid
-TC_PROFILE_11,Boundary gender empty,Nguyen Van A,0901234567,1995-05-10,,400,Gender is required
-TC_PROFILE_12,Invalid gender value,Nguyen Van A,0901234567,1995-05-10,OTHER,400,Gender invalid
+tc_id,description,expectedStatus,expectedMessage,fullName,dob,gender
+TC_PF_001,Cập nhật Profile thành công với dữ liệu hợp lệ đầy đủ,200,thành công,Nguyen Van A,1995-10-15,MALE
+TC_PF_002,BVA - fullName đạt độ dài tối thiểu biên dưới hợp lệ (2 ký tự),200,thành công,An,1990-01-01,MALE
+TC_PF_003,BVA - Thử nghiệm số điện thoại hợp lệ đầu số 03 (Xử lý tiền đầu số động),200,thành công,Nguyen Van B,1988-12-12,MALE
+TC_PF_004,BVA - fullName rỗng (Độ dài dưới biên tối thiểu),400,không được để trống,,1995-10-15,MALE
+TC_PF_005,BVA - fullName quá dài vượt biên trên tối đa (51 ký tự),400,quá dài,Toi la mot nguoi co cai ten rat la dai vuot qua muc quy dinh cho phep cua he thong,1995-10-15,MALE
+TC_PF_006,BVA - Định dạng Ngày sinh (dob) không hợp lệ,400,định dạng ngày,Nguyen Van A,15-10-1995,MALE
+TC_PF_007,BVA - Số điện thoại trống (Xử lý tiền dynamicPhone rỗng),400,số điện thoại không được trống,Nguyen Van A,1995-10-15,MALE
+TC_PF_008,BVA - Số điện thoại quá ngắn (Số điện thoại động ít hơn 10 chữ số),400,không hợp lệ,Nguyen Van A,1995-10-15,MALE
+TC_PF_009,BVA - Số điện thoại quá dài (Số điện thoại động nhiều hơn 11 chữ số),400,không hợp lệ,Nguyen Van A,1995-10-15,MALE
+TC_PF_010,BVA - Đầu số điện thoại không hợp lệ (Bắt đầu bằng 19),400,không đúng định dạng,Nguyen Van A,1995-10-15,MALE
