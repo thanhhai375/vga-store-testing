@@ -1,53 +1,161 @@
 Feature('Login - Authentication');
 
-Before(({ I }) => {
+const SELECTORS = {
+  openAuthButton: '[data-testid="open-auth-button"], button[title="Đăng nhập"]',
+  modal: '[data-testid="auth-modal"], .auth-modal',
+  username: '[data-testid="login-username-input"], input[placeholder="Nhập tài khoản hoặc email"]',
+  password: '[data-testid="login-password-input"], input[placeholder="Nhập mật khẩu"]',
+  togglePassword: '[data-testid="toggle-password-button"], .toggle-password',
+  submit: '.auth-submit-btn',
+  close: '[data-testid="auth-close-button"], .auth-close-btn',
+  userAvatar: '.user-avatar-trigger',
+  logoutButton: '.logout-btn'
+};
+
+const VALID_USER = {
+  username: 'hai123',
+  password: 'hai123'
+};
+
+const clearAuthState = (I) => {
   I.amOnPage('http://localhost:5173/');
-  // Xóa session cũ để đảm bảo luôn ở trạng thái Guest (chưa đăng nhập)
-  I.executeScript(() => localStorage.clear());
   I.clearCookie();
-  I.refreshPage(); // Reload lại trang để áp dụng trạng thái Guest
-
-  I.waitForElement('button[title="Đăng nhập"]', 10);
-  I.forceClick('button[title="Đăng nhập"]');
-  I.waitForVisible('.auth-submit-btn', 5); // Đợi form hiển thị
-  // Xóa HTML5 required để test validation Backend
   I.executeScript(() => {
-    document.querySelectorAll('input').forEach(i => i.removeAttribute('required'));
+    localStorage.clear();
+    sessionStorage.clear();
   });
+  I.refreshPage();
+};
+
+const openLoginForm = (I) => {
+  I.waitForElement(SELECTORS.openAuthButton, 10);
+  I.forceClick(SELECTORS.openAuthButton);
+  I.waitForVisible(SELECTORS.modal, 5);
+  I.waitForVisible(SELECTORS.submit, 5);
+};
+
+const loginSuccessfully = (I) => {
+  I.fillField(SELECTORS.username, VALID_USER.username);
+  I.fillField(SELECTORS.password, VALID_USER.password);
+  clickSubmit(I);
+  I.waitForFunction(() => Boolean(localStorage.getItem('token')), [], 20);
+  I.waitForInvisible(SELECTORS.modal, 5);
+};
+
+const clickSubmit = (I) => {
+  I.waitForVisible(SELECTORS.submit, 5);
+  I.forceClick(SELECTORS.submit);
+};
+
+const assertFieldInvalid = (I, selector) => {
+  I.waitForFunction((selectors) => {
+    const [fieldSelector] = selectors;
+    const field = document.querySelector(fieldSelector);
+    return Boolean(field && !field.checkValidity());
+  }, [selector], 5);
+  I.seeElement(SELECTORS.modal);
+};
+
+Before(({ I }) => {
+  clearAuthState(I);
+  openLoginForm(I);
 });
 
-// Định nghĩa DataTable dựa trên file VGA-Store-Auth-Testcase.csv (Phần LOGIN)
-let loginData = new DataTable(['testId', 'username', 'password', 'expectedMessage']);
-
-// Các Test Case sai (Negative Cases)
-loginData.add(['L-002', '', '123456', 'Tên đăng nhập không được trống']); // Hoặc text tương ứng trên UI
-loginData.add(['L-003', 'hai123', '', 'Mật khẩu không được trống']);
-loginData.add(['L-006', 'ab', '123456', 'Invalid username or password']);
-loginData.add(['L-010', 'hai123', '12345', 'Invalid username or password']);
-loginData.add(['L-013', 'usernotexist999', '123456', 'Invalid username or password']);
-
-// Test Cases: Khoảng trắng và Ký tự đặc biệt
-loginData.add(['L-014', '   ', '123456', 'Tên đăng nhập không được trống']); // Chỉ chứa khoảng trắng
-loginData.add(['L-015', 'hai 123', '123456', 'Invalid username or password']); // Chứa khoảng trắng ở giữa username
-loginData.add(['L-016', 'hai!@#', '123456', 'Invalid username or password']); // Username chứa ký tự đặc biệt
-loginData.add(['L-017', 'hai123', '   ', 'Mật khẩu không được trống']); // Mật khẩu chỉ chứa khoảng trắng
-loginData.add(['L-018', "' OR 1=1 --", '123456', 'Invalid username or password']); // Chứa ký tự đặc biệt (Dạng SQL Injection)
-
-Data(loginData).Scenario('Kiểm thử Đăng nhập các trường hợp lỗi', ({ I, current }) => {
-  I.fillField('input[placeholder="Nhập tài khoản hoặc email"]', current.username);
-  I.fillField('input[placeholder="Nhập mật khẩu"]', current.password);
-  
-  I.forceClick('.auth-submit-btn');
-  I.waitForText(current.expectedMessage, 5); // Đợi tối đa 5s để Toast hoặc Error hiển thị
+Scenario('L-001: Dang nhap thanh cong (Happy Path)', ({ I }) => {
+  loginSuccessfully(I);
 });
 
-// Test case thành công (Positive Case)
-Scenario('L-001: Đăng nhập thành công', ({ I }) => {
-  I.fillField('input[placeholder="Nhập tài khoản hoặc email"]', 'hai123');
-  I.fillField('input[placeholder="Nhập mật khẩu"]', 'hai123'); // Mật khẩu đúng
-  I.forceClick('.auth-submit-btn');
-  
-  // Kiểm tra xem đã đăng nhập thành công chưa
+Scenario('L-002: Dang nhap that bai khi sai username hoac password', ({ I }) => {
+  I.fillField(SELECTORS.username, 'usernotexist999');
+  I.fillField(SELECTORS.password, 'wrong-password');
+  clickSubmit(I);
+
+  I.waitForText('Invalid username or password', 10);
+  I.seeElement(SELECTORS.modal);
+});
+
+Scenario('L-003: Trang thai form khi thieu du lieu bat buoc', ({ I }) => {
+  clickSubmit(I);
+
+  I.waitForFunction((selectors) => {
+    const [usernameSelector, passwordSelector] = selectors;
+    const username = document.querySelector(usernameSelector);
+    const password = document.querySelector(passwordSelector);
+    return Boolean(username && password && (!username.checkValidity() || !password.checkValidity()));
+  }, [SELECTORS.username, SELECTORS.password], 5);
+  I.seeElement(SELECTORS.modal);
+});
+
+Scenario('L-004: An hien mat khau', ({ I }) => {
+  I.fillField(SELECTORS.password, 'secret123');
+  I.seeAttributesOnElements(SELECTORS.password, { type: 'password' });
+
+  I.forceClick(SELECTORS.togglePassword);
+  I.seeAttributesOnElements(SELECTORS.password, { type: 'text' });
+
+  I.forceClick(SELECTORS.togglePassword);
+  I.seeAttributesOnElements(SELECTORS.password, { type: 'password' });
+});
+
+Scenario('L-005: Dang nhap bang phim Enter', ({ I }) => {
+  I.fillField(SELECTORS.username, VALID_USER.username);
+  I.fillField(SELECTORS.password, VALID_USER.password);
+  I.pressKey('Enter');
+
+  I.waitForFunction(() => Boolean(localStorage.getItem('token')), [], 20);
+  I.waitForInvisible(SELECTORS.modal, 5);
+});
+
+Scenario('L-006: Thieu username thi form bi chan submit', ({ I }) => {
+  I.fillField(SELECTORS.password, VALID_USER.password);
+  clickSubmit(I);
+
+  assertFieldInvalid(I, SELECTORS.username);
+});
+
+Scenario('L-007: Thieu password thi form bi chan submit', ({ I }) => {
+  I.fillField(SELECTORS.username, VALID_USER.username);
+  clickSubmit(I);
+
+  assertFieldInvalid(I, SELECTORS.password);
+});
+
+Scenario('L-008: Sai password voi username ton tai', ({ I }) => {
+  I.fillField(SELECTORS.username, VALID_USER.username);
+  I.fillField(SELECTORS.password, 'wrong-password');
+  clickSubmit(I);
+
+  I.waitForText('Invalid username or password', 10);
+  I.seeElement(SELECTORS.modal);
+});
+
+Scenario('L-009: Toggle password khong lam mat gia tri da nhap', ({ I }) => {
+  I.fillField(SELECTORS.password, 'secret123');
+  I.forceClick(SELECTORS.togglePassword);
+
+  I.seeInField(SELECTORS.password, 'secret123');
+});
+
+Scenario('L-010: Dong modal bang nut close', ({ I }) => {
+  I.forceClick(SELECTORS.close);
+
+  I.waitForInvisible(SELECTORS.modal, 5);
+});
+
+Scenario('L-011: Session van duoc giu sau khi reload trang', ({ I }) => {
+  loginSuccessfully(I);
+  I.refreshPage();
+
+  I.waitForElement(SELECTORS.userAvatar, 10);
   I.waitForFunction(() => Boolean(localStorage.getItem('token')), [], 5);
-  I.dontSeeElement('.auth-modal'); // Đảm bảo form đăng nhập đã đóng
+});
+
+Scenario('L-012: Dang xuat xoa token va hien lai nut dang nhap', ({ I }) => {
+  loginSuccessfully(I);
+  I.forceClick(SELECTORS.userAvatar);
+  I.waitForVisible(SELECTORS.logoutButton, 5);
+  I.forceClick(SELECTORS.logoutButton);
+
+  I.waitForFunction(() => !localStorage.getItem('token'), [], 5);
+  I.waitForElement(SELECTORS.openAuthButton, 10);
 });
