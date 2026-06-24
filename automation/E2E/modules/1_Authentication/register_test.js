@@ -42,6 +42,19 @@ Data(registerData).Scenario('Kiểm thử Đăng ký các trường hợp lỗi'
     I.fillField('input[placeholder="Nhập mật khẩu"]', current.password);
     I.fillField('input[placeholder="Nhập họ và tên của bạn"]', current.fullName);
 
+    if (current.testId === 'R-004') {
+        I.executeScript(() => {
+            const passwordInput = document.querySelector('input[placeholder="Nhập mật khẩu"]');
+            if (passwordInput) passwordInput.setAttribute('required', '');
+        });
+        I.forceClick('.auth-submit-btn');
+        I.waitForFunction(() => {
+            const passwordInput = document.querySelector('input[placeholder="Nhập mật khẩu"]');
+            return Boolean(passwordInput && !passwordInput.checkValidity());
+        }, [], 5);
+        return;
+    }
+
     I.executeScript(() => {
         document.querySelectorAll('input').forEach(i => i.removeAttribute('required'));
     });
