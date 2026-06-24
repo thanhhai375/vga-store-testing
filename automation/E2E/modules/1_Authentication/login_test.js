@@ -1,13 +1,13 @@
 Feature('Login - Authentication');
 
 const SELECTORS = {
-  openAuthButton: '[data-testid="open-auth-button"], button[title="Đăng nhập"]',
-  modal: '[data-testid="auth-modal"], .auth-modal',
-  username: '[data-testid="login-username-input"], input[placeholder="Nhập tài khoản hoặc email"]',
-  password: '[data-testid="login-password-input"], input[placeholder="Nhập mật khẩu"]',
-  togglePassword: '[data-testid="toggle-password-button"], .toggle-password',
+  openAuthButton: 'button[title="Đăng nhập"]',
+  modal: '.auth-modal',
+  username: 'input[placeholder="Nhập tài khoản hoặc email"]',
+  password: 'input[placeholder="Nhập mật khẩu"]',
+  togglePassword: '.toggle-password',
   submit: '.auth-submit-btn',
-  close: '[data-testid="auth-close-button"], .auth-close-btn',
+  close: '.auth-close-btn',
   userAvatar: '.user-avatar-trigger',
   logoutButton: '.logout-btn'
 };
