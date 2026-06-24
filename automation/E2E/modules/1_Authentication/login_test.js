@@ -48,6 +48,6 @@ Scenario('L-001: Đăng nhập thành công', ({ I }) => {
   I.forceClick('.auth-submit-btn');
   
   // Kiểm tra xem đã đăng nhập thành công chưa
-  I.waitForText('Đăng nhập thành công', 5); 
+  I.waitForFunction(() => Boolean(localStorage.getItem('token')), [], 5);
   I.dontSeeElement('.auth-modal'); // Đảm bảo form đăng nhập đã đóng
 });
