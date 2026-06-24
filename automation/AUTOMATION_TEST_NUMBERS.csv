@@ -1,0 +1,21 @@
+Loai test,Module,Tong testcase,Passed,Failed,Chua co ket qua,Nguon so lieu,Ghi chu
+TONG HOP,Tat ca automation,368,2,11,355,E2E test files + Postman CSV + E2E/testlog.md,Tong testcase da viet; pass/fail chi lay tu log E2E hien co
+E2E - ket qua chay gan nhat,Tat ca module da chay trong testlog,13,2,11,0,automation/E2E/testlog.md,Chi tinh cac dong co OK/FAILED trong testlog
+E2E - testcase da viet,Authentication,4,0,0,4,automation/E2E/modules/1_Authentication,Dem so Scenario trong file test
+E2E - testcase da viet,Shopping Experience,18,0,0,18,automation/E2E/modules/2_Shopping_Experience,Dem so Scenario trong file test
+E2E - testcase da viet,Cart & Payment,15,0,0,15,automation/E2E/modules/3_Cart&Payment,Dem so Scenario trong file test
+E2E - testcase da viet,Product & Category Management,37,0,0,37,automation/E2E/modules/4_Product&Category_Management,Dem so Scenario trong file test
+E2E - testcase da viet,Order Management,17,0,0,17,automation/E2E/modules/5_Order_Management,Dem so Scenario trong file test
+E2E - testcase da viet,Dashboard & User Management,10,0,0,10,automation/E2E/modules/6_Dashboard&User_Management,Dem so Scenario trong file test
+E2E - testcase da viet,User Profile,0,0,0,0,automation/E2E/modules/7_User_Profile,Chua co Scenario trong file example
+POSTMAN API/BVA,Authentication,65,0,0,65,automation/postman/VGA-AUTH-USER/VGA-Store-Auth/VGA-Store-Auth-Testcase.csv,Chua co file ket qua pass/fail
+POSTMAN API/BVA,User Address,12,0,0,12,automation/postman/VGA-AUTH-USER/VGA-Store-USER/VGA_Store_User_Address_BVA.csv,Chua co file ket qua pass/fail
+POSTMAN API/BVA,User Profile,12,0,0,12,automation/postman/VGA-AUTH-USER/VGA-Store-USER/VGA_Store_User_Profile_BVA.csv,Chua co file ket qua pass/fail
+POSTMAN API/BVA,Admin BVA,20,0,0,20,automation/postman/VGA-Store-Admin/VGA_Admin_BVA_TestCases.csv,Chua co file ket qua pass/fail
+POSTMAN API/BVA,Admin TestCases,26,0,0,26,automation/postman/VGA-Store-Admin/VGA_Store_Admin_TestCases.csv,Chua co file ket qua pass/fail
+POSTMAN API/BVA,Cart,30,0,0,30,automation/postman/VGA-Store-Cart/VGA_Store_Cart_TestCases.csv,Chua co file ket qua pass/fail
+POSTMAN API/BVA,Product Admin,34,0,0,34,automation/postman/VGA-store-product/product-admin/VGA-store_product_AutoTest.csv,Chua co file ket qua pass/fail
+POSTMAN API/BVA,Product User,37,0,0,37,automation/postman/VGA-store-product/product-user/PRODUCT_USER.csv,Chua co file ket qua pass/fail
+POSTMAN API/BVA,Payment BVA,8,0,0,8,automation/postman/VGAShop_Payment/payment-bva-data-from-TC_Payment_92.csv,Chua co file ket qua pass/fail
+POSTMAN API/BVA,Payment TestCases,23,0,0,23,automation/postman/VGAShop_Payment/payment-test-data-from-TC_Payment_71.csv,Chua co file ket qua pass/fail
+MINH CHUNG LOI,E2E failed screenshots,61,0,61,0,automation/E2E/output,So anh PNG loi hien co trong output
