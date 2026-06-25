@@ -57,8 +57,8 @@ Scenario('TC_PROD_026: Admin thêm sản phẩm thiếu trường name → báo 
 // ─────────────────────────────────────────────────────────────
 
 Scenario('TC_PROD_027: Admin cập nhật thông tin sản phẩm thành công', ({ I }) => {
-  // Sản phẩm số 1 trong bảng có ID=78, navigate thẳng đến trang edit
-  I.amOnPage('http://localhost:5174/products/78');
+  // Dùng nút "Sửa" trong cột Hành động để navigate đến trang edit
+  I.forceClick('//table//tbody//tr[1]//*[contains(text(),"Sửa")]');
   I.waitForElement('input[placeholder="Ví dụ: 15000000"]', 10);
 
   I.clearField('input[placeholder="Ví dụ: 15000000"]');
