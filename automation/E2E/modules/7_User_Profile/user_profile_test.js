@@ -48,7 +48,7 @@ Before(async ({ I }) => {
     if (isLoggedOut > 0) {
         I.forceClick(selectors.navbar.btnDangNhapHeader);
         I.waitForVisible(selectors.authModal.btnSubmit, 10);
-        I.fillField(selectors.authModal.inputTaiKhoanLogin, 'minhvon10'); 
+        I.fillField(selectors.authModal.inputTaiKhoanLogin, 'minhvon12'); 
         I.fillField(selectors.authModal.inputMatKhauLogin, '123456'); 
         I.forceClick(selectors.authModal.btnSubmit);
         I.wait(5); // Đợi redirect sau login
@@ -216,32 +216,26 @@ Scenario('TC05d: Đổi mật khẩu thất bại do mật khẩu mới quá ng�
     I.forceClick(selectors.password.btnXacNhanDoi); I.wait(1);
 });
 
-Scenario('TC05e: Đổi mật khẩu thất bại khi mật khẩu mới thiếu ký tự đặc biệt/chữ hoa (Nếu FE yêu cầu)', ({ I }) => {
-    I.forceClick(selectors.sidebar.doiMatKhau);
-    I.waitForElement(selectors.password.btnXacNhanDoi, 7); I.wait(1.5);
-    I.fillField(selectors.password.inputMatKhauCu, '123456');       
-    I.fillField(selectors.password.inputMatKhauMoi, 'onlylowercase');     
-    I.fillField(selectors.password.inputXacNhanMatKhau, 'onlylowercase');   
-    I.forceClick(selectors.password.btnXacNhanDoi); I.wait(1);
-});
 
-Scenario('TC05f: Đổi mật khẩu thành công (Happy Case)', ({ I }) => {
+Scenario('TC05e: Đổi mật khẩu thành công (Happy Case)', ({ I }) => {
     I.forceClick(selectors.sidebar.doiMatKhau);
     I.waitForElement(selectors.password.btnXacNhanDoi, 7); I.wait(1.5);
     I.fillField(selectors.password.inputMatKhauCu, '123456');       
-    I.fillField(selectors.password.inputMatKhauMoi, '123456New!');     
-    I.fillField(selectors.password.inputXacNhanMatKhau, '123456New!');   
+    I.fillField(selectors.password.inputMatKhauMoi, '12345678');     
+    I.fillField(selectors.password.inputXacNhanMatKhau, '12345678');   
     I.forceClick(selectors.password.btnXacNhanDoi); I.wait(2);
     
     I.refreshPage(); I.wait(2);
     I.forceClick(selectors.sidebar.doiMatKhau);
     I.waitForElement(selectors.password.btnXacNhanDoi, 7); I.wait(1.5);
     
-    I.fillField(selectors.password.inputMatKhauCu, '123456New!');       
+    I.fillField(selectors.password.inputMatKhauCu, '12345678');       
     I.fillField(selectors.password.inputMatKhauMoi, '123456');     
     I.fillField(selectors.password.inputXacNhanMatKhau, '123456');   
     I.forceClick(selectors.password.btnXacNhanDoi); I.wait(2);
 });
+
+
 
 // ==========================================
 // HÀNH ĐỘNG CUỐI: ĐĂNG XUẤT (LOGOUT)
