@@ -5,7 +5,7 @@ Before(({ I }) => {
 });
 
 Scenario('Hiển thị danh sách Người dùng và các bộ lọc', ({ I }) => {
-  I.amOnPage('http://localhost:5174/users');
+  I.amOnPage((process.env.ADMIN_FE_URL || 'http://localhost:5174') + '/users');
   
   I.see('Người dùng', 'h1');
   I.see('Quản lý tài khoản hệ thống');
@@ -24,21 +24,21 @@ Scenario('Hiển thị danh sách Người dùng và các bộ lọc', ({ I }) =
 });
 
 Scenario('Tìm kiếm người dùng', ({ I }) => {
-  I.amOnPage('http://localhost:5174/users');
+  I.amOnPage((process.env.ADMIN_FE_URL || 'http://localhost:5174') + '/users');
   I.fillField('input[placeholder="Tìm tài khoản..."]', 'admin');
   I.wait(2);
   I.see('admin');
 });
 
 Scenario('Lọc theo vai trò', ({ I }) => {
-  I.amOnPage('http://localhost:5174/users');
+  I.amOnPage((process.env.ADMIN_FE_URL || 'http://localhost:5174') + '/users');
   I.selectOption('select.form-control', 'ADMIN');
   I.wait(2);
   I.seeElement('.badge-danger'); // Admin badge
 });
 
 Scenario('Thêm người dùng mới', ({ I }) => {
-  I.amOnPage('http://localhost:5174/users');
+  I.amOnPage((process.env.ADMIN_FE_URL || 'http://localhost:5174') + '/users');
   I.click('+ Thêm người dùng');
   I.see('Thêm Người Dùng Mới');
   
@@ -62,7 +62,7 @@ Scenario('Thêm người dùng mới', ({ I }) => {
 });
 
 Scenario('Khóa và Mở khóa người dùng', ({ I }) => {
-  I.amOnPage('http://localhost:5174/users');
+  I.amOnPage((process.env.ADMIN_FE_URL || 'http://localhost:5174') + '/users');
   I.selectOption('select.form-control', 'USER');
   I.wait(2);
   
@@ -74,7 +74,7 @@ Scenario('Khóa và Mở khóa người dùng', ({ I }) => {
 });
 
 Scenario('Hủy Thêm người dùng', ({ I }) => {
-  I.amOnPage('http://localhost:5174/users');
+  I.amOnPage((process.env.ADMIN_FE_URL || 'http://localhost:5174') + '/users');
   I.click('+ Thêm người dùng');
   I.waitForText('Thêm Người Dùng Mới', 5);
   
@@ -83,7 +83,7 @@ Scenario('Hủy Thêm người dùng', ({ I }) => {
 });
 
 Scenario('Phân trang Danh sách Người dùng', ({ I }) => {
-  I.amOnPage('http://localhost:5174/users');
+  I.amOnPage((process.env.ADMIN_FE_URL || 'http://localhost:5174') + '/users');
   // Check if pagination exists, then click next page
   I.executeScript(() => {
     const nextBtn = document.querySelector('.pagination .page-btn:last-child');

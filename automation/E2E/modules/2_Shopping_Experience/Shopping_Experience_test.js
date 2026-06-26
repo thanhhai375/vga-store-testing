@@ -2,13 +2,13 @@
 // MODULE: 2_Shopping_Experience — FE Shopping Experience
 // Framework: CodeceptJS + Playwright
 // File: automation/E2E/modules/2_Shopping_Experience/Shopping_Experience_test.js
-// baseURL: http://localhost:5173
+// baseURL: ' + (process.env.USER_FE_URL || 'http://localhost:5173') + '
 // ==============================================================
 
 Feature('A. Search & Filter');
 
 Scenario('SH-001 | Tìm kiếm tên hợp lệ → hiện đúng sản phẩm', async ({ I }) => {
-  I.amOnPage('http://localhost:5173/products');
+  I.amOnPage((process.env.USER_FE_URL || 'http://localhost:5173') + '/products');
   I.waitForElement('input[placeholder*="Tìm kiếm"]', 5);
   I.fillField('input[placeholder*="Tìm kiếm"]', 'RTX 4090');
   I.pressKey('Enter');
@@ -17,7 +17,7 @@ Scenario('SH-001 | Tìm kiếm tên hợp lệ → hiện đúng sản phẩm', 
 });
 
 Scenario('SH-002 | Tìm kiếm từ khóa KHÔNG tồn tại → hiện "Không tìm thấy"', async ({ I }) => {
-  I.amOnPage('http://localhost:5173/products');
+  I.amOnPage((process.env.USER_FE_URL || 'http://localhost:5173') + '/products');
   I.waitForElement('input[placeholder*="Tìm kiếm"]', 5);
   I.fillField('input[placeholder*="Tìm kiếm"]', 'vga rtx 9090');
   I.pressKey('Enter');
@@ -26,7 +26,7 @@ Scenario('SH-002 | Tìm kiếm từ khóa KHÔNG tồn tại → hiện "Không 
 });
 
 Scenario('SH-003 | Lọc giá thấp → cao → thứ tự thẻ sản phẩm phải tăng dần', async ({ I }) => {
-  I.amOnPage('http://localhost:5173/products');
+  I.amOnPage((process.env.USER_FE_URL || 'http://localhost:5173') + '/products');
   I.waitForElement('select.sort-select, [data-filter="price-asc"], .filter-sort', 5);
   try {
     await I.selectOption('select.sort-select', 'price_asc');
@@ -37,7 +37,7 @@ Scenario('SH-003 | Lọc giá thấp → cao → thứ tự thẻ sản phẩm p
 });
 
 Scenario('SH-004 | Lọc giá cao → thấp → thứ tự giảm dần', async ({ I }) => {
-  I.amOnPage('http://localhost:5173/products');
+  I.amOnPage((process.env.USER_FE_URL || 'http://localhost:5173') + '/products');
   I.waitForElement('select.sort-select, [data-filter="price-desc"], .filter-sort', 5);
   try {
     await I.selectOption('select.sort-select', 'price_desc');
@@ -48,7 +48,7 @@ Scenario('SH-004 | Lọc giá cao → thấp → thứ tự giảm dần', async
 });
 
 Scenario('SH-005 | Lọc hãng NVIDIA → chỉ hiện sản phẩm NVIDIA', async ({ I }) => {
-  I.amOnPage('http://localhost:5173/products');
+  I.amOnPage((process.env.USER_FE_URL || 'http://localhost:5173') + '/products');
   I.waitForElement('input[value*="NVIDIA"], [data-brand="NVIDIA"], label:has-text("NVIDIA")', 5);
   I.click('[data-brand="NVIDIA"], label:has-text("NVIDIA")');
   I.wait(3);
@@ -60,7 +60,7 @@ Scenario('SH-005 | Lọc hãng NVIDIA → chỉ hiện sản phẩm NVIDIA', asy
 Feature('B. Product Detail — Dynamic UI');
 
 Scenario('SH-006 | Product Detail hiển thị đúng giá', async ({ I }) => {
-  I.amOnPage('http://localhost:5173/products');
+  I.amOnPage((process.env.USER_FE_URL || 'http://localhost:5173') + '/products');
   I.waitForElement('.product-card', 5);
   I.click(".product-card");
   I.waitForElement('.detail-info', 10);
@@ -70,7 +70,7 @@ Scenario('SH-006 | Product Detail hiển thị đúng giá', async ({ I }) => {
 // FIX SH-007: xóa sạch cart trước → thêm đúng 1 item → so sánh .col-total trước/sau tăng qty
 Scenario('SH-007 | Thay đổi số lượng → Giá tổng phải nhảy theo', async ({ I }) => {
   // Bước 1: Xóa sạch cart để tránh nhiễu từ test trước
-  I.amOnPage('http://localhost:5173/cart');
+  I.amOnPage((process.env.USER_FE_URL || 'http://localhost:5173') + '/cart');
   I.wait(2);
   const hasItems = await I.grabNumberOfVisibleElements('.cart-item-row');
   if (hasItems > 0) {
@@ -79,7 +79,7 @@ Scenario('SH-007 | Thay đổi số lượng → Giá tổng phải nhảy theo'
   }
 
   // Bước 2: Thêm đúng 1 sản phẩm vào giỏ
-  I.amOnPage('http://localhost:5173/products');
+  I.amOnPage((process.env.USER_FE_URL || 'http://localhost:5173') + '/products');
   I.waitForElement('.product-card', 5);
   I.click(".product-card");
   I.waitForElement('.detail-info', 10);
@@ -88,7 +88,7 @@ Scenario('SH-007 | Thay đổi số lượng → Giá tổng phải nhảy theo'
   I.wait(3);
 
   // Bước 3: Vào cart, lấy giá thành tiền trước khi tăng
-  I.amOnPage('http://localhost:5173/cart');
+  I.amOnPage((process.env.USER_FE_URL || 'http://localhost:5173') + '/cart');
   I.waitForElement('.cart-item-row', 10);
   I.waitForElement('.cart-item-row .col-total', 5);
   const before = await I.grabTextFrom('.cart-item-row .col-total');
@@ -118,7 +118,7 @@ Scenario('SH-007 | Thay đổi số lượng → Giá tổng phải nhảy theo'
 Feature('C. Giỏ hàng — UI Behavior');
 
 Scenario('SH-008 | Giỏ hàng rỗng → Hiển thị màn hình trống + nút Tiếp tục mua sắm', async ({ I }) => {
-  I.amOnPage('http://localhost:5173/cart');
+  I.amOnPage((process.env.USER_FE_URL || 'http://localhost:5173') + '/cart');
   const hasItems = await I.grabNumberOfVisibleElements(".cart-item-row");
   if (hasItems > 0) {
     I.click('button:has-text("XÓA TOÀN BỘ GIỎ HÀNG"), .btn-clear-cart');
@@ -130,7 +130,7 @@ Scenario('SH-008 | Giỏ hàng rỗng → Hiển thị màn hình trống + nút
 });
 
 Scenario('SH-009 | Thêm vào giỏ → Hiện Toast + badge số tăng', async ({ I }) => {
-  I.amOnPage('http://localhost:5173/products');
+  I.amOnPage((process.env.USER_FE_URL || 'http://localhost:5173') + '/products');
   I.waitForElement('.product-card', 5);
 
   let before = 0;
@@ -148,14 +148,14 @@ Scenario('SH-009 | Thêm vào giỏ → Hiện Toast + badge số tăng', async 
 // FIX SH-010: login → add-to-cart → vào cart → tăng qty vượt tồn kho
 Scenario('SH-010 | Tăng số lượng vượt tồn kho → Báo lỗi ngay tại chỗ', async ({ I }) => {
 
-  I.amOnPage('http://localhost:5173/products');
+  I.amOnPage((process.env.USER_FE_URL || 'http://localhost:5173') + '/products');
   I.waitForElement('.product-card', 5);
   I.click(".product-card");
   I.waitForElement(".btn-add-cart", 5);
   I.click(".btn-add-cart");
   I.wait(3);
 
-  I.amOnPage('http://localhost:5173/cart');
+  I.amOnPage((process.env.USER_FE_URL || 'http://localhost:5173') + '/cart');
   I.waitForElement('.cart-item-row', 10);
 
   I.waitForElement('.qty-controls button:last-child', 5);
@@ -167,7 +167,7 @@ Scenario('SH-010 | Tăng số lượng vượt tồn kho → Báo lỗi ngay t�
 });
 
 Scenario('SH-011 | Nút Thêm vào giỏ có Spinner khi gọi API', async ({ I }) => {
-  I.amOnPage('http://localhost:5173/products');
+  I.amOnPage((process.env.USER_FE_URL || 'http://localhost:5173') + '/products');
   I.waitForElement('.product-card', 5);
   I.click(".product-card");
   I.waitForElement(".btn-add-cart", 5);
@@ -178,14 +178,14 @@ Scenario('SH-011 | Nút Thêm vào giỏ có Spinner khi gọi API', async ({ I 
 // FIX SH-012: login trước, dùng .col-action để tìm nút xóa
 Scenario('SH-012 | Xóa 1 sản phẩm khỏi giỏ → item biến mất', async ({ I }) => {
 
-  I.amOnPage('http://localhost:5173/products');
+  I.amOnPage((process.env.USER_FE_URL || 'http://localhost:5173') + '/products');
   I.waitForElement('.product-card', 5);
   I.click(".product-card");
   I.waitForElement(".btn-add-cart", 5);
   I.click(".btn-add-cart");
   I.wait(3);
 
-  I.amOnPage('http://localhost:5173/cart');
+  I.amOnPage((process.env.USER_FE_URL || 'http://localhost:5173') + '/cart');
   I.waitForElement('.cart-item-row', 10);
 
   // Nút xóa nằm trong .col-action
@@ -200,7 +200,7 @@ Feature('D. Checkout — Form Validation UI');
 
 
 Scenario('SH-013 | Điền SĐT sai định dạng → border đỏ hiện ngay', async ({ I }) => {
-  I.amOnPage('http://localhost:5173/checkout');
+  I.amOnPage((process.env.USER_FE_URL || 'http://localhost:5173') + '/checkout');
   I.wait(3);
   if (await I.grabNumberOfVisibleElements('input[name="phone"]') > 0) {
     I.fillField('input[name="phone"]', '0123abc');
@@ -209,18 +209,18 @@ Scenario('SH-013 | Điền SĐT sai định dạng → border đỏ hiện ngay'
 });
 
 Scenario('SH-014 | Để trống Tên → hiện lỗi validation', async ({ I }) => {
-  I.amOnPage('http://localhost:5173/checkout');
+  I.amOnPage((process.env.USER_FE_URL || 'http://localhost:5173') + '/checkout');
   I.wait(2);
 });
 
 Scenario('SH-015 | Để trống SĐT → hiện lỗi', async ({ I }) => {
-  I.amOnPage('http://localhost:5173/checkout');
+  I.amOnPage((process.env.USER_FE_URL || 'http://localhost:5173') + '/checkout');
   I.wait(2);
 });
 
 Scenario('SH-016 | Giỏ hàng rỗng → Checkout bị chặn', async ({ I }) => {
-  I.amOnPage('http://localhost:5173/cart');
-  I.amOnPage('http://localhost:5173/checkout');
+  I.amOnPage((process.env.USER_FE_URL || 'http://localhost:5173') + '/cart');
+  I.amOnPage((process.env.USER_FE_URL || 'http://localhost:5173') + '/checkout');
   I.wait(1);
 });
 
@@ -228,20 +228,20 @@ Scenario('SH-016 | Giỏ hàng rỗng → Checkout bị chặn', async ({ I }) =
 Feature('E. UX States');
 
 Scenario('SH-017 | Bấm Đặt hàng → nút disabled/spinner', async ({ I }) => {
-  I.amOnPage('http://localhost:5173/products');
+  I.amOnPage((process.env.USER_FE_URL || 'http://localhost:5173') + '/products');
   I.waitForElement('.product-card', 5);
   I.click(".product-card");
   I.waitForElement(".btn-add-cart", 5);
   I.click(".btn-add-cart");
   I.wait(2);
   // Vào checkout sau khi có item trong giỏ
-  I.amOnPage('http://localhost:5173/checkout');
+  I.amOnPage((process.env.USER_FE_URL || 'http://localhost:5173') + '/checkout');
   I.wait(2);
 });
 
 Scenario('SH-018 | Responsive Mobile 375px không tràn nút Mua ngay', async ({ I }) => {
   I.resizeWindow(375, 812);
-  I.amOnPage('http://localhost:5173/products');
+  I.amOnPage((process.env.USER_FE_URL || 'http://localhost:5173') + '/products');
   I.waitForElement('.product-card', 5);
   I.click(".product-card");
   I.waitForElement('.btn-buy-now', 5);

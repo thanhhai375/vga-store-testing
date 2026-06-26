@@ -23,10 +23,10 @@ module.exports = function () {
 
     /**
      * Đăng nhập với tài khoản Admin
-     * Admin app chạy riêng tại http://localhost:5174
+     * Admin app chạy riêng tại ' + (process.env.ADMIN_FE_URL || 'http://localhost:5174') + '
      */
     loginAsAdmin() {
-      this.amOnPage('http://localhost:5174/login');
+      this.amOnPage((process.env.ADMIN_FE_URL || 'http://localhost:5174') + '/login');
       this.waitForElement('input[name="username"]', 10);
       this.fillField('input[name="username"]', 'hai123');
       this.fillField('input[name="password"]', 'hai123');

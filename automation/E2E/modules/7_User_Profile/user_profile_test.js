@@ -39,7 +39,7 @@ const selectors = {
 
 Before(async ({ I }) => {
     // 1. Ép buộc truy cập đúng port 5173
-    const baseUrl = 'http://localhost:5173';
+    const baseUrl = process.env.USER_FE_URL || 'http://localhost:5173';
     I.amOnPage(baseUrl + '/');
     I.wait(2);
     

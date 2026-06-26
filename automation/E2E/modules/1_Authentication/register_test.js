@@ -21,7 +21,7 @@ const VALID_REGISTER_USER = {
 };
 
 const clearAuthState = (I) => {
-  I.amOnPage('http://localhost:5173/');
+  I.amOnPage((process.env.USER_FE_URL || 'http://localhost:5173') + '/');
   I.clearCookie();
   I.executeScript(() => {
     localStorage.clear();
