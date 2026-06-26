@@ -299,7 +299,10 @@ EOF
             }
             environment {
                 HEADLESS = 'true'
-                FE_URL = 'http://admin-frontend'
+                FE_URL = 'http://user-frontend'
+                USER_FE_URL = 'http://user-frontend'
+                ADMIN_FE_URL = 'http://admin-frontend'
+                BACKEND_URL = 'http://backend:8080'
             }
             steps {
                 dir('automation') {

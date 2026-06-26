@@ -15,7 +15,7 @@ exports.config = {
   output: './E2E/output',
   helpers: {
     Playwright: {
-      url: process.env.FE_URL || 'http://admin-frontend',
+      url: process.env.USER_FE_URL || process.env.FE_URL || 'http://localhost:5173',
       show: false,
       browser: 'chromium',
       restart: 'session',
