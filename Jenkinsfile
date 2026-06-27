@@ -357,6 +357,74 @@ EOF
                     branchName = env.GIT_BRANCH ?: "Unknown Branch"
                 }
 
+                def findExistingBug = { bugSummary ->
+                    def escapedSummary = bugSummary.replace('\\', '\\\\').replace('"', '\\"')
+                    def jql = "project = ${JIRA_PROJECT_KEY} AND issuetype = Bug AND summary ~ \"${escapedSummary}\" ORDER BY created DESC"
+                    writeFile file: 'jira_search_jql.txt', text: jql
+
+                    def searchResponse = sh(script: '''
+                    curl -s -u "$JIRA_USER:$JIRA_TOKEN" \
+                    --get \
+                    --data-urlencode "jql=$(cat jira_search_jql.txt)" \
+                    --data-urlencode "maxResults=10" \
+                    --data-urlencode "fields=summary,status,created" \
+                    "$JIRA_URL/rest/api/2/search"
+                    ''', returnStdout: true).trim()
+
+                    def parsed = new groovy.json.JsonSlurperClassic().parseText(searchResponse ?: '{"issues":[]}')
+                    def issues = parsed.issues ?: []
+                    return issues.find { it.fields?.summary == bugSummary }
+                }
+
+                def addJiraComment = { issueKey, commentText ->
+                    def commentPayload = groovy.json.JsonOutput.toJson([body: commentText])
+                    writeFile file: "jira_comment_${issueKey}.json", text: commentPayload
+
+                    sh(script: '''
+                    curl -s -X POST -u "$JIRA_USER:$JIRA_TOKEN" \
+                    -H "Content-Type: application/json" \
+                    -d @jira_comment_''' + issueKey + '''.json \
+                    "$JIRA_URL/rest/api/2/issue/''' + issueKey + '''/comment"
+                    ''')
+                }
+
+                def createOrUpdateJiraBug = { int index, String bugSummary, String summaryTitle, String bugDescriptionNew, String errorReason ->
+                    def existingBug = findExistingBug(bugSummary)
+
+                    if (existingBug) {
+                        def issueKey = existingBug.key
+                        def statusName = existingBug.fields?.status?.name ?: 'Unknown'
+                        def statusCategory = existingBug.fields?.status?.statusCategory?.key ?: 'unknown'
+                        def recurrenceState = statusCategory == 'done' ? 'LOI CU DA DONE NHUNG TAI PHAT' : 'LOI CU DANG MO'
+                        def commentText = "Trang thai loi: ${recurrenceState}.\n\nJenkins phat hien lai loi nay trong Build #${env.BUILD_NUMBER}.\n\n**Trang thai Jira hien tai:** ${statusName}\n\n**Nhanh:** ${branchName}\n\n**Chi tiet lan tai phat:**\n{code}\n${errorReason}\n{code}"
+                        addJiraComment(issueKey, commentText)
+                        echo "Loi cu: da ton tai Jira ${issueKey} (${statusName}) cho '${summaryTitle}'. Da them comment thay vi tao ticket moi."
+                        return issueKey
+                    }
+
+                    def payload = groovy.json.JsonOutput.toJson([
+                        fields: [
+                            project    : [key: "${JIRA_PROJECT_KEY}"],
+                            summary    : bugSummary,
+                            description: bugDescriptionNew,
+                            issuetype  : [name: 'Bug']
+                        ]
+                    ])
+
+                    writeFile file: "jira_payload_${index}.json", text: payload
+
+                    def createResponse = sh(script: '''
+                    curl -s -X POST -u "$JIRA_USER:$JIRA_TOKEN" \
+                    -H "Content-Type: application/json" \
+                    -d @jira_payload_''' + index + '''.json \
+                    "$JIRA_URL/rest/api/2/issue/"
+                    ''', returnStdout: true).trim()
+
+                    def created = new groovy.json.JsonSlurperClassic().parseText(createResponse ?: '{}')
+                    echo "Loi moi: da tao Jira ticket ${created.key ?: '(khong doc duoc key)'} cho '${summaryTitle}'"
+                    return created.key
+                }
+
                 // Tìm tất cả các file lỗi được sinh ra
                 def errorFilesStr = sh(script: "ls error_reason_*.txt 2>/dev/null || true", returnStdout: true).trim()
 
@@ -381,36 +449,9 @@ EOF
                             }
                         }
 
-                        // CÔNG THỨC LÀM SẠCH CHUẨN JSON
-                        errorReason = errorReason.replace('\\', '\\\\')
-                                                 .replace('"', '\\"')
-                                                 .replace('\t', '    ')
-                                                 .replace('\r', '')
-                                                 .replace('\n', '\\n')
-
                         def bugSummary = "[Bug Tự Động] ${summaryTitle}"
-                        def bugDescription = "Hệ thống CI/CD Jenkins vừa quét và phát hiện lỗi mới.\\n\\n**1. Nhánh bị lỗi (Branch):** ${branchName}\\n\\n**2. Các Testcase rớt & Lý do lỗi:**\\n{code}\\n${errorReason}\\n{code}\\n\\n**3. Thủ phạm tình nghi (Người sửa file cuối):** ${culprit}\\n\\n**4. Xem thêm:** Vui lòng kiểm tra màn hình Jenkins Console (Build #${env.BUILD_NUMBER}) để biết toàn bộ quá trình chạy."
-
-                        def payload = """
-                        {
-                            "fields": {
-                                "project": { "key": "${JIRA_PROJECT_KEY}" },
-                                "summary": "${bugSummary}",
-                                "description": "${bugDescription}",
-                                "issuetype": { "name": "Bug" }
-                            }
-                        }
-                        """
-
-                        writeFile file: "jira_payload_${i}.json", text: payload
-
-                        sh(script: '''
-                        curl -s -X POST -u "$JIRA_USER:$JIRA_TOKEN" \
-                        -H "Content-Type: application/json" \
-                        -d @jira_payload_''' + i + '''.json \
-                        "$JIRA_URL/rest/api/2/issue/"
-                        ''')
-                        echo "✅ Đã tạo Jira ticket cho file ${file}"
+                        def bugDescription = "Trang thai loi: LOI MOI.\n\nHe thong CI/CD Jenkins vua quet va chua thay Jira Bug dang mo nao trung loi nay.\n\n**1. Nhanh bi loi (Branch):** ${branchName}\n\n**2. Cac Testcase rot & Ly do loi:**\n{code}\n${errorReason}\n{code}\n\n**3. Thu pham tinh nghi (Nguoi sua file cuoi):** ${culprit}\n\n**4. Xem them:** Vui long kiem tra man hinh Jenkins Console (Build #${env.BUILD_NUMBER}) de biet toan bo qua trinh chay."
+                        createOrUpdateJiraBug(i, bugSummary, summaryTitle, bugDescription, errorReason)
                     }
                 } else {
                     // Nếu pipeline sập nhưng không có file lỗi (ví dụ sập do build docker lỗi)
@@ -419,27 +460,8 @@ EOF
                     def errorReason = "Lỗi khởi động môi trường Server (Pipeline sập trước khi kịp chạy Test). Vui lòng kiểm tra log Jenkins."
 
                     def bugSummary = "[Bug Tự Động] ${summaryTitle}"
-                    def bugDescription = "Hệ thống CI/CD Jenkins vừa quét và phát hiện lỗi.\\n\\n**1. Nhánh bị lỗi (Branch):** ${branchName}\\n\\n**2. Lý do lỗi:**\\n{code}\\n${errorReason}\\n{code}\\n\\n**3. Thủ phạm tình nghi:** ${culprit}\\n\\n**4. Xem thêm:** Vui lòng kiểm tra màn hình Jenkins Console (Build #${env.BUILD_NUMBER}) để biết toàn bộ quá trình chạy."
-
-                    def payload = """
-                    {
-                        "fields": {
-                            "project": { "key": "${JIRA_PROJECT_KEY}" },
-                            "summary": "${bugSummary}",
-                            "description": "${bugDescription}",
-                            "issuetype": { "name": "Bug" }
-                        }
-                    }
-                    """
-
-                    writeFile file: 'jira_payload.json', text: payload
-
-                    sh '''
-                    curl -s -X POST -u "$JIRA_USER:$JIRA_TOKEN" \
-                    -H "Content-Type: application/json" \
-                    -d @jira_payload.json \
-                    "$JIRA_URL/rest/api/2/issue/"
-                    '''
+                    def bugDescription = "Trang thai loi: LOI MOI.\n\nHe thong CI/CD Jenkins vua quet va chua thay Jira Bug dang mo nao trung loi nay.\n\n**1. Nhanh bi loi (Branch):** ${branchName}\n\n**2. Ly do loi:**\n{code}\n${errorReason}\n{code}\n\n**3. Thu pham tinh nghi:** ${culprit}\n\n**4. Xem them:** Vui long kiem tra man hinh Jenkins Console (Build #${env.BUILD_NUMBER}) de biet toan bo qua trinh chay."
+                    createOrUpdateJiraBug(0, bugSummary, summaryTitle, bugDescription, errorReason)
                 }
             }
         }
