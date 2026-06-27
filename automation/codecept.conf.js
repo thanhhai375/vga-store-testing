@@ -24,13 +24,6 @@ exports.config = {
     I: './E2E/steps_file.js'
   },
   plugins: {
-    pauseOnFail: {},
-    retryFailedStep: {
-      enabled: true
-    },
-    tryTo: {
-      enabled: true
-    },
     screenshotOnFail: {
       enabled: true
     }
