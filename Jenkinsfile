@@ -313,21 +313,34 @@ EOF
                     sh 'npx playwright install chromium'
                     sh '''#!/bin/bash
                     set +e
-                    npx codeceptjs run --steps 2>&1 | tee codecept_ui.log
-                    ui_status=${PIPESTATUS[0]}
+                    failed=0
 
-                    if [ "$ui_status" -ne 0 ]; then
-                        {
-                            echo "❌ FILE: UI_Test_E2E"
-                            echo "  - Testcase: Lỗi tại bước test giao diện (CodeceptJS)"
-                            echo ""
-                            echo "===== Các testcase lỗi ====="
-                            grep -E "^[[:space:]]*[0-9]+\\) |-- FAILURES:|FAILURES|Failed tests|Error |TimeoutError|AssertionError" codecept_ui.log | tail -n 80 || true
-                            echo ""
-                            echo "===== Log cuối của CodeceptJS ====="
-                            tail -n 160 codecept_ui.log
-                        } > ../error_reason_UI_Test.txt
-                        exit "$ui_status"
+                    while read -r test_file; do
+                        safe_name=$(echo "$test_file" | sed 's#^./##; s#[/\\ ]#_#g; s#[^A-Za-z0-9_.-]#_#g')
+                        log_file="codecept_${safe_name}.log"
+                        error_file="../error_reason_UI_${safe_name}.txt"
+
+                        echo "===== Chạy UI module: $test_file ====="
+                        npx codeceptjs run "$test_file" --steps 2>&1 | tee "$log_file"
+                        ui_status=${PIPESTATUS[0]}
+
+                        if [ "$ui_status" -ne 0 ]; then
+                            failed=1
+                            {
+                                echo "❌ FILE: $test_file"
+                                echo "  - Testcase: Lỗi tại bước test giao diện (CodeceptJS)"
+                                echo ""
+                                echo "===== Các testcase lỗi ====="
+                                grep -E "^[[:space:]]*[0-9]+\\) |-- FAILURES:|FAILURES|Failed tests|Error |TimeoutError|AssertionError|ElementNotFound|expected web application" "$log_file" | tail -n 120 || true
+                                echo ""
+                                echo "===== Log cuối của CodeceptJS ====="
+                                tail -n 180 "$log_file"
+                            } > "$error_file"
+                        fi
+                    done < <(find ./E2E/modules -name "*_test.js" | sort)
+
+                    if [ "$failed" -ne 0 ]; then
+                        exit 1
                     fi
                     '''
                 }
