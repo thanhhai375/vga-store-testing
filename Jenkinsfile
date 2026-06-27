@@ -388,27 +388,70 @@ EOF
                     ''')
                 }
 
-                def createOrUpdateJiraBug = { int index, String bugSummary, String summaryTitle, String bugDescriptionNew, String errorReason ->
+                def extractEmail = { authorText ->
+                    def matcher = (authorText ?: '') =~ /<([^>]+)>/
+                    return matcher.find() ? matcher.group(1).trim() : ''
+                }
+
+                def findJiraUserByEmail = { email ->
+                    if (!email) {
+                        return null
+                    }
+
+                    def userResponse = sh(script: '''
+                    curl -s -u "$JIRA_USER:$JIRA_TOKEN" \
+                    --get \
+                    --data-urlencode "query=''' + email + '''" \
+                    "$JIRA_URL/rest/api/2/user/search"
+                    ''', returnStdout: true).trim()
+
+                    def users = new groovy.json.JsonSlurperClassic().parseText(userResponse ?: '[]')
+                    return users.find { it.emailAddress == email } ?: users.find { it.accountId }
+                }
+
+                def assignJiraIssue = { issueKey, jiraUser ->
+                    if (!issueKey || !jiraUser?.accountId) {
+                        return
+                    }
+
+                    def assignPayload = groovy.json.JsonOutput.toJson([accountId: jiraUser.accountId])
+                    writeFile file: "jira_assign_${issueKey}.json", text: assignPayload
+
+                    sh(script: '''
+                    curl -s -X PUT -u "$JIRA_USER:$JIRA_TOKEN" \
+                    -H "Content-Type: application/json" \
+                    -d @jira_assign_''' + issueKey + '''.json \
+                    "$JIRA_URL/rest/api/2/issue/''' + issueKey + '''/assignee"
+                    ''')
+                }
+
+                def createOrUpdateJiraBug = { int index, String bugSummary, String summaryTitle, String bugDescriptionNew, String errorReason, String culprit ->
                     def existingBug = findExistingBug(bugSummary)
+                    def culpritEmail = extractEmail(culprit)
+                    def jiraAssignee = findJiraUserByEmail(culpritEmail)
 
                     if (existingBug) {
                         def issueKey = existingBug.key
                         def statusName = existingBug.fields?.status?.name ?: 'Unknown'
                         def statusCategory = existingBug.fields?.status?.statusCategory?.key ?: 'unknown'
                         def recurrenceState = statusCategory == 'done' ? 'LOI CU DA DONE NHUNG TAI PHAT' : 'LOI CU DANG MO'
-                        def commentText = "Trang thai loi: ${recurrenceState}.\n\nJenkins phat hien lai loi nay trong Build #${env.BUILD_NUMBER}.\n\n**Trang thai Jira hien tai:** ${statusName}\n\n**Nhanh:** ${branchName}\n\n**Chi tiet lan tai phat:**\n{code}\n${errorReason}\n{code}"
+                        def assigneeText = jiraAssignee?.accountId ? "${jiraAssignee.displayName ?: culprit} (${culpritEmail})" : "Khong tim thay user Jira theo email ${culpritEmail ?: 'Unknown'}"
+                        def commentText = "Trang thai loi: ${recurrenceState}.\n\nJenkins phat hien lai loi nay trong Build #${env.BUILD_NUMBER}.\n\n**Trang thai Jira hien tai:** ${statusName}\n\n**Nguoi phu trach theo commit:** ${assigneeText}\n\n**Nhanh:** ${branchName}\n\n**Chi tiet lan tai phat:**\n{code}\n${errorReason}\n{code}"
                         addJiraComment(issueKey, commentText)
+                        assignJiraIssue(issueKey, jiraAssignee)
                         echo "Loi cu: da ton tai Jira ${issueKey} (${statusName}) cho '${summaryTitle}'. Da them comment thay vi tao ticket moi."
                         return issueKey
                     }
 
+                    def issueFields = [
+                        project    : [key: "${JIRA_PROJECT_KEY}"],
+                        summary    : bugSummary,
+                        description: bugDescriptionNew,
+                        issuetype  : [name: 'Bug']
+                    ]
+
                     def payload = groovy.json.JsonOutput.toJson([
-                        fields: [
-                            project    : [key: "${JIRA_PROJECT_KEY}"],
-                            summary    : bugSummary,
-                            description: bugDescriptionNew,
-                            issuetype  : [name: 'Bug']
-                        ]
+                        fields: issueFields
                     ])
 
                     writeFile file: "jira_payload_${index}.json", text: payload
@@ -422,6 +465,10 @@ EOF
 
                     def created = new groovy.json.JsonSlurperClassic().parseText(createResponse ?: '{}')
                     echo "Loi moi: da tao Jira ticket ${created.key ?: '(khong doc duoc key)'} cho '${summaryTitle}'"
+                    assignJiraIssue(created.key, jiraAssignee)
+                    if (!jiraAssignee?.accountId) {
+                        echo "Khong gan duoc assignee vi khong tim thay Jira user theo email commit: ${culpritEmail ?: 'Unknown'}"
+                    }
                     return created.key
                 }
 
@@ -451,7 +498,7 @@ EOF
 
                         def bugSummary = "[Bug Tự Động] ${summaryTitle}"
                         def bugDescription = "Trang thai loi: LOI MOI.\n\nHe thong CI/CD Jenkins vua quet va chua thay Jira Bug dang mo nao trung loi nay.\n\n**1. Nhanh bi loi (Branch):** ${branchName}\n\n**2. Cac Testcase rot & Ly do loi:**\n{code}\n${errorReason}\n{code}\n\n**3. Thu pham tinh nghi (Nguoi sua file cuoi):** ${culprit}\n\n**4. Xem them:** Vui long kiem tra man hinh Jenkins Console (Build #${env.BUILD_NUMBER}) de biet toan bo qua trinh chay."
-                        createOrUpdateJiraBug(i, bugSummary, summaryTitle, bugDescription, errorReason)
+                        createOrUpdateJiraBug(i, bugSummary, summaryTitle, bugDescription, errorReason, culprit)
                     }
                 } else {
                     // Nếu pipeline sập nhưng không có file lỗi (ví dụ sập do build docker lỗi)
@@ -461,7 +508,7 @@ EOF
 
                     def bugSummary = "[Bug Tự Động] ${summaryTitle}"
                     def bugDescription = "Trang thai loi: LOI MOI.\n\nHe thong CI/CD Jenkins vua quet va chua thay Jira Bug dang mo nao trung loi nay.\n\n**1. Nhanh bi loi (Branch):** ${branchName}\n\n**2. Ly do loi:**\n{code}\n${errorReason}\n{code}\n\n**3. Thu pham tinh nghi:** ${culprit}\n\n**4. Xem them:** Vui long kiem tra man hinh Jenkins Console (Build #${env.BUILD_NUMBER}) de biet toan bo qua trinh chay."
-                    createOrUpdateJiraBug(0, bugSummary, summaryTitle, bugDescription, errorReason)
+                    createOrUpdateJiraBug(0, bugSummary, summaryTitle, bugDescription, errorReason, culprit)
                 }
             }
         }
