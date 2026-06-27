@@ -294,15 +294,15 @@ EOF
                     // Sử dụng image Playwright của Microsoft đã có sẵn các trình duyệt Chrome/Firefox
                     image 'mcr.microsoft.com/playwright:v1.44.0-jammy'
                     reuseNode true
-                    args '--ipc=host --network vga-store-testing_vga-network'
+                    args '--ipc=host --network vga-store-testing_vga-network --add-host=host.docker.internal:host-gateway'
                 }
             }
             environment {
                 HEADLESS = 'true'
-                FE_URL = 'http://user-frontend'
-                USER_FE_URL = 'http://user-frontend'
-                ADMIN_FE_URL = 'http://admin-frontend'
-                BACKEND_URL = 'http://backend:8080'
+                FE_URL = 'http://host.docker.internal:5173'
+                USER_FE_URL = 'http://host.docker.internal:5173'
+                ADMIN_FE_URL = 'http://host.docker.internal:5174'
+                BACKEND_URL = 'http://host.docker.internal:8080'
             }
             steps {
                 dir('automation') {
