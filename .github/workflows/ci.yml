@@ -1,0 +1,527 @@
+name: VGA Store CI
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+      - "feature/**"
+      - "fix/**"
+      - "bugfix/**"
+  pull_request:
+    branches:
+      - main
+      - develop
+
+permissions:
+  contents: read
+
+env:
+  COMPOSE_PROJECT_NAME: vga-store-testing
+  JIRA_BASE_URL: ${{ secrets.JIRA_BASE_URL }}
+  JIRA_EMAIL: ${{ secrets.JIRA_EMAIL }}
+  JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
+  JIRA_PROJECT_KEY: ${{ secrets.JIRA_PROJECT_KEY }}
+
+jobs:
+  ci:
+    name: Build and test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: automation/package-lock.json
+
+      - name: Start application with Docker Compose
+        run: |
+          rm -f error_reason*.txt
+          docker compose -p "$COMPOSE_PROJECT_NAME" down -v --remove-orphans
+          docker compose -p "$COMPOSE_PROJECT_NAME" up -d --build db backend admin-frontend user-frontend
+
+      - name: Wait for backend
+        run: |
+          max_attempts=30
+          attempt=0
+
+          while [ "$attempt" -lt "$max_attempts" ]; do
+            http_code=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8080/api/orders || true)
+
+            if [ "$http_code" = "200" ] || [ "$http_code" = "401" ] || [ "$http_code" = "403" ] || [ "$http_code" = "405" ]; then
+              echo "Backend is ready. HTTP status: $http_code"
+              exit 0
+            fi
+
+            echo "Backend is starting. Attempt $((attempt + 1))/$max_attempts"
+            sleep 2
+            attempt=$((attempt + 1))
+          done
+
+          echo "Backend did not start within 60 seconds."
+          docker compose -p "$COMPOSE_PROJECT_NAME" logs backend
+          exit 1
+
+      - name: Install automation dependencies
+        working-directory: automation
+        run: npm ci
+
+      - name: Run API tests with Newman
+        working-directory: automation
+        run: |
+          set +e
+          failed=0
+
+          cat > parse_errors.js <<'NODE'
+          const fs = require('fs');
+          const path = require('path');
+          const testFile = process.argv[2];
+          const jsonName = process.argv[3];
+
+          function getRequestUrl(requestUrl) {
+            if (!requestUrl) return '';
+            if (typeof requestUrl === 'string') return requestUrl;
+            if (requestUrl.raw) return requestUrl.raw;
+            const protocol = requestUrl.protocol || 'http';
+            const host = Array.isArray(requestUrl.host) ? requestUrl.host.join('.') : (requestUrl.host || '');
+            const port = requestUrl.port ? `:${requestUrl.port}` : '';
+            const pathValue = Array.isArray(requestUrl.path) ? requestUrl.path.join('/') : (requestUrl.path || '');
+            return `${protocol}://${host}${port}/${pathValue}`;
+          }
+
+          function stringifyBody(value) {
+            if (!value) return '';
+            try {
+              const parsed = JSON.parse(value);
+              return JSON.stringify(parsed, null, 2).slice(0, 1000);
+            } catch {
+              return String(value).slice(0, 1000);
+            }
+          }
+
+          try {
+            const baseName = path.basename(testFile);
+            const outName = '../error_reason_' + baseName.replace(/\s+/g, '_') + '.txt';
+            const data = JSON.parse(fs.readFileSync(jsonName, 'utf8'));
+            let hasError = false;
+
+            for (const exec of data.run.executions || []) {
+              const failedAsserts = (exec.assertions || []).filter((item) => item.error);
+              if (failedAsserts.length === 0) continue;
+
+              if (!hasError) {
+                fs.appendFileSync(outName, 'FAILED FILE: ' + testFile + '\n\n');
+                hasError = true;
+              }
+
+              const iteration = exec.cursor ? exec.cursor.iteration + 1 : 1;
+              const method = exec.request ? exec.request.method : 'N/A';
+              const reqUrl = getRequestUrl(exec.request && exec.request.url);
+              const reqBody = stringifyBody(exec.request && exec.request.body && exec.request.body.raw);
+              const statusCode = exec.response ? exec.response.code : 'N/A';
+
+              fs.appendFileSync(outName, `  - Request: ${method} ${reqUrl} (Iteration: ${iteration})\n`);
+              if (reqBody) {
+                fs.appendFileSync(outName, '    Request Body:\n' + reqBody.split('\n').map((line) => '      ' + line).join('\n') + '\n');
+              }
+              fs.appendFileSync(outName, '    Response Status: ' + statusCode + '\n');
+
+              for (const assert of failedAsserts) {
+                const assertName = assert.assertion || 'Unnamed assertion';
+                const errMsg = assert.error.message.replace(/[\r\n]+/g, ' ');
+                fs.appendFileSync(outName, '    * Failure: ' + assertName + '\n      Error details: ' + errMsg + '\n');
+              }
+
+              fs.appendFileSync(outName, '\n==================================================\n\n');
+            }
+          } catch (error) {
+            const baseName = path.basename(testFile);
+            const outName = '../error_reason_' + baseName.replace(/\s+/g, '_') + '.txt';
+            fs.appendFileSync(outName, 'FAILED FILE: ' + testFile + '\n  - Unknown error. Check GitHub Actions log: ' + error.message + '\n\n');
+          }
+          NODE
+
+          while read -r test_file; do
+            dir_name=$(dirname "$test_file")
+            base_test_name=$(basename "$test_file")
+            csv_count=0
+
+            shopt -s nullglob
+            csv_files=("$dir_name"/*.csv)
+            shopt -u nullglob
+
+            if [ "${#csv_files[@]}" -gt 0 ]; then
+              for csv_file in "${csv_files[@]}"; do
+                csv_count=$((csv_count + 1))
+                base_csv_name=$(basename "$csv_file")
+                json_report_name="report-${base_test_name}-${base_csv_name}.json"
+
+                echo "Running API collection: $test_file with data: $base_csv_name"
+                docker run --rm \
+                  --network "${COMPOSE_PROJECT_NAME}_vga-network" \
+                  -v "$PWD:/work" \
+                  -w /work \
+                  postman/newman run "$test_file" \
+                  -d "$csv_file" \
+                  -e "postman/env/VGA_Store_Environment.postman_environment.json" \
+                  --export-environment "postman/env/VGA_Store_Environment.postman_environment.json" \
+                  --env-var "baseUrl=http://backend:8080" \
+                  --color off --disable-unicode \
+                  --reporters cli,junit,json \
+                  --reporter-junit-export "report-${base_test_name}-${base_csv_name}.xml" \
+                  --reporter-json-export "$json_report_name" > newman_log.txt 2>&1 || {
+                    node parse_errors.js "$test_file" "$json_report_name"
+                    failed=1
+                  }
+
+                cat newman_log.txt
+              done
+            fi
+
+            if [ "$csv_count" -eq 0 ]; then
+              json_report_name="report-${base_test_name}.json"
+
+              echo "Running API collection: $test_file without CSV data"
+              docker run --rm \
+                --network "${COMPOSE_PROJECT_NAME}_vga-network" \
+                -v "$PWD:/work" \
+                -w /work \
+                postman/newman run "$test_file" \
+                -e "postman/env/VGA_Store_Environment.postman_environment.json" \
+                --export-environment "postman/env/VGA_Store_Environment.postman_environment.json" \
+                --env-var "baseUrl=http://backend:8080" \
+                --color off --disable-unicode \
+                --reporters cli,junit,json \
+                --reporter-junit-export "report-${base_test_name}.xml" \
+                --reporter-json-export "$json_report_name" > newman_log.txt 2>&1 || {
+                  node parse_errors.js "$test_file" "$json_report_name"
+                  failed=1
+                }
+
+              cat newman_log.txt
+            fi
+          done < <(find . -name "*.postman_collection.json" | sort)
+
+          exit "$failed"
+
+      - name: Run UI tests with CodeceptJS
+        if: always()
+        working-directory: automation
+        env:
+          HEADLESS: "true"
+          FE_URL: http://localhost:5173
+          USER_FE_URL: http://localhost:5173
+          ADMIN_FE_URL: http://localhost:5174
+          BACKEND_URL: http://localhost:8080
+        run: |
+          set +e
+          failed=0
+          npx playwright install chromium
+
+          while read -r test_file; do
+            safe_name=$(echo "$test_file" | sed 's#^./##; s#[/\\ ]#_#g; s#[^A-Za-z0-9_.-]#_#g')
+            log_file="codecept_${safe_name}.log"
+            error_file="../error_reason_UI_${safe_name}.txt"
+
+            echo "Running UI test: $test_file"
+            npx codeceptjs run "$test_file" --steps 2>&1 | tee "$log_file"
+            ui_status=${PIPESTATUS[0]}
+
+            if [ "$ui_status" -ne 0 ]; then
+              failed=1
+              {
+                echo "FAILED FILE: $test_file"
+                echo "  - Testcase: UI test failed in CodeceptJS"
+                echo ""
+                echo "===== Failed test summary ====="
+                grep -E "^[[:space:]]*[0-9]+\\) |-- FAILURES:|FAILURES|Failed tests|Error |TimeoutError|AssertionError|ElementNotFound|expected web application" "$log_file" | tail -n 120 || true
+                echo ""
+                echo "===== Last CodeceptJS log ====="
+                tail -n 180 "$log_file"
+              } > "$error_file"
+            fi
+          done < <(find ./E2E/modules -name "*_test.js" | sort)
+
+          exit "$failed"
+
+      - name: Upload test logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-test-logs
+          path: |
+            error_reason*.txt
+            automation/*.xml
+            automation/*.json
+            automation/*.log
+            automation/E2E/output/**
+          if-no-files-found: ignore
+
+      - name: Create or update Jira failure subtask
+        if: failure()
+        run: |
+          node <<'NODE'
+          const fs = require('fs');
+          const { execSync } = require('child_process');
+
+          const jiraBaseUrl = process.env.JIRA_BASE_URL;
+          const jiraEmail = process.env.JIRA_EMAIL;
+          const jiraToken = process.env.JIRA_API_TOKEN;
+          const projectKey = process.env.JIRA_PROJECT_KEY || 'KCPM';
+          const jiraFailureIssueType = process.env.JIRA_FAILURE_ISSUE_TYPE || 'Sub-task';
+          const jiraDefaultPriority = process.env.JIRA_DEFAULT_PRIORITY || 'High';
+          const runUrl = `${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID}`;
+          const branchName = process.env.GITHUB_HEAD_REF || process.env.GITHUB_REF_NAME || 'unknown';
+          const eventName = process.env.GITHUB_EVENT_NAME || '';
+
+          if (!jiraBaseUrl || !jiraEmail || !jiraToken) {
+            console.error('Missing Jira secrets. Cannot log failure to Jira.');
+            process.exit(0);
+          }
+
+          const auth = Buffer.from(`${jiraEmail}:${jiraToken}`).toString('base64');
+
+          async function jira(path, options = {}) {
+            const response = await fetch(`${jiraBaseUrl}${path}`, {
+              ...options,
+              headers: {
+                Authorization: `Basic ${auth}`,
+                Accept: 'application/json',
+                'Content-Type': 'application/json',
+                ...(options.headers || {})
+              }
+            });
+
+            const text = await response.text();
+            let body = {};
+            try {
+              body = text ? JSON.parse(text) : {};
+            } catch {
+              body = { raw: text };
+            }
+
+            if (!response.ok) {
+              throw new Error(`Jira API failed ${response.status}: ${text}`);
+            }
+
+            return body;
+          }
+
+          function sh(command) {
+            return execSync(command, { encoding: 'utf8' }).trim();
+          }
+
+          function readEventPayload() {
+            try {
+              return JSON.parse(fs.readFileSync(process.env.GITHUB_EVENT_PATH, 'utf8'));
+            } catch {
+              return {};
+            }
+          }
+
+          function collectIssueKeySources(event) {
+            const latestCommitMessage = (() => {
+              try {
+                return sh('git log -1 --pretty=%B');
+              } catch {
+                return '';
+              }
+            })();
+
+            return [
+              latestCommitMessage,
+              branchName,
+              event.pull_request && event.pull_request.title,
+              event.pull_request && event.pull_request.head && event.pull_request.head.ref,
+              event.head_commit && event.head_commit.message
+            ].filter(Boolean).join('\n');
+          }
+
+          function findJiraIssueKey(text) {
+            const regex = new RegExp(`\\b${projectKey}-\\d+\\b`, 'i');
+            const match = String(text || '').match(regex);
+            return match ? match[0].toUpperCase() : '';
+          }
+
+          function extractEmail(authorText) {
+            const match = String(authorText || '').match(/<([^>]+)>/);
+            return match ? match[1].trim() : '';
+          }
+
+          async function findJiraUserByEmail(email) {
+            if (!email) return null;
+            const users = await jira(`/rest/api/3/user/search?query=${encodeURIComponent(email)}`);
+            return users.find((user) => user.emailAddress === email) || users.find((user) => user.accountId) || null;
+          }
+
+          async function getIssue(issueKey) {
+            return jira(`/rest/api/3/issue/${issueKey}?fields=summary,status,issuetype,assignee,parent,priority`);
+          }
+
+          async function assignIssue(issueKey, jiraUser) {
+            if (!issueKey || !jiraUser || !jiraUser.accountId) return;
+            await jira(`/rest/api/3/issue/${issueKey}/assignee`, {
+              method: 'PUT',
+              body: JSON.stringify({ accountId: jiraUser.accountId })
+            });
+          }
+
+          function extractCommentText(node) {
+            if (!node) return '';
+            if (typeof node === 'string') return node;
+            if (node.text) return node.text;
+            if (Array.isArray(node.content)) {
+              return node.content.map(extractCommentText).join('\n');
+            }
+            return '';
+          }
+
+          function jiraDoc(text) {
+            return {
+              type: 'doc',
+              version: 1,
+              content: [
+                {
+                  type: 'paragraph',
+                  content: [{ type: 'text', text }]
+                }
+              ]
+            };
+          }
+
+          async function addComment(issueKey, text) {
+            await jira(`/rest/api/3/issue/${issueKey}/comment`, {
+              method: 'POST',
+              body: JSON.stringify({ body: jiraDoc(text) })
+            });
+          }
+
+          async function searchExistingFailureIssue(parentIssueKey, fingerprint) {
+            const escapedFingerprint = fingerprint.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+            const jql = `project = ${projectKey} AND parent = ${parentIssueKey} AND text ~ "${escapedFingerprint}" ORDER BY created DESC`;
+            const result = await jira(`/rest/api/3/search?jql=${encodeURIComponent(jql)}&maxResults=20&fields=summary,status,issuetype,assignee,priority`);
+            return (result.issues || [])[0] || null;
+          }
+
+          async function createFailureIssue(parentIssue, summary, description, priorityName, jiraUser) {
+            const fields = {
+              project: { key: projectKey },
+              parent: { key: parentIssue.key },
+              summary,
+              description: jiraDoc(description),
+              issuetype: { name: jiraFailureIssueType },
+              labels: ['ci-failure'],
+              priority: { name: priorityName || jiraDefaultPriority }
+            };
+
+            if (jiraUser && jiraUser.accountId) {
+              fields.assignee = { accountId: jiraUser.accountId };
+            }
+
+            return jira('/rest/api/3/issue', {
+              method: 'POST',
+              body: JSON.stringify({ fields })
+            });
+          }
+
+          async function main() {
+            const event = readEventPayload();
+            const sourceText = collectIssueKeySources(event);
+            const issueKey = findJiraIssueKey(sourceText);
+
+            if (!issueKey) {
+              console.error(`No Jira task key found. Commit message, branch name, or PR title must contain ${projectKey}-123 format.`);
+              process.exit(1);
+            }
+
+            const parentIssue = await getIssue(issueKey);
+            let errorFiles = fs.readdirSync('.').filter((file) => /^error_reason.*\.txt$/.test(file));
+
+            if (errorFiles.length === 0) {
+              fs.writeFileSync('error_reason_build_environment.txt', 'FAILED FILE: Build/Deploy environment\n  - Pipeline failed before test error files were created. Check GitHub Actions logs.\n');
+              errorFiles = ['error_reason_build_environment.txt'];
+            }
+
+            for (const file of errorFiles) {
+              const errorReason = fs.readFileSync(file, 'utf8').trim();
+              const firstLine = errorReason.split('\n')[0] || 'GitHub Actions CI failed';
+              const summaryTitle = firstLine.slice(0, 200).replace(/"/g, "'");
+              const failedFileMatch = errorReason.match(/^FAILED FILE:\s*(.+)$/m);
+              const failedFile = failedFileMatch ? failedFileMatch[1].trim() : '';
+              const fingerprint = `${issueKey}:${summaryTitle}`;
+
+              let culprit = sh("git log -1 --pretty=format:'%an <%ae>'");
+              if (failedFile) {
+                try {
+                  const fileAuthor = sh(`git log -1 --pretty=format:'%an <%ae>' -- "automation/${failedFile}"`);
+                  if (fileAuthor) culprit = fileAuthor;
+                } catch {}
+              }
+
+              const culpritEmail = extractEmail(culprit);
+              const jiraUser = await findJiraUserByEmail(culpritEmail);
+              const assigneeText = jiraUser && jiraUser.accountId
+                ? `${jiraUser.displayName || culprit} (${culpritEmail})`
+                : `No Jira user found for ${culpritEmail || 'unknown email'}`;
+              const currentAssignee = parentIssue.fields && parentIssue.fields.assignee
+                ? parentIssue.fields.assignee.displayName
+                : 'Unassigned';
+              const issueType = parentIssue.fields && parentIssue.fields.issuetype
+                ? parentIssue.fields.issuetype.name
+                : 'Unknown';
+              const statusName = parentIssue.fields && parentIssue.fields.status
+                ? parentIssue.fields.status.name
+                : 'Unknown';
+              const parentPriority = parentIssue.fields && parentIssue.fields.priority
+                ? parentIssue.fields.priority.name
+                : jiraDefaultPriority;
+              const failureSummary = `[CI Fail] ${issueKey} - ${summaryTitle}`.slice(0, 250);
+              const existingFailureIssue = await searchExistingFailureIssue(issueKey, fingerprint);
+              const failureType = existingFailureIssue ? 'LOI CU TAI PHAT' : 'LOI MOI';
+              const failureBody = [
+                `CI-FINGERPRINT: ${fingerprint}`,
+                `Trang thai loi: ${failureType}.`,
+                '',
+                `Task cha: ${issueKey} - ${parentIssue.fields.summary}`,
+                `Loai task cha: ${issueType}`,
+                `Trang thai task cha: ${statusName}`,
+                `Priority: ${parentPriority}`,
+                `Assignee task cha truoc khi CI tao loi: ${currentAssignee}`,
+                '',
+                `Nhanh bi loi: ${branchName}`,
+                `Su kien GitHub: ${eventName}`,
+                `Nguoi phu trach theo commit: ${culprit}`,
+                `Jira assignee lookup: ${assigneeText}`,
+                `GitHub Actions log: ${runUrl}`,
+                '',
+                'Chi tiet loi:',
+                errorReason
+              ].join('\n');
+
+              if (existingFailureIssue) {
+                await addComment(existingFailureIssue.key, failureBody);
+                await assignIssue(existingFailureIssue.key, jiraUser);
+                console.log(`Updated existing Jira failure issue ${existingFailureIssue.key} for ${issueKey}`);
+              } else {
+                const created = await createFailureIssue(parentIssue, failureSummary, failureBody, parentPriority, jiraUser);
+                console.log(`Created Jira failure issue ${created.key} under ${issueKey}`);
+              }
+            }
+          }
+
+          main().catch((error) => {
+            console.error(error);
+            process.exit(0);
+          });
+          NODE
+
+      - name: Stop application
+        if: always()
+        run: docker compose -p "$COMPOSE_PROJECT_NAME" down -v --remove-orphans
