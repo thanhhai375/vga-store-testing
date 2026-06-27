@@ -311,7 +311,25 @@ EOF
                     sh 'rm -rf node_modules'
                     sh 'npm install'
                     sh 'npx playwright install chromium'
-                    sh 'npx codeceptjs run --steps || { echo "❌ FILE: UI_Test_E2E\\n  - Testcase: Lỗi tại bước test giao diện (CodeceptJS)\\n\\n" > ../error_reason_UI_Test.txt; exit 1; }'
+                    sh '''#!/bin/bash
+                    set +e
+                    npx codeceptjs run --steps 2>&1 | tee codecept_ui.log
+                    ui_status=${PIPESTATUS[0]}
+
+                    if [ "$ui_status" -ne 0 ]; then
+                        {
+                            echo "❌ FILE: UI_Test_E2E"
+                            echo "  - Testcase: Lỗi tại bước test giao diện (CodeceptJS)"
+                            echo ""
+                            echo "===== Các testcase lỗi ====="
+                            grep -E "^[[:space:]]*[0-9]+\\) |-- FAILURES:|FAILURES|Failed tests|Error |TimeoutError|AssertionError" codecept_ui.log | tail -n 80 || true
+                            echo ""
+                            echo "===== Log cuối của CodeceptJS ====="
+                            tail -n 160 codecept_ui.log
+                        } > ../error_reason_UI_Test.txt
+                        exit "$ui_status"
+                    fi
+                    '''
                 }
             }
         }
@@ -373,12 +391,12 @@ EOF
 
                         writeFile file: "jira_payload_${i}.json", text: payload
 
-                        sh """
-                        curl -s -X POST -u "${JIRA_USER}:${JIRA_TOKEN}" \\
-                        -H "Content-Type: application/json" \\
-                        -d @jira_payload_${i}.json \\
-                        ${JIRA_URL}/rest/api/2/issue/
-                        """
+                        sh(script: '''
+                        curl -s -X POST -u "$JIRA_USER:$JIRA_TOKEN" \
+                        -H "Content-Type: application/json" \
+                        -d @jira_payload_''' + i + '''.json \
+                        "$JIRA_URL/rest/api/2/issue/"
+                        ''')
                         echo "✅ Đã tạo Jira ticket cho file ${file}"
                     }
                 } else {
@@ -403,12 +421,12 @@ EOF
 
                     writeFile file: 'jira_payload.json', text: payload
 
-                    sh """
-                    curl -s -X POST -u "${JIRA_USER}:${JIRA_TOKEN}" \\
-                    -H "Content-Type: application/json" \\
-                    -d @jira_payload.json \\
-                    ${JIRA_URL}/rest/api/2/issue/
-                    """
+                    sh '''
+                    curl -s -X POST -u "$JIRA_USER:$JIRA_TOKEN" \
+                    -H "Content-Type: application/json" \
+                    -d @jira_payload.json \
+                    "$JIRA_URL/rest/api/2/issue/"
+                    '''
                 }
             }
         }
