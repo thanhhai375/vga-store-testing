@@ -366,7 +366,14 @@ jobs:
           async function searchExistingFailureIssue(parentIssueKey, fingerprint) {
             const escapedFingerprint = fingerprint.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
             const jql = `project = ${projectKey} AND parent = ${parentIssueKey} AND text ~ "${escapedFingerprint}" ORDER BY created DESC`;
-            const result = await jira(`/rest/api/3/search?jql=${encodeURIComponent(jql)}&maxResults=20&fields=summary,status,issuetype,assignee,priority`);
+            const result = await jira('/rest/api/3/search/jql', {
+              method: 'POST',
+              body: JSON.stringify({
+                jql,
+                maxResults: 20,
+                fields: ['summary', 'status', 'issuetype', 'assignee', 'priority']
+              })
+            });
             return (result.issues || [])[0] || null;
           }
 
@@ -625,7 +632,14 @@ jobs:
               `summary ~ "CI Fail"`,
               `ORDER BY created DESC`
             ].join(' AND ');
-            const result = await jira(`/rest/api/3/search?jql=${encodeURIComponent(jql)}&maxResults=20&fields=summary,status,labels`);
+            const result = await jira('/rest/api/3/search/jql', {
+              method: 'POST',
+              body: JSON.stringify({
+                jql,
+                maxResults: 20,
+                fields: ['summary', 'status', 'labels']
+              })
+            });
             return result.issues || [];
           }
 
