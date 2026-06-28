@@ -16,7 +16,7 @@ public class UserDTO {
 
     @NotBlank(message= "Password là bắt buộc")
     @Size(min = 8, max = 64, message = "Password phải từ 8 đến 64 ký tự")
-    @Pattern(regexp = "^(?!.*\\s)(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[\\W_]).+$", message = "Mật khẩu phải chứa ít nhất 1 chữ hoa, 1 chữ thường, 1 số, 1 ký tự đặc biệt và không có khoảng trắng")
+
     private String password;
 
     private String fullName;
