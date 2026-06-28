@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - develop
+      - sprint7
       - "feature/**"
       - "fix/**"
       - "bugfix/**"
@@ -12,6 +13,7 @@ on:
     branches:
       - main
       - develop
+      - sprint7
 
 permissions:
   contents: read
@@ -79,140 +81,74 @@ jobs:
           set +e
           failed=0
 
-          cat > parse_errors.js <<'NODE'
-          const fs = require('fs');
-          const path = require('path');
-          const testFile = process.argv[2];
-          const jsonName = process.argv[3];
+          mkdir -p reports
 
-          function getRequestUrl(requestUrl) {
-            if (!requestUrl) return '';
-            if (typeof requestUrl === 'string') return requestUrl;
-            if (requestUrl.raw) return requestUrl.raw;
-            const protocol = requestUrl.protocol || 'http';
-            const host = Array.isArray(requestUrl.host) ? requestUrl.host.join('.') : (requestUrl.host || '');
-            const port = requestUrl.port ? `:${requestUrl.port}` : '';
-            const pathValue = Array.isArray(requestUrl.path) ? requestUrl.path.join('/') : (requestUrl.path || '');
-            return `${protocol}://${host}${port}/${pathValue}`;
-          }
+          branch_name="${GITHUB_HEAD_REF:-${GITHUB_REF_NAME:-}}"
+          base_branch="${GITHUB_BASE_REF:-}"
+          commit_message="$(git log -1 --pretty=%B)"
+          selector_text="$(printf '%s\n%s\n%s\n' "$branch_name" "$base_branch" "$commit_message" | tr '[:upper:]' '[:lower:]')"
 
-          function stringifyBody(value) {
-            if (!value) return '';
-            try {
-              const parsed = JSON.parse(value);
-              return JSON.stringify(parsed, null, 2).slice(0, 1000);
-            } catch {
-              return String(value).slice(0, 1000);
-            }
-          }
-
-          try {
-            const baseName = path.basename(testFile);
-            const outName = '../error_reason_' + baseName.replace(/\s+/g, '_') + '.txt';
-            const data = JSON.parse(fs.readFileSync(jsonName, 'utf8'));
-            let hasError = false;
-
-            for (const exec of data.run.executions || []) {
-              const failedAsserts = (exec.assertions || []).filter((item) => item.error);
-              if (failedAsserts.length === 0) continue;
-
-              if (!hasError) {
-                fs.appendFileSync(outName, 'FAILED FILE: ' + testFile + '\n\n');
-                hasError = true;
-              }
-
-              const iteration = exec.cursor ? exec.cursor.iteration + 1 : 1;
-              const method = exec.request ? exec.request.method : 'N/A';
-              const reqUrl = getRequestUrl(exec.request && exec.request.url);
-              const reqBody = stringifyBody(exec.request && exec.request.body && exec.request.body.raw);
-              const statusCode = exec.response ? exec.response.code : 'N/A';
-
-              fs.appendFileSync(outName, `  - Request: ${method} ${reqUrl} (Iteration: ${iteration})\n`);
-              if (reqBody) {
-                fs.appendFileSync(outName, '    Request Body:\n' + reqBody.split('\n').map((line) => '      ' + line).join('\n') + '\n');
-              }
-              fs.appendFileSync(outName, '    Response Status: ' + statusCode + '\n');
-
-              for (const assert of failedAsserts) {
-                const assertName = assert.assertion || 'Unnamed assertion';
-                const errMsg = assert.error.message.replace(/[\r\n]+/g, ' ');
-                fs.appendFileSync(outName, '    * Failure: ' + assertName + '\n      Error details: ' + errMsg + '\n');
-              }
-
-              fs.appendFileSync(outName, '\n==================================================\n\n');
-            }
-          } catch (error) {
-            const baseName = path.basename(testFile);
-            const outName = '../error_reason_' + baseName.replace(/\s+/g, '_') + '.txt';
-            fs.appendFileSync(outName, 'FAILED FILE: ' + testFile + '\n  - Unknown error. Check GitHub Actions log: ' + error.message + '\n\n');
-          }
-          NODE
-
-          while read -r test_file; do
-            dir_name=$(dirname "$test_file")
-            base_test_name=$(basename "$test_file")
-            csv_count=0
-
-            shopt -s nullglob
-            csv_files=("$dir_name"/*.csv)
-            shopt -u nullglob
-
-            if [ "${#csv_files[@]}" -gt 0 ]; then
-              for csv_file in "${csv_files[@]}"; do
-                csv_count=$((csv_count + 1))
-                base_csv_name=$(basename "$csv_file")
-                json_report_name="report-${base_test_name}-${base_csv_name}.json"
-
-                echo "Running API collection: $test_file with data: $base_csv_name"
-                docker run --rm \
-                  --network "${COMPOSE_PROJECT_NAME}_vga-network" \
-                  -v "$PWD:/work" \
-                  -w /work \
-                  postman/newman run "$test_file" \
-                  -d "$csv_file" \
-                  -e "postman/env/VGA_Store_Environment.postman_environment.json" \
-                  --export-environment "postman/env/VGA_Store_Environment.postman_environment.json" \
-                  --env-var "baseUrl=http://backend:8080" \
-                  --color off --disable-unicode \
-                  --reporters cli,junit,json \
-                  --reporter-junit-export "report-${base_test_name}-${base_csv_name}.xml" \
-                  --reporter-json-export "$json_report_name" > newman_log.txt 2>&1 || {
-                    node parse_errors.js "$test_file" "$json_report_name"
-                    failed=1
-                  }
-
-                cat newman_log.txt
-              done
+          full_regression=false
+          if [ "$GITHUB_EVENT_NAME" = "pull_request" ]; then
+            if [ "$base_branch" = "main" ] || [ "$base_branch" = "develop" ] || [ "$base_branch" = "sprint7" ]; then
+              full_regression=true
             fi
+          elif [ "$branch_name" = "main" ] || [ "$branch_name" = "develop" ] || [ "$branch_name" = "sprint7" ]; then
+            full_regression=true
+          fi
 
-            if [ "$csv_count" -eq 0 ]; then
-              json_report_name="report-${base_test_name}.json"
+          scripts="$(node -e "const p=require('./package.json'); console.log(Object.keys(p.scripts||{}).filter(s=>/^test:.*:blackbox$/.test(s)).join('\n'))")"
+          selected_scripts=""
 
-              echo "Running API collection: $test_file without CSV data"
-              docker run --rm \
-                --network "${COMPOSE_PROJECT_NAME}_vga-network" \
-                -v "$PWD:/work" \
-                -w /work \
-                postman/newman run "$test_file" \
-                -e "postman/env/VGA_Store_Environment.postman_environment.json" \
-                --export-environment "postman/env/VGA_Store_Environment.postman_environment.json" \
-                --env-var "baseUrl=http://backend:8080" \
-                --color off --disable-unicode \
-                --reporters cli,junit,json \
-                --reporter-junit-export "report-${base_test_name}.xml" \
-                --reporter-json-export "$json_report_name" > newman_log.txt 2>&1 || {
-                  node parse_errors.js "$test_file" "$json_report_name"
-                  failed=1
-                }
-
-              cat newman_log.txt
+          if [ "$full_regression" = "true" ]; then
+            selected_scripts="$scripts"
+            echo "Full regression mode: running all blackbox scripts."
+          else
+            echo "Personal branch mode: selecting blackbox scripts from branch/commit."
+            if echo "$selector_text" | grep -Eq 'kcpm-87|auth|authentication'; then
+              selected_scripts="$(printf '%s\n%s\n' "$selected_scripts" "test:auth:blackbox")"
             fi
-          done < <(find . -name "*.postman_collection.json" | sort)
+            if echo "$selector_text" | grep -Eq 'product-admin|product admin|admin-product|kcpm-90'; then
+              selected_scripts="$(printf '%s\n%s\n' "$selected_scripts" "test:product-admin:blackbox")"
+            fi
+            selected_scripts="$(printf '%s\n' "$selected_scripts" | sed '/^$/d' | sort -u)"
+
+            if [ -z "$selected_scripts" ]; then
+              echo "No module selector found. Fallback: running all blackbox scripts."
+              selected_scripts="$scripts"
+            fi
+          fi
+
+          echo "Blackbox scripts to run:"
+          printf '%s\n' "$selected_scripts" | sed 's/^/- /'
+
+          while read -r script_name; do
+            [ -z "$script_name" ] && continue
+            safe_name="$(echo "$script_name" | sed 's#[^A-Za-z0-9_.-]#_#g')"
+            log_file="reports/${safe_name}.log"
+
+            echo "Running npm script: $script_name"
+            npm run "$script_name" 2>&1 | tee "$log_file"
+            script_status=${PIPESTATUS[0]}
+
+            if [ "$script_status" -ne 0 ]; then
+              failed=1
+              {
+                echo "FAILED FILE: npm script $script_name"
+                echo "  - Script: $script_name"
+                echo "  - Branch: $branch_name"
+                echo "  - Commit: ${GITHUB_SHA:-unknown}"
+                echo ""
+                echo "===== Last Newman log ====="
+                tail -n 220 "$log_file"
+              } > "../error_reason_API_${safe_name}.txt"
+            fi
+          done < <(printf '%s\n' "$selected_scripts")
 
           exit "$failed"
 
       - name: Run UI tests with CodeceptJS
-        if: always()
+        if: always() && ((github.event_name == 'pull_request' && (github.base_ref == 'main' || github.base_ref == 'develop' || github.base_ref == 'sprint7')) || (github.event_name == 'push' && (github.ref_name == 'main' || github.ref_name == 'develop' || github.ref_name == 'sprint7')))
         working-directory: automation
         env:
           HEADLESS: "true"
@@ -261,6 +197,7 @@ jobs:
             automation/*.xml
             automation/*.json
             automation/*.log
+            automation/reports/**
             automation/E2E/output/**
           if-no-files-found: ignore
 
