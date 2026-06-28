@@ -64,6 +64,10 @@ public class UserService {
             throw new IllegalArgumentException("Mật khẩu cũ không đúng!");
         }
         
+        if (!req.getNewPassword().equals(req.getConfirmPassword())) {
+            throw new IllegalArgumentException("Mật khẩu xác nhận không khớp!");
+        }
+        
         if (passwordEncoder.matches(req.getNewPassword(), user.getPassword())) {
             throw new IllegalArgumentException("Mật khẩu mới không được trùng mật khẩu cũ!");
         }

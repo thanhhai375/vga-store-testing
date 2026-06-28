@@ -17,6 +17,7 @@
     "@codeceptjs/configure": "^4.0.0-beta.4",
     "codeceptjs": "^4.0.7",
     "cypress": "^15.15.0",
+    "newman": "^6.2.2",
     "playwright": "^1.61.0"
   }
 }
