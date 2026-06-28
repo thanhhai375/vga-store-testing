@@ -626,12 +626,12 @@ jobs:
           }
 
           async function findFailureSubtasks(parentIssueKey) {
-            const jql = [
+            const conditions = [
               `project = ${projectKey}`,
               `parent = ${parentIssueKey}`,
-              `summary ~ "CI Fail"`,
-              `ORDER BY created DESC`
+              `summary ~ "CI Fail"`
             ].join(' AND ');
+            const jql = `${conditions} ORDER BY created DESC`;
             const result = await jira('/rest/api/3/search/jql', {
               method: 'POST',
               body: JSON.stringify({
