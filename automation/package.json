@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Use npm run test:auth:blackbox\" && exit 0",
+    "test:auth:blackbox": "newman run \"postman/VGA-AUTH-USER/VGA-Store-Auth/VGA Store Auth.postman_collection.json\" -e \"postman/env/VGA_Store_Environment.postman_environment.json\" -d \"postman/VGA-AUTH-USER/VGA-Store-Auth/VGA-Store-Auth-Testcase.csv\" --folder Register --folder Login --folder ChangePassword --reporters cli,json --reporter-json-export \"reports/auth-blackbox-newman.json\""
   },
   "keywords": [],
   "author": "",

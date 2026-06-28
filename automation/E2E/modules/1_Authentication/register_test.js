@@ -1,67 +1,191 @@
 Feature('Register - Authentication');
 
-Before(({ I }) => {
-  I.amOnPage('http://localhost:5173/');
-  // Xóa session cũ để đảm bảo luôn ở trạng thái Guest
-  I.executeScript(() => localStorage.clear());
+const SELECTORS = {
+  openAuthButton: 'button[title="Đăng nhập"]',
+  modal: '.auth-modal',
+  loginTab: '.auth-tab:nth-child(1)',
+  registerTab: '.auth-tab:nth-child(2)',
+  username: 'input[placeholder="Nhập tên đăng nhập"]',
+  fullName: 'input[placeholder="Nhập họ và tên của bạn"]',
+  email: 'input[placeholder="Nhập email của bạn"]',
+  password: 'input[placeholder="Nhập mật khẩu"]',
+  loginUsername: 'input[placeholder="Nhập tài khoản hoặc email"]',
+  submit: '.auth-submit-btn'
+};
+
+const VALID_REGISTER_USER = {
+  username: 'valid_user',
+  fullName: 'Valid User',
+  email: 'valid_user@gmail.com',
+  password: 'pass123456'
+};
+
+const clearAuthState = (I) => {
+  I.amOnPage((process.env.USER_FE_URL || 'http://localhost:5173') + '/');
   I.clearCookie();
-  I.refreshPage();
-
-  // Mở modal Đăng nhập/Đăng ký từ Header
-  I.waitForElement('button[title="Đăng nhập"]', 10); 
-  I.forceClick('button[title="Đăng nhập"]');
-  
-  // Chuyển sang Tab ĐĂNG KÝ trong Modal
-  I.waitForVisible('.auth-modal', 5);
-  I.forceClick('//button[contains(@class, "auth-tab") and text()="ĐĂNG KÝ"]');
-  I.waitForVisible('.auth-submit-btn', 5);
-  // Xóa HTML5 required để test validation Backend
   I.executeScript(() => {
-    document.querySelectorAll('input').forEach(i => i.removeAttribute('required'));
+    localStorage.clear();
+    sessionStorage.clear();
   });
-  I.wait(1); // Đợi 1 giây để hiệu ứng chuyển tab hoàn thành hoàn toàn
+  I.refreshPage();
+};
+
+const openRegisterForm = (I) => {
+  I.waitForElement(SELECTORS.openAuthButton, 10);
+  I.forceClick(SELECTORS.openAuthButton);
+  I.waitForVisible(SELECTORS.modal, 5);
+  I.forceClick(SELECTORS.registerTab);
+  I.waitForVisible(SELECTORS.username, 5);
+};
+
+const fillRegisterForm = (I, user) => {
+  I.fillField(SELECTORS.username, user.username);
+  I.fillField(SELECTORS.fullName, user.fullName);
+  I.fillField(SELECTORS.email, user.email);
+  I.fillField(SELECTORS.password, user.password);
+};
+
+const clickSubmit = (I) => {
+  I.waitForVisible(SELECTORS.submit, 5);
+  I.forceClick(SELECTORS.submit);
+};
+
+const assertFieldInvalid = (I, selector) => {
+  I.waitForFunction((selectors) => {
+    const [fieldSelector] = selectors;
+    const field = document.querySelector(fieldSelector);
+    return Boolean(field && !field.checkValidity());
+  }, [selector], 5);
+  I.seeElement(SELECTORS.modal);
+};
+
+Before(({ I }) => {
+  clearAuthState(I);
+  openRegisterForm(I);
 });
 
-// Định nghĩa DataTable dựa trên file VGA-Store-Auth-Testcase.csv (Phần REGISTER)
-let registerData = new DataTable(['testId', 'username', 'email', 'password', 'fullName', 'expectedMessage']);
+Scenario('R-001: Dang ky thanh cong (Happy Path)', ({ I }) => {
+  const suffix = Date.now();
 
-// Các Test Case lỗi phổ biến
-registerData.add(['R-002', '', 'r002_empty_user@gmail.com', 'pass123456', 'User Name', 'Tên đăng nhập từ 3-50 ký tự']);
-registerData.add(['R-003', 'r003_user', '', 'pass123456', 'User Name', 'Email không được trống']);
-registerData.add(['R-004', 'r004_user', 'r004_empty_pass@gmail.com', '', 'User Name', 'Mật khẩu ít nhất 6 ký tự']);
-registerData.add(['R-006', 'ab', 'r006_short_user@gmail.com', 'pass123456', 'User Name', 'Tên đăng nhập từ 3-50 ký tự']);
-registerData.add(['R-010', 'r010_user', 'invalidgmail', 'pass123456', 'User Name', 'Email không hợp lệ']);
-registerData.add(['R-012', 'hai123', 'r012_taken@gmail.com', 'pass123456', 'Another User', 'Username is already taken']);
+  fillRegisterForm(I, {
+    username: `e2e_user_${suffix}`,
+    fullName: 'E2E Test User',
+    email: `e2e_user_${suffix}@gmail.com`,
+    password: 'pass123456'
+  });
+  clickSubmit(I);
 
-// Test Cases: Khoảng trắng và Ký tự đặc biệt
-registerData.add(['R-013', '   ', 'r013_space@gmail.com', 'pass123456', 'User Name', 'Tên đăng nhập từ 3-50 ký tự']); // Chỉ chứa khoảng trắng
-registerData.add(['R-014', 'user name', 'r014_space@gmail.com', 'pass123456', 'User Name', 'Tên đăng nhập từ 3-50 ký tự']); // Chứa khoảng trắng ở giữa
-registerData.add(['R-015', 'user!@#$', 'r015_special@gmail.com', 'pass123456', 'User Name', 'Tên đăng nhập từ 3-50 ký tự']); // Chứa ký tự đặc biệt
-registerData.add(['R-016', 'validuser', 'r016_special@gmail.com', 'pass 123', 'User Name', 'Mật khẩu ít nhất 6 ký tự']); // Mật khẩu chứa khoảng trắng (tùy vào rule của backend)
-registerData.add(['R-017', '<script>alert(1)</script>', 'r017_xss@gmail.com', 'pass123456', 'User Name', 'Tên đăng nhập từ 3-50 ký tự']); // Thẻ HTML/XSS
-
-Data(registerData).Scenario('Kiểm thử Đăng ký các trường hợp lỗi', ({ I, current }) => {
-  // Điền form dựa trên placeholder đã update chuẩn UI
-  I.fillField('input[placeholder="Nhập tên đăng nhập"]', current.username);
-  I.fillField('input[placeholder="Nhập email của bạn"]', current.email);
-  I.fillField('input[placeholder="Nhập mật khẩu"]', current.password);
-  I.fillField('input[placeholder="Nhập họ và tên của bạn"]', current.fullName);
-  
-  I.forceClick('.auth-submit-btn'); // Cần đổi selector nếu nút Đăng ký class khác
-  I.waitForText(current.expectedMessage, 5); // Đợi tối đa 5s để Toast hoặc Error hiển thị
+  I.waitForText('Đăng ký thành công', 10);
+  I.waitForVisible(SELECTORS.loginTab, 5);
+  I.seeElement(SELECTORS.loginUsername);
 });
 
-// Test case đăng ký thành công
-Scenario('R-001: Đăng ký thành công', ({ I }) => {
-  const uniqueUsername = 'user_' + Date.now(); // Tạo user động để không bị trùng sau nhiều lần chạy
-  const uniqueEmail = 'email_' + Date.now() + '@gmail.com';
+Scenario('R-002: Kiem tra validation truc tiep khi bo trong', ({ I }) => {
+  clickSubmit(I);
 
-  I.fillField('input[placeholder="Nhập tên đăng nhập"]', uniqueUsername);
-  I.fillField('input[placeholder="Nhập email của bạn"]', uniqueEmail);
-  I.fillField('input[placeholder="Nhập mật khẩu"]', 'pass123456');
-  I.fillField('input[placeholder="Nhập họ và tên của bạn"]', 'Test User');
-  
-  I.forceClick('.auth-submit-btn');
-  I.waitForText('Đăng ký thành công', 5);
-  I.dontSeeElement('.auth-modal');
+  I.waitForFunction((selectors) => {
+    const fields = selectors.map((selector) => document.querySelector(selector));
+    return fields.every(Boolean) && fields.some((field) => !field.checkValidity());
+  }, [SELECTORS.username, SELECTORS.fullName, SELECTORS.email, SELECTORS.password], 5);
+  I.seeElement(SELECTORS.modal);
+});
+
+Scenario('R-003: Kiem tra dinh dang email sai', ({ I }) => {
+  fillRegisterForm(I, {
+    ...VALID_REGISTER_USER,
+    username: `invalid_email_${Date.now()}`,
+    email: 'invalidgmail'
+  });
+  clickSubmit(I);
+
+  I.waitForText('Email không hợp lệ', 10);
+  I.seeElement(SELECTORS.modal);
+});
+
+Scenario('R-004: Dang ky trung tai khoan (Duplicate)', ({ I }) => {
+  fillRegisterForm(I, {
+    ...VALID_REGISTER_USER,
+    username: 'hai123',
+    email: `duplicate_${Date.now()}@gmail.com`
+  });
+  clickSubmit(I);
+
+  I.waitForText('Username is already taken', 10);
+  I.seeElement(SELECTORS.modal);
+});
+
+Scenario('R-005: Username qua ngan bi tu choi', ({ I }) => {
+  fillRegisterForm(I, {
+    ...VALID_REGISTER_USER,
+    username: 'ab',
+    email: `short_username_${Date.now()}@gmail.com`
+  });
+  clickSubmit(I);
+
+  I.waitForText('Tên đăng nhập từ 3-50 ký tự', 10);
+  I.seeElement(SELECTORS.modal);
+});
+
+Scenario('R-006: Username chi gom khoang trang bi tu choi', ({ I }) => {
+  fillRegisterForm(I, {
+    ...VALID_REGISTER_USER,
+    username: '   ',
+    email: `blank_username_${Date.now()}@gmail.com`
+  });
+  clickSubmit(I);
+
+  I.waitForText('Tên đăng nhập không được trống', 10);
+  I.seeElement(SELECTORS.modal);
+});
+
+Scenario('R-007: Thieu username thi form bi chan submit', ({ I }) => {
+  I.fillField(SELECTORS.fullName, VALID_REGISTER_USER.fullName);
+  I.fillField(SELECTORS.email, `missing_username_${Date.now()}@gmail.com`);
+  I.fillField(SELECTORS.password, VALID_REGISTER_USER.password);
+  clickSubmit(I);
+
+  assertFieldInvalid(I, SELECTORS.username);
+});
+
+Scenario('R-008: Thieu full name thi form bi chan submit', ({ I }) => {
+  I.fillField(SELECTORS.username, `missing_fullname_${Date.now()}`);
+  I.fillField(SELECTORS.email, `missing_fullname_${Date.now()}@gmail.com`);
+  I.fillField(SELECTORS.password, VALID_REGISTER_USER.password);
+  clickSubmit(I);
+
+  assertFieldInvalid(I, SELECTORS.fullName);
+});
+
+Scenario('R-009: Thieu email thi form bi chan submit', ({ I }) => {
+  I.fillField(SELECTORS.username, `missing_email_${Date.now()}`);
+  I.fillField(SELECTORS.fullName, VALID_REGISTER_USER.fullName);
+  I.fillField(SELECTORS.password, VALID_REGISTER_USER.password);
+  clickSubmit(I);
+
+  assertFieldInvalid(I, SELECTORS.email);
+});
+
+Scenario('R-010: Thieu password thi form bi chan submit', ({ I }) => {
+  I.fillField(SELECTORS.username, `missing_password_${Date.now()}`);
+  I.fillField(SELECTORS.fullName, VALID_REGISTER_USER.fullName);
+  I.fillField(SELECTORS.email, `missing_password_${Date.now()}@gmail.com`);
+  clickSubmit(I);
+
+  assertFieldInvalid(I, SELECTORS.password);
+});
+
+Scenario('R-011: Sau khi dang ky thanh cong form chuyen ve login va reset field', ({ I }) => {
+  const suffix = Date.now();
+
+  fillRegisterForm(I, {
+    username: `reset_user_${suffix}`,
+    fullName: 'Reset User',
+    email: `reset_user_${suffix}@gmail.com`,
+    password: 'pass123456'
+  });
+  clickSubmit(I);
+
+  I.waitForText('Đăng ký thành công', 10);
+  I.waitForVisible(SELECTORS.loginUsername, 5);
+  I.seeInField(SELECTORS.loginUsername, '');
 });

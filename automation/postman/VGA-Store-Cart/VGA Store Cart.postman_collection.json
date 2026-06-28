@@ -14,6 +14,19 @@
           "name": "Đăng ký",
           "event": [
             {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "var unique = Date.now() + '_' + Math.floor(Math.random() * 100000);",
+                  "pm.environment.set('generatedUsername', 'user_' + unique);",
+                  "pm.environment.set('generatedUserEmail', 'user_' + unique + '@test.com');"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
               "listen": "test",
               "script": {
                 "exec": [
@@ -70,7 +83,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\r\n  \"email\": \"{{$randomEmail}}\",\r\n  \"username\": \"{{$randomUserName}}\",\r\n  \"password\": \"123456\",\r\n  \"fullName\": \"Người Dùng Test\"\r\n}\r\n"
+              "raw": "{\r\n  \"email\": \"{{generatedUserEmail}}\",\r\n  \"username\": \"{{generatedUsername}}\",\r\n  \"password\": \"123456\",\r\n  \"fullName\": \"Người Dùng Test\"\r\n}\r\n"
             },
             "url": {
               "raw": "{{baseUrl}}/api/auth/register",
