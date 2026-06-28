@@ -44,7 +44,7 @@ public class UserController {
     }
 
     @PutMapping("/change-password")
-    public ResponseEntity<ApiResponse<String>> changePassword(Principal principal, @RequestBody ChangePasswordRequest request) {
+    public ResponseEntity<ApiResponse<String>> changePassword(Principal principal, @Valid @RequestBody ChangePasswordRequest request) {
         userService.changePassword(principal.getName(), request);
         return ResponseEntity.ok(ApiResponse.success("Đổi mật khẩu thành công", null));
     }
