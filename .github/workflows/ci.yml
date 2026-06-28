@@ -340,6 +340,29 @@ jobs:
             });
           }
 
+          async function transitionIssue(issueKey, preferredNames) {
+            if (!issueKey) return false;
+            const transitions = await jira(`/rest/api/3/issue/${issueKey}/transitions`);
+            const names = preferredNames.map((name) => name.toLowerCase());
+            const transition = (transitions.transitions || []).find((item) => {
+              const transitionName = String(item.name || '').toLowerCase();
+              const targetName = String(item.to && item.to.name || '').toLowerCase();
+              return names.some((name) => transitionName.includes(name) || targetName.includes(name));
+            });
+
+            if (!transition) {
+              console.log(`No matching transition found for ${issueKey}: ${preferredNames.join(', ')}`);
+              return false;
+            }
+
+            await jira(`/rest/api/3/issue/${issueKey}/transitions`, {
+              method: 'POST',
+              body: JSON.stringify({ transition: { id: transition.id } })
+            });
+            console.log(`Transitioned ${issueKey} with ${transition.name}`);
+            return true;
+          }
+
           async function searchExistingFailureIssue(parentIssueKey, fingerprint) {
             const escapedFingerprint = fingerprint.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
             const jql = `project = ${projectKey} AND parent = ${parentIssueKey} AND text ~ "${escapedFingerprint}" ORDER BY created DESC`;
@@ -379,6 +402,7 @@ jobs:
             }
 
             const parentIssue = await getIssue(issueKey);
+            await transitionIssue(issueKey, ['in progress', 'start progress', 'to do']);
             let errorFiles = fs.readdirSync('.').filter((file) => /^error_reason.*\.txt$/.test(file));
 
             if (errorFiles.length === 0) {
@@ -451,6 +475,207 @@ jobs:
                 console.log(`Created Jira failure issue ${created.key} under ${issueKey}`);
               }
             }
+          }
+
+          main().catch((error) => {
+            console.error(error);
+            process.exit(0);
+          });
+          NODE
+
+      - name: Resolve Jira failure subtask on success
+        if: success()
+        run: |
+          node <<'NODE'
+          const fs = require('fs');
+          const { execSync } = require('child_process');
+
+          const jiraBaseUrl = process.env.JIRA_BASE_URL;
+          const jiraEmail = process.env.JIRA_EMAIL;
+          const jiraToken = process.env.JIRA_API_TOKEN;
+          const projectKey = process.env.JIRA_PROJECT_KEY || 'KCPM';
+          const runUrl = `${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID}`;
+          const branchName = process.env.GITHUB_HEAD_REF || process.env.GITHUB_REF_NAME || 'unknown';
+          const eventName = process.env.GITHUB_EVENT_NAME || '';
+
+          if (!jiraBaseUrl || !jiraEmail || !jiraToken) {
+            console.log('Missing Jira secrets. Skip Jira success update.');
+            process.exit(0);
+          }
+
+          const auth = Buffer.from(`${jiraEmail}:${jiraToken}`).toString('base64');
+
+          async function jira(path, options = {}) {
+            const response = await fetch(`${jiraBaseUrl}${path}`, {
+              ...options,
+              headers: {
+                Authorization: `Basic ${auth}`,
+                Accept: 'application/json',
+                'Content-Type': 'application/json',
+                ...(options.headers || {})
+              }
+            });
+
+            const text = await response.text();
+            let body = {};
+            try {
+              body = text ? JSON.parse(text) : {};
+            } catch {
+              body = { raw: text };
+            }
+
+            if (!response.ok) {
+              throw new Error(`Jira API failed ${response.status}: ${text}`);
+            }
+
+            return body;
+          }
+
+          function sh(command) {
+            return execSync(command, { encoding: 'utf8' }).trim();
+          }
+
+          function readEventPayload() {
+            try {
+              return JSON.parse(fs.readFileSync(process.env.GITHUB_EVENT_PATH, 'utf8'));
+            } catch {
+              return {};
+            }
+          }
+
+          function collectIssueKeySources(event) {
+            let latestCommitMessage = '';
+            try {
+              latestCommitMessage = sh('git log -1 --pretty=%B');
+            } catch {}
+
+            return [
+              latestCommitMessage,
+              branchName,
+              event.pull_request && event.pull_request.title,
+              event.pull_request && event.pull_request.head && event.pull_request.head.ref,
+              event.head_commit && event.head_commit.message
+            ].filter(Boolean).join('\n');
+          }
+
+          function findJiraIssueKey(text) {
+            const regex = new RegExp(`\\b${projectKey}-\\d+\\b`, 'i');
+            const match = String(text || '').match(regex);
+            return match ? match[0].toUpperCase() : '';
+          }
+
+          function jiraDoc(text) {
+            return {
+              type: 'doc',
+              version: 1,
+              content: [
+                {
+                  type: 'paragraph',
+                  content: [{ type: 'text', text }]
+                }
+              ]
+            };
+          }
+
+          async function addComment(issueKey, text) {
+            await jira(`/rest/api/3/issue/${issueKey}/comment`, {
+              method: 'POST',
+              body: JSON.stringify({ body: jiraDoc(text) })
+            });
+          }
+
+          async function transitionIssue(issueKey, preferredNames) {
+            if (!issueKey) return false;
+            const transitions = await jira(`/rest/api/3/issue/${issueKey}/transitions`);
+            const names = preferredNames.map((name) => name.toLowerCase());
+            const transition = (transitions.transitions || []).find((item) => {
+              const transitionName = String(item.name || '').toLowerCase();
+              const targetName = String(item.to && item.to.name || '').toLowerCase();
+              return names.some((name) => transitionName.includes(name) || targetName.includes(name));
+            });
+
+            if (!transition) {
+              console.log(`No matching transition found for ${issueKey}: ${preferredNames.join(', ')}`);
+              return false;
+            }
+
+            await jira(`/rest/api/3/issue/${issueKey}/transitions`, {
+              method: 'POST',
+              body: JSON.stringify({ transition: { id: transition.id } })
+            });
+            console.log(`Transitioned ${issueKey} with ${transition.name}`);
+            return true;
+          }
+
+          async function updateLabels(issueKey, labelsToAdd, labelsToRemove) {
+            const update = { labels: [] };
+            for (const label of labelsToRemove) update.labels.push({ remove: label });
+            for (const label of labelsToAdd) update.labels.push({ add: label });
+            if (!update.labels.length) return;
+            await jira(`/rest/api/3/issue/${issueKey}`, {
+              method: 'PUT',
+              body: JSON.stringify({ update })
+            });
+          }
+
+          async function findFailureSubtasks(parentIssueKey) {
+            const jql = [
+              `project = ${projectKey}`,
+              `parent = ${parentIssueKey}`,
+              `summary ~ "CI Fail"`,
+              `ORDER BY created DESC`
+            ].join(' AND ');
+            const result = await jira(`/rest/api/3/search?jql=${encodeURIComponent(jql)}&maxResults=20&fields=summary,status,labels`);
+            return result.issues || [];
+          }
+
+          async function main() {
+            const event = readEventPayload();
+            const issueKey = findJiraIssueKey(collectIssueKeySources(event));
+
+            if (!issueKey) {
+              console.log(`No Jira task key found. Skip Jira success update.`);
+              return;
+            }
+
+            const successBody = [
+              `CI PASSED for parent task ${issueKey}.`,
+              '',
+              `Run: ${runUrl}`,
+              `Branch: ${branchName}`,
+              `Commit: ${process.env.GITHUB_SHA || 'unknown'}`,
+              `GitHub event: ${eventName}`,
+              '',
+              'Automation handling:',
+              '- Related blackbox/module tests passed.',
+              '- This CI failure sub-task is being resolved automatically.',
+              '- Parent task is also being moved toward Done when Jira workflow permits it.'
+            ].join('\n');
+
+            const failureSubtasks = await findFailureSubtasks(issueKey);
+            if (!failureSubtasks.length) {
+              console.log(`No CI failure subtask found under ${issueKey}. Updating parent only.`);
+            }
+
+            for (const subtask of failureSubtasks) {
+              const statusName = String(subtask.fields && subtask.fields.status && subtask.fields.status.name || '').toLowerCase();
+              if (statusName.includes('done')) {
+                console.log(`${subtask.key} is already Done.`);
+                continue;
+              }
+              await addComment(subtask.key, successBody);
+              await updateLabels(subtask.key, ['ci-passed', 'ci-resolved'], ['ci-fail', 'ci-failure']);
+              await transitionIssue(subtask.key, ['done', 'complete', 'resolved']);
+              console.log(`Resolved Jira CI failure subtask ${subtask.key}`);
+            }
+
+            await addComment(issueKey, [
+              `CI PASSED for ${issueKey}.`,
+              `Run: ${runUrl}`,
+              `Branch: ${branchName}`,
+              `Commit: ${process.env.GITHUB_SHA || 'unknown'}`
+            ].join('\n'));
+            await transitionIssue(issueKey, ['done', 'complete', 'resolved']);
           }
 
           main().catch((error) => {
