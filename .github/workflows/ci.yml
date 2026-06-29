@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - develop
+      - tanvinh
       - "feature/**"
       - "fix/**"
       - "bugfix/**"
@@ -103,7 +104,7 @@ jobs:
             echo "Full regression mode: running all blackbox scripts."
           else
             echo "Personal branch mode: selecting blackbox scripts from branch/commit."
-            if echo "$selector_text" | grep -Eq 'kcpm-87|auth|authentication'; then
+            if [ "$branch_name" = "tanvinh" ] || echo "$selector_text" | grep -Eq 'kcpm-87|auth|authentication'; then
               selected_scripts="$(printf '%s\n%s\n' "$selected_scripts" "test:auth:blackbox")"
             fi
             if echo "$selector_text" | grep -Eq 'product-admin|product admin|admin-product|kcpm-90'; then
