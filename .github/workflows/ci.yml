@@ -438,24 +438,48 @@ jobs:
           }
 
           async function createFailureIssue(parentIssue, summary, description, priorityName, jiraUser) {
-            const fields = {
-              project: { key: projectKey },
-              parent: { key: parentIssue.key },
-              summary,
-              description: jiraDoc(description),
-              issuetype: { name: jiraFailureIssueType },
-              labels: ['ci-failure'],
-              priority: { name: priorityName || jiraDefaultPriority }
-            };
+            const issueTypeCandidates = [
+              jiraFailureIssueType,
+              'Subtask',
+              'Sub-task',
+              'Bug',
+              'Task'
+            ].filter((value, index, array) => value && array.indexOf(value) === index);
 
-            if (jiraUser && jiraUser.accountId) {
-              fields.assignee = { accountId: jiraUser.accountId };
+            let lastError = null;
+
+            for (const issueTypeName of issueTypeCandidates) {
+              const fields = {
+                project: { key: projectKey },
+                summary,
+                description: jiraDoc(description),
+                issuetype: { name: issueTypeName },
+                labels: ['ci-failure'],
+                priority: { name: priorityName || jiraDefaultPriority }
+              };
+
+              if (/sub[- ]?task/i.test(issueTypeName)) {
+                fields.parent = { key: parentIssue.key };
+              }
+
+              if (jiraUser && jiraUser.accountId) {
+                fields.assignee = { accountId: jiraUser.accountId };
+              }
+
+              try {
+                const created = await jira('/rest/api/3/issue', {
+                  method: 'POST',
+                  body: JSON.stringify({ fields })
+                });
+                console.log(`Created Jira failure issue using issue type "${issueTypeName}".`);
+                return created;
+              } catch (error) {
+                lastError = error;
+                console.log(`Could not create Jira failure issue with issue type "${issueTypeName}": ${error.message}`);
+              }
             }
 
-            return jira('/rest/api/3/issue', {
-              method: 'POST',
-              body: JSON.stringify({ fields })
-            });
+            throw lastError || new Error('Could not create Jira failure issue with any fallback issue type.');
           }
 
           async function main() {
