@@ -1,20 +1,18 @@
-﻿{
-    "name":  "automation",
-    "version":  "1.0.0",
-    "description":  "",
-    "main":  "index.js",
-    "scripts":  {
-                    "test":  "echo \"Error: no test specified\" \u0026\u0026 exit 1",
-                    "test:payment:blackbox":  "node -e \"require(\u0027fs\u0027).mkdirSync(\u0027reports\u0027,{recursive:true})\" \u0026\u0026 newman run \"postman/VGAShop_Payment/VGA Store Payment_postman_collection.json\" -e \"postman/env/VGA_Store_Environment.postman_environment.json\" -d \"postman/VGAShop_Payment/VGA-Store-Payment-Testcase.csv\" --reporters cli,json --reporter-json-export \"reports/payment-blackbox-newman.json\""
-                },
-    "keywords":  [
-
-                 ],
-    "author":  "",
-    "license":  "ISC",
-    "type":  "commonjs",
-    "devDependencies":  {
-                            "cypress":  "^15.15.0",
-                            "newman":  "^6.2.2"
-                        }
+{
+  "name": "automation",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "test:payment:blackbox": "node -e \"require('fs').mkdirSync('reports',{recursive:true})\" && newman run \"postman/VGAShop_Payment/VGA Store Payment.postman_collection.json\" -e \"postman/env/VGA_Store_Environment.postman_environment.json\" -d \"postman/VGAShop_Payment/VGA-Store-Payment-Testcase.csv\" --reporters cli,json --reporter-json-export \"reports/payment-blackbox-newman.json\""
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "devDependencies": {
+    "cypress": "^15.15.0",
+    "newman": "^6.2.2"
+  }
 }
