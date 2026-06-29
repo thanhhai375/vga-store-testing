@@ -234,6 +234,17 @@ jobs:
             if [ "$ui_status" -ne 0 ]; then
               failed=1
               failed_cases="$(grep -E "^[[:space:]]*[0-9]+\\) " "$log_file" | sed 's/^[[:space:]]*//' | tail -n 20 || true)"
+              failure_reasons="$(grep -E "still not visible|was not found on page|Timeout [0-9]+ms exceeded|AssertionError|ElementNotFound|expected web application|expected .* to |Error:" "$log_file" | sed 's/^[[:space:]]*//' | head -n 20 || true)"
+              failure_locations="$(grep -E " at Test\\.<anonymous>| File: file:|File: file:" "$log_file" | sed 's/^[[:space:]]*//' | head -n 20 || true)"
+              failure_screenshots="$(grep -E "screenshot: .*\\.png" "$log_file" | sed 's/^[[:space:]]*[- ]*//' | head -n 20 || true)"
+              fix_hint="Check the failed UI expectation, frontend feedback state, backend response, and test data for this testcase."
+              if echo "$failure_reasons" | grep -qi "still not visible"; then
+                fix_hint="Expected UI element did not appear in time. Check whether the action succeeds, whether the selector is correct, and whether FE renders the expected success/error feedback."
+              elif echo "$failure_reasons" | grep -qi "was not found on page"; then
+                fix_hint="Expected text was not shown after submit. Check the actual UI message, toast/alert behavior, backend validation response, and whether the test assertion is too strict."
+              elif echo "$failure_reasons" | grep -qi "Timeout"; then
+                fix_hint="UI timed out waiting for the expected state. Check loading state, route transition, API response time, and selector stability."
+              fi
               {
                 echo "FAILED FILE: $test_file"
                 echo "  - Script: npx codeceptjs run $test_file --steps"
@@ -245,11 +256,29 @@ jobs:
                   echo "FAILED TESTCASE: UI test failed in CodeceptJS"
                 fi
                 echo ""
-                echo "===== Failed test summary ====="
-                grep -E "^[[:space:]]*[0-9]+\\) |-- FAILURES:|FAILURES|Failed tests|Error |TimeoutError|AssertionError|ElementNotFound|expected web application" "$log_file" | tail -n 120 || true
+                echo "===== Failure reason ====="
+                if [ -n "$failure_reasons" ]; then
+                  printf '%s\n' "$failure_reasons"
+                else
+                  echo "Could not extract a concise failure reason. Check the GitHub Actions log and screenshot artifact."
+                fi
                 echo ""
-                echo "===== Last CodeceptJS log ====="
-                tail -n 180 "$log_file"
+                echo "===== Failure location ====="
+                if [ -n "$failure_locations" ]; then
+                  printf '%s\n' "$failure_locations"
+                else
+                  echo "$test_file"
+                fi
+                echo ""
+                echo "===== Screenshot artifact ====="
+                if [ -n "$failure_screenshots" ]; then
+                  printf '%s\n' "$failure_screenshots"
+                else
+                  echo "No screenshot path found in CodeceptJS log."
+                fi
+                echo ""
+                echo "===== Fix hint ====="
+                echo "$fix_hint"
               } > "$error_file"
             fi
           done < <(printf '%s\n' "$selected_files")
