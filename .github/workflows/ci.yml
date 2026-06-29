@@ -232,9 +232,17 @@ jobs:
 
             if [ "$ui_status" -ne 0 ]; then
               failed=1
+              failed_cases="$(grep -E "^[[:space:]]*[0-9]+\\) " "$log_file" | sed 's/^[[:space:]]*//' | tail -n 20 || true)"
               {
                 echo "FAILED FILE: $test_file"
-                echo "  - Testcase: UI test failed in CodeceptJS"
+                echo "  - Script: npx codeceptjs run $test_file --steps"
+                echo "  - Branch: $branch_name"
+                echo "  - Commit: ${GITHUB_SHA:-unknown}"
+                if [ -n "$failed_cases" ]; then
+                  printf '%s\n' "$failed_cases" | sed 's/^/FAILED TESTCASE: /'
+                else
+                  echo "FAILED TESTCASE: UI test failed in CodeceptJS"
+                fi
                 echo ""
                 echo "===== Failed test summary ====="
                 grep -E "^[[:space:]]*[0-9]+\\) |-- FAILURES:|FAILURES|Failed tests|Error |TimeoutError|AssertionError|ElementNotFound|expected web application" "$log_file" | tail -n 120 || true
@@ -507,7 +515,12 @@ jobs:
               const summaryTitle = firstLine.slice(0, 200).replace(/"/g, "'");
               const failedFileMatch = errorReason.match(/^FAILED FILE:\s*(.+)$/m);
               const failedFile = failedFileMatch ? failedFileMatch[1].trim() : '';
-              const fingerprint = `${issueKey}:${summaryTitle}`;
+              const failedTestcases = [...errorReason.matchAll(/^FAILED TESTCASE:\s*(.+)$/gm)]
+                .map((match) => match[1].trim())
+                .filter(Boolean);
+              const primaryFailedTestcase = failedTestcases[0] || '';
+              const fingerprintParts = [issueKey, failedFile || summaryTitle, primaryFailedTestcase].filter(Boolean);
+              const fingerprint = fingerprintParts.join(':');
 
               let culprit = sh("git log -1 --pretty=format:'%an <%ae>'");
               if (failedFile) {
@@ -534,12 +547,19 @@ jobs:
               const parentPriority = parentIssue.fields && parentIssue.fields.priority
                 ? parentIssue.fields.priority.name
                 : jiraDefaultPriority;
-              const failureSummary = `[CI Fail] ${issueKey} - ${summaryTitle}`.slice(0, 250);
+              const failureSummary = `[CI Fail] ${issueKey} - ${(primaryFailedTestcase || summaryTitle)}`.slice(0, 250);
               const existingFailureIssue = await searchExistingFailureIssue(issueKey, fingerprint);
               const failureType = existingFailureIssue ? 'LOI CU TAI PHAT' : 'LOI MOI';
+              const failedTestcaseText = failedTestcases.length
+                ? failedTestcases.map((item) => `- ${item}`).join('\n')
+                : '- UI test failed in CodeceptJS';
               const failureBody = [
                 `CI-FINGERPRINT: ${fingerprint}`,
                 `Trang thai loi: ${failureType}.`,
+                '',
+                `FAILED FILE: ${failedFile || 'unknown'}`,
+                'FAILED TESTCASE:',
+                failedTestcaseText,
                 '',
                 `Task cha: ${issueKey} - ${parentIssue.fields.summary}`,
                 `Loai task cha: ${issueType}`,
