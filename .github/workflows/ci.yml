@@ -24,6 +24,7 @@ env:
   JIRA_EMAIL: ${{ secrets.JIRA_EMAIL }}
   JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
   JIRA_PROJECT_KEY: ${{ secrets.JIRA_PROJECT_KEY }}
+  JIRA_DUE_DAYS: ${{ secrets.JIRA_DUE_DAYS || vars.JIRA_DUE_DAYS }}
 
 jobs:
   ci:
@@ -367,7 +368,7 @@ jobs:
           }
 
           async function getIssue(issueKey) {
-            return jira(`/rest/api/3/issue/${issueKey}?fields=summary,status,issuetype,assignee,parent,priority`);
+            return jira(`/rest/api/3/issue/${issueKey}?fields=summary,status,issuetype,assignee,parent,priority,duedate`);
           }
 
           async function assignIssue(issueKey, jiraUser) {
@@ -445,7 +446,55 @@ jobs:
             return (result.issues || [])[0] || null;
           }
 
-          async function createFailureIssue(parentIssue, summary, description, priorityName, jiraUser) {
+          async function updateIssueLabels(issueKey, labelsToAdd, labelsToRemove = []) {
+            const update = { labels: [] };
+            for (const label of labelsToRemove) update.labels.push({ remove: label });
+            for (const label of labelsToAdd) update.labels.push({ add: label });
+            if (!update.labels.length) return;
+            await jira(`/rest/api/3/issue/${issueKey}`, {
+              method: 'PUT',
+              body: JSON.stringify({ update })
+            });
+          }
+
+          async function updateIssueFields(issueKey, fields) {
+            if (!issueKey || !fields || Object.keys(fields).length === 0) return;
+            await jira(`/rest/api/3/issue/${issueKey}`, {
+              method: 'PUT',
+              body: JSON.stringify({ fields })
+            });
+          }
+
+          function computeDueDate() {
+            const dueDays = Number.parseInt(process.env.JIRA_DUE_DAYS || '', 10);
+            if (!Number.isFinite(dueDays) || dueDays < 0) return '';
+            const date = new Date();
+            date.setDate(date.getDate() + dueDays);
+            return date.toISOString().slice(0, 10);
+          }
+
+          function detectFailureLabels(errorFileName, failedFile) {
+            const source = `${errorFileName}\n${failedFile || ''}`.toLowerCase();
+            const labels = ['automation-test', 'blackbox', 'github-actions', 'ci-failure'];
+
+            if (source.includes('error_reason_ui') || source.includes('/e2e/') || source.includes('\\e2e\\')) {
+              labels.push('ui', 'fe', 'codeceptjs');
+            } else if (source.includes('error_reason_api') || source.includes('newman') || source.includes('postman')) {
+              labels.push('api', 'newman', 'postman');
+            }
+
+            if (source.includes('1_authentication')) labels.push('module-auth');
+            else if (source.includes('2_shopping_experience')) labels.push('module-shopping');
+            else if (source.includes('3_cart') || source.includes('payment')) labels.push('module-cart-payment');
+            else if (source.includes('4_product') || source.includes('category')) labels.push('module-product-category');
+            else if (source.includes('5_order')) labels.push('module-order');
+            else if (source.includes('6_dashboard') || source.includes('user_management')) labels.push('module-dashboard-user');
+            else if (source.includes('7_user_profile')) labels.push('module-user-profile');
+
+            return [...new Set(labels)];
+          }
+
+          async function createFailureIssue(parentIssue, summary, description, priorityName, jiraUser, labels = ['ci-failure']) {
             const issueTypeCandidates = [
               jiraFailureIssueType,
               'Subtask',
@@ -462,9 +511,16 @@ jobs:
                 summary,
                 description: jiraDoc(description),
                 issuetype: { name: issueTypeName },
-                labels: ['ci-failure'],
+                labels,
                 priority: { name: priorityName || jiraDefaultPriority }
               };
+
+              const computedDueDate = computeDueDate();
+              if (computedDueDate) {
+                fields.duedate = computedDueDate;
+              } else if (parentIssue.fields && parentIssue.fields.duedate) {
+                fields.duedate = parentIssue.fields.duedate;
+              }
 
               if (/sub[- ]?task/i.test(issueTypeName)) {
                 fields.parent = { key: parentIssue.key };
@@ -521,6 +577,8 @@ jobs:
               const primaryFailedTestcase = failedTestcases[0] || '';
               const fingerprintParts = [issueKey, failedFile || summaryTitle, primaryFailedTestcase].filter(Boolean);
               const fingerprint = fingerprintParts.join(':');
+              const failureLabels = detectFailureLabels(file, failedFile);
+              const labelsToRemove = failureLabels.includes('ui') ? ['newman', 'postman', 'api'] : ['ui', 'fe', 'codeceptjs'];
 
               let culprit = sh("git log -1 --pretty=format:'%an <%ae>'");
               if (failedFile) {
@@ -538,6 +596,8 @@ jobs:
               const currentAssignee = parentIssue.fields && parentIssue.fields.assignee
                 ? parentIssue.fields.assignee.displayName
                 : 'Unassigned';
+              const computedDueDate = computeDueDate();
+              const failureDueDate = computedDueDate || (parentIssue.fields && parentIssue.fields.duedate) || 'None';
               const issueType = parentIssue.fields && parentIssue.fields.issuetype
                 ? parentIssue.fields.issuetype.name
                 : 'Unknown';
@@ -565,6 +625,7 @@ jobs:
                 `Loai task cha: ${issueType}`,
                 `Trang thai task cha: ${statusName}`,
                 `Priority: ${parentPriority}`,
+                `Due date: ${failureDueDate}`,
                 `Assignee task cha truoc khi CI tao loi: ${currentAssignee}`,
                 '',
                 `Nhanh bi loi: ${branchName}`,
@@ -579,10 +640,14 @@ jobs:
 
               if (existingFailureIssue) {
                 await addComment(existingFailureIssue.key, failureBody);
+                await updateIssueLabels(existingFailureIssue.key, failureLabels, labelsToRemove);
+                if (failureDueDate !== 'None') {
+                  await updateIssueFields(existingFailureIssue.key, { duedate: failureDueDate });
+                }
                 await assignIssue(existingFailureIssue.key, jiraUser);
                 console.log(`Updated existing Jira failure issue ${existingFailureIssue.key} for ${issueKey}`);
               } else {
-                const created = await createFailureIssue(parentIssue, failureSummary, failureBody, parentPriority, jiraUser);
+                const created = await createFailureIssue(parentIssue, failureSummary, failureBody, parentPriority, jiraUser, failureLabels);
                 console.log(`Created Jira failure issue ${created.key} under ${issueKey}`);
               }
             }
