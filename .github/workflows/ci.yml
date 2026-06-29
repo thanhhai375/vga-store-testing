@@ -139,14 +139,46 @@ jobs:
 
             if [ "$script_status" -ne 0 ]; then
               failed=1
+              failed_requests="$(grep -E "^[[:space:]]*[0-9]+\\.|→|POST |GET |PUT |DELETE |PATCH " "$log_file" | tail -n 30 || true)"
+              failed_assertions="$(grep -E "AssertionError|expected .* to |expected response|Expected|actual|Actual|FAIL|failed|error" "$log_file" | sed 's/^[[:space:]]*//' | tail -n 40 || true)"
+              failed_statuses="$(grep -E "^[[:space:]]*(GET|POST|PUT|DELETE|PATCH)|[[:space:]][1-5][0-9][0-9][[:space:]]" "$log_file" | tail -n 30 || true)"
+              api_fix_hint="Check the failed Postman assertion, request data, expected status/message, backend validation, and environment variables."
+              if echo "$failed_assertions" | grep -qi "status"; then
+                api_fix_hint="HTTP status assertion failed. Check endpoint behavior, test data, expectedStatus in CSV, and backend validation/handler."
+              elif echo "$failed_assertions" | grep -qi "message"; then
+                api_fix_hint="Response message assertion failed. Check backend error/success message format and Postman expectedMessage."
+              elif echo "$failed_assertions" | grep -qi "token"; then
+                api_fix_hint="Token/session assertion failed. Check login/register response payload and environment variable persistence."
+              fi
               {
                 echo "FAILED FILE: npm script $script_name"
                 echo "  - Script: $script_name"
                 echo "  - Branch: $branch_name"
                 echo "  - Commit: ${GITHUB_SHA:-unknown}"
                 echo ""
-                echo "===== Last Newman log ====="
-                tail -n 220 "$log_file"
+                echo "===== Failed API request/assertion summary ====="
+                if [ -n "$failed_requests" ]; then
+                  printf '%s\n' "$failed_requests"
+                else
+                  echo "Could not extract failed request names from Newman log."
+                fi
+                echo ""
+                echo "===== Failure reason ====="
+                if [ -n "$failed_assertions" ]; then
+                  printf '%s\n' "$failed_assertions"
+                else
+                  echo "Could not extract concise Newman assertion failure. Check the GitHub Actions log artifact."
+                fi
+                echo ""
+                echo "===== Response/status context ====="
+                if [ -n "$failed_statuses" ]; then
+                  printf '%s\n' "$failed_statuses"
+                else
+                  echo "No status context extracted."
+                fi
+                echo ""
+                echo "===== Fix hint ====="
+                echo "$api_fix_hint"
               } > "../error_reason_API_${safe_name}.txt"
             fi
           done < <(printf '%s\n' "$selected_scripts")
