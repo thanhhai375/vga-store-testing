@@ -1,658 +1,1617 @@
 {
   "info": {
-    "_postman_id": "7a712285-76af-4d43-a32e-0075aa475165",
+    "_postman_id": "6e5ba0b5-9059-423a-99bf-17cfa6e09dce",
     "name": "VGA Store Cart",
-    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-    "_exporter_id": "54984213",
-    "_collection_link": "https://go.postman.co/collection/51701293-7a712285-76af-4d43-a32e-0075aa475165?source=collection_link"
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
-  "item": [
-    {
-      "name": "Auth",
-      "item": [
-        {
-          "name": "Đăng ký",
-          "event": [
-            {
-              "listen": "prerequest",
-              "script": {
-                "exec": [
-                  "var unique = Date.now() + '_' + Math.floor(Math.random() * 100000);",
-                  "pm.environment.set('generatedUsername', 'user_' + unique);",
-                  "pm.environment.set('generatedUserEmail', 'user_' + unique + '@test.com');"
-                ],
-                "type": "text/javascript",
-                "packages": {},
-                "requests": {}
-              }
-            },
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "const jsonData = pm.response.json();\r",
-                  "\r",
-                  "pm.test(\"Status code is 200\", function () {\r",
-                  "    pm.response.to.have.status(200);\r",
-                  "});\r",
-                  "\r",
-                  "pm.test(\"Response has token\", function () {\r",
-                  "    pm.expect(jsonData.token).to.not.be.undefined;\r",
-                  "});\r",
-                  "\r",
-                  "pm.test(\"Registration successful\", function () {\r",
-                  "    pm.expect(jsonData.message).to.eql(\"Registration successful\");\r",
-                  "});\r",
-                  "\r",
-                  "pm.test(\"Response has username and userId\", function () {\r",
-                  "    pm.expect(jsonData.username).to.not.be.undefined;\r",
-                  "    pm.expect(jsonData.userId).to.not.be.undefined;\r",
-                  "});\r",
-                  "\r",
-                  "// Lưu vào Environment để Login dùng\r",
-                  "pm.environment.set(\"loginUsername\", jsonData.username);\r",
-                  "pm.environment.set(\"token\", jsonData.token);\r",
-                  "pm.environment.set(\"userId\", jsonData.userId);\r",
-                  "\r",
-                  "console.log(\"Saved loginUsername = \" + jsonData.username);"
-                ],
-                "type": "text/javascript",
-                "packages": {},
-                "requests": {}
-              }
-            },
-            {
-              "listen": "prerequest",
-              "script": {
-                "exec": [
-                  ""
-                ],
-                "type": "text/javascript",
-                "packages": {},
-                "requests": {}
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\r\n  \"email\": \"{{generatedUserEmail}}\",\r\n  \"username\": \"{{generatedUsername}}\",\r\n  \"password\": \"123456\",\r\n  \"fullName\": \"Người Dùng Test\"\r\n}\r\n"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/auth/register",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "auth",
-                "register"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Đăng nhập",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "const jsonData = pm.response.json();\r",
-                  "\r",
-                  "pm.test(\"Status code is 200\", function () {\r",
-                  "    pm.response.to.have.status(200);\r",
-                  "});\r",
-                  "\r",
-                  "pm.test(\"Login successful\", function () {\r",
-                  "    pm.expect(jsonData.message).to.eql(\"Login successful\");\r",
-                  "});\r",
-                  "\r",
-                  "pm.test(\"Response has token\", function () {\r",
-                  "    pm.expect(jsonData.token).to.not.be.undefined;\r",
-                  "});\r",
-                  "\r",
-                  "pm.environment.set(\"token\", jsonData.token);\r",
-                  "pm.environment.set(\"userId\", jsonData.userId);\r",
-                  "\r",
-                  "console.log(\"Login token saved\");"
-                ],
-                "type": "text/javascript",
-                "packages": {},
-                "requests": {}
-              }
-            },
-            {
-              "listen": "prerequest",
-              "script": {
-                "exec": [
-                  ""
-                ],
-                "type": "text/javascript",
-                "packages": {},
-                "requests": {}
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n    \"username\": \"{{loginUsername}}\",\n    \"password\": \"123456\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/auth/login",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "auth",
-                "login"
-              ]
-            }
-          },
-          "response": []
-        }
-      ],
-      "event": [
-        {
-          "listen": "prerequest",
-          "script": {
-            "type": "text/javascript",
-            "packages": {},
-            "requests": {},
-            "exec": [
-              ""
-            ]
-          }
-        },
-        {
-          "listen": "test",
-          "script": {
-            "type": "text/javascript",
-            "packages": {},
-            "requests": {},
-            "exec": [
-              ""
-            ]
-          }
-        }
-      ]
-    },
-    {
-      "name": "Cart",
-      "item": [
-        {
-          "name": "TC_CART_01_02_03_04_05_06_07_20 - Thêm sản phẩm vào giỏ hàng",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "const statusCode = pm.response.code;\r",
-                  "const res = pm.response.json();\r",
-                  "\r",
-                  "\r",
-                  "pm.test(\"TC_CART_01 - Thêm sản phẩm vào giỏ hàng thành công\", function () {\r",
-                  "    pm.expect(statusCode).to.be.oneOf([200, 201]);\r",
-                  "});\r",
-                  "\r",
-                  "pm.test(\"TC_CART_02 - Thêm sản phẩm với số lượng hợp lệ thành công\", function () {\r",
-                  "    pm.expect(statusCode).to.be.oneOf([200, 201]);\r",
-                  "});\r",
-                  "\r",
-                  "pm.test(\"TC_CART_03 - Hệ thống bắt lỗi khi số lượng vượt tồn kho (Bỏ qua nếu đang chạy luồng Đúng)\", function () {\r",
-                  "    if (statusCode === 400 || statusCode === 422) { pm.expect(res.message).to.be.a('string'); }\r",
-                  "});\r",
-                  "\r",
-                  "pm.test(\"TC_CART_04 - Hệ thống bắt lỗi khi productId trống (Bỏ qua nếu đang chạy luồng Đúng)\", function () {\r",
-                  "    if (statusCode === 400 || statusCode === 422) { pm.expect(res.message).to.be.a('string'); }\r",
-                  "});\r",
-                  "\r",
-                  "pm.test(\"TC_CART_05 - Hệ thống bắt lỗi khi số lượng bằng 0 (Bỏ qua nếu đang chạy luồng Đúng)\", function () {\r",
-                  "    if (statusCode === 400 || statusCode === 422) { pm.expect(res.message).to.be.a('string'); }\r",
-                  "});\r",
-                  "\r",
-                  "pm.test(\"TC_CART_06 - Hệ thống bắt lỗi khi số lượng là số âm (Bỏ qua nếu đang chạy luồng Đúng)\", function () {\r",
-                  "    if (statusCode === 400 || statusCode === 422) { pm.expect(res.message).to.be.a('string'); }\r",
-                  "});\r",
-                  "\r",
-                  "pm.test(\"TC_CART_07 - Hệ thống bắt lỗi khi productId không tồn tại (Bỏ qua nếu đang chạy luồng Đúng)\", function () {\r",
-                  "    if (statusCode === 404) { pm.expect(statusCode).to.eql(404); }\r",
-                  "});\r",
-                  "\r",
-                  "pm.test(\"TC_CART_20 - Hệ thống trả về cấu trúc giỏ hàng và thông báo hợp lệ\", function () {\r",
-                  "    pm.expect(res).to.have.property(\"message\");\r",
-                  "});\r",
-                  "\r",
-                  "pm.test(\"BUG-003 - Kiểm tra tổng tiền chính xác\", function () {\r",
-                  "    const cartData = res.data;\r",
-                  "    \r",
-                  "    // 1. Tính tổng tiền sản phẩm từ danh sách items\r",
-                  "    let itemsTotal = cartData.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);\r",
-                  "    \r",
-                  "    // 2. Lấy phí vận chuyển thực tế từ API (hoặc tính chênh lệch)\r",
-                  "    // Giả sử API trả về totalAmount là tổng cuối cùng\r",
-                  "    const actualTotal = cartData.totalAmount;\r",
-                  "    \r",
-                  "    // 3. Kiểm tra logic: Total = ItemSubtotal + Fee\r",
-                  "    // Nếu bạn không biết phí là bao nhiêu, hãy kiểm tra: Total phải >= ItemSubtotal\r",
-                  "    pm.expect(actualTotal).to.be.at.least(itemsTotal);\r",
-                  "    \r",
-                  "    console.log(\"Tổng tiền hàng: \" + itemsTotal + \", Tổng thanh toán: \" + actualTotal);\r",
-                  "});\r",
-                  "// Tự động bóc tách và lưu cartItemId cho các bước sau\r",
-                  "const cartData = res.data || res;\r",
-                  "if ((statusCode === 200 || statusCode === 201) && cartData && cartData.items && cartData.items.length > 0) {\r",
-                  "    pm.environment.set(\"cartItemId\", cartData.items[0].cartItemId);\r",
-                  "}"
-                ],
-                "type": "text/javascript",
-                "packages": {},
-                "requests": {}
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"productId\": 1,\n  \"quantity\": 1\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/cart/add",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "cart",
-                "add"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "TC_CART_08_09 - Lấy dữ liệu danh sách giỏ hàng",
-          "event": [
-            {
-              "listen": "prerequest",
-              "script": {
-                "exec": [
-                  ""
-                ],
-                "type": "text/javascript",
-                "packages": {},
-                "requests": {}
-              }
-            },
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "const res = pm.response.json();\r",
-                  "const cartData = res.data || res;\r",
-                  "\r",
-                  "pm.test(\"TC_CART_08 - Kiểm tra hiển thị thông tin khi giỏ hàng rỗng (Bỏ qua nếu giỏ có đồ)\", function () {\r",
-                  "    if (cartData.totalItems === 0) {\r",
-                  "        pm.expect(cartData.totalAmount).to.eql(0);\r",
-                  "    }\r",
-                  "});\r",
-                  "\r",
-                  "pm.test(\"TC_CART_09 - Hiển thị danh sách sản phẩm trong giỏ hàng thành công\", function () {\r",
-                  "    pm.response.to.have.status(200);\r",
-                  "    if (cartData.items) { pm.expect(cartData.items).to.be.an('array'); }\r",
-                  "});"
-                ],
-                "type": "text/javascript",
-                "packages": {},
-                "requests": {}
-              }
-            }
-          ],
-          "protocolProfileBehavior": {
-            "disableBodyPruning": true
-          },
-          "request": {
-            "method": "GET",
-            "header": [],
-            "body": {
-              "mode": "raw",
-              "raw": "{\r\n  \"productId\": 1,\r\n  \"quantity\": 1\r\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/cart",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "cart"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Logic - Thêm số lượng âm vào giỏ hàng không bị chặn",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "// BUG: API không chặn số lượng <= 0",
-                  "// Expected: 400 Bad Request",
-                  "// Actual: 200 OK (Thành công thêm số âm vào giỏ)",
-                  "",
-                  "pm.test('Status is 400', function () {",
-                  "    pm.response.to.have.status(400);",
-                  "});"
-                ],
-                "type": "text/javascript",
-                "packages": {},
-                "requests": {}
-              }
-            }
-          ],
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{token}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"productId\": 1,\n  \"quantity\": -5\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/cart/add",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "cart",
-                "add"
-              ]
-            },
-            "description": "BUG-002: Lỗ hổng cho phép truyền số lượng âm vào giỏ hàng, khiến tổng tiền bị âm."
-          },
-          "response": []
-        },
-        {
-          "name": "TC_CART_10_11_12_13_14_15 - Cập nhật số lượng sản phẩm",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "const statusCode = pm.response.code;\r",
-                  "\r",
-                  "pm.test(\"TC_CART_10 - Tăng số lượng sản phẩm trong giỏ hàng thành công\", function () {\r",
-                  "    if (statusCode === 200) pm.response.to.have.status(200);\r",
-                  "});\r",
-                  "\r",
-                  "pm.test(\"TC_CART_11 - Giảm số lượng sản phẩm trong giỏ hàng thành công\", function () {\r",
-                  "    if (statusCode === 200) pm.response.to.have.status(200);\r",
-                  "});\r",
-                  "\r",
-                  "pm.test(\"TC_CART_12 - Hệ thống bắt lỗi cập nhật số lượng bằng 0 (Bỏ qua nếu đang chạy luồng Đúng)\", function () {\r",
-                  "    if (statusCode !== 200) pm.expect(statusCode).to.be.oneOf([400, 422]);\r",
-                  "});\r",
-                  "\r",
-                  "pm.test(\"TC_CART_13 - Hệ thống bắt lỗi cập nhật số lượng âm (Bỏ qua nếu đang chạy luồng Đúng)\", function () {\r",
-                  "    if (statusCode !== 200) pm.expect(statusCode).to.be.oneOf([400, 422]);\r",
-                  "});\r",
-                  "\r",
-                  "pm.test(\"TC_CART_14 - Hệ thống bắt lỗi cập nhật số lượng vượt tồn kho (Bỏ qua nếu đang chạy luồng Đúng)\", function () {\r",
-                  "    if (statusCode !== 200) pm.expect(statusCode).to.be.oneOf([400, 422]);\r",
-                  "});\r",
-                  "\r",
-                  "pm.test(\"TC_CART_15 - Hệ thống bắt lỗi khi cartItemId không tồn tại (Bỏ qua nếu đang chạy luồng Đúng)\", function () {\r",
-                  "    if (statusCode === 404) pm.expect(statusCode).to.eql(404);\r",
-                  "});"
-                ],
-                "type": "text/javascript",
-                "packages": {},
-                "requests": {}
-              }
-            }
-          ],
-          "request": {
-            "method": "PUT",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"quantity\": 2\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/cart/items/{{cartItemId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "cart",
-                "items",
-                "{{cartItemId}}"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "TC_CART_16_17 - Xóa sản phẩm khỏi giỏ hàng",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "const statusCode = pm.response.code;\r",
-                  "\r",
-                  "pm.test(\"TC_CART_16 - Chọn sản phẩm và xóa khỏi giỏ hàng thành công\", function () {\r",
-                  "    if (statusCode === 200 || statusCode === 204) pm.expect(statusCode).to.be.oneOf([200, 204]);\r",
-                  "});\r",
-                  "\r",
-                  "pm.test(\"TC_CART_17 - Hệ thống bắt lỗi khi xóa sản phẩm với ID không tồn tại (Bỏ qua nếu đang chạy luồng Đúng)\", function () {\r",
-                  "    if (statusCode === 404) pm.expect(statusCode).to.eql(404);\r",
-                  "});"
-                ],
-                "type": "text/javascript",
-                "packages": {},
-                "requests": {}
-              }
-            }
-          ],
-          "request": {
-            "method": "DELETE",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/cart/items/{{cartItemId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "cart",
-                "items",
-                "{{cartItemId}}"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "TC_CART_18_19 - Xóa sạch toàn bộ giỏ hàng",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "const statusCode = pm.response.code;\r",
-                  "\r",
-                  "pm.test(\"TC_CART_18 - Xóa toàn bộ giỏ hàng thành công, totalAmount quay về bằng 0\", function () {\r",
-                  "    if (statusCode === 200 || statusCode === 204) {\r",
-                  "        pm.expect(statusCode).to.be.oneOf([200, 204]);\r",
-                  "    }\r",
-                  "});\r",
-                  "\r",
-                  "pm.test(\"TC_CART_19 - Hệ thống bắt lỗi khi xóa giỏ hàng đã rỗng sẵn (Bỏ qua nếu đang chạy luồng Đúng)\", function () {\r",
-                  "    if (statusCode === 400 || statusCode === 404) {\r",
-                  "        pm.expect(statusCode).to.be.oneOf([400, 404]);\r",
-                  "    }\r",
-                  "});"
-                ],
-                "type": "text/javascript",
-                "packages": {},
-                "requests": {}
-              }
-            }
-          ],
-          "request": {
-            "method": "DELETE",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/cart",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "cart"
-              ]
-            }
-          },
-          "response": []
-        }
-      ],
-      "auth": {
-        "type": "bearer",
-        "bearer": [
-          {
-            "key": "token",
-            "value": "{{token}}",
-            "type": "string"
-          }
-        ]
-      },
-      "event": [
-        {
-          "listen": "prerequest",
-          "script": {
-            "type": "text/javascript",
-            "packages": {},
-            "requests": {},
-            "exec": [
-              ""
-            ]
-          }
-        },
-        {
-          "listen": "test",
-          "script": {
-            "type": "text/javascript",
-            "packages": {},
-            "requests": {},
-            "exec": [
-              ""
-            ]
-          }
-        }
-      ]
-    }
-  ],
-  "event": [
-    {
-      "listen": "prerequest",
-      "script": {
-        "type": "text/javascript",
-        "packages": {},
-        "requests": {},
-        "exec": [
-          ""
-        ]
-      }
-    },
-    {
-      "listen": "test",
-      "script": {
-        "type": "text/javascript",
-        "packages": {},
-        "requests": {},
-        "exec": [
-          ""
-        ]
-      }
-    }
-  ],
   "variable": [
     {
-      "key": "token",
+      "key": "runtimeToken",
       "value": ""
     },
     {
-      "key": "baseUrl",
+      "key": "latestCartItemId",
       "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "TC_CART_001 - View cart valid",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              "// Auto-login once for Cart requests. Does not modify environment file.\nif (!pm.collectionVariables.get(\"runtimeToken\")) {\n    const baseUrl = pm.environment.get(\"baseUrl\") || \"http://localhost:8080\";\n    const username = pm.environment.get(\"loginUsername\") || (\"cartuser_\" + Date.now());\n    const password = pm.environment.get(\"loginPassword\") || \"Cart@Test123\";\n\n    pm.sendRequest({\n        url: baseUrl + \"/api/auth/login\",\n        method: \"POST\",\n        header: { \"Content-Type\": \"application/json\" },\n        body: { mode: \"raw\", raw: JSON.stringify({ username, password }) }\n    }, function (err, res) {\n        let token = null;\n        try { token = res && res.json() && res.json().token; } catch (e) {}\n\n        if (token) {\n            pm.collectionVariables.set(\"runtimeToken\", token);\n            return;\n        }\n\n        const newUsername = \"cartuser_\" + Date.now();\n        const newEmail = newUsername + \"@example.com\";\n        const newPassword = \"Cart@Test123\";\n\n        pm.sendRequest({\n            url: baseUrl + \"/api/auth/register\",\n            method: \"POST\",\n            header: { \"Content-Type\": \"application/json\" },\n            body: { mode: \"raw\", raw: JSON.stringify({\n                username: newUsername,\n                email: newEmail,\n                password: newPassword,\n                fullName: \"Cart BlackBox User\"\n            }) }\n        }, function (regErr, regRes) {\n            let regToken = null;\n            try { regToken = regRes && regRes.json() && regRes.json().token; } catch (e) {}\n            if (regToken) {\n                pm.collectionVariables.set(\"runtimeToken\", regToken);\n            }\n        });\n    });\n}"
+            ],
+            "type": "text/javascript"
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"TC_CART_001 - status code = 200\", function () {",
+              "    pm.expect(pm.response.code).to.eql(200);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{runtimeToken}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/cart",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "cart"
+          ]
+        }
+      }
     },
     {
-      "key": "validProductId",
-      "value": ""
+      "name": "TC_CART_002 - Clear cart setup",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              "// Auto-login once for Cart requests. Does not modify environment file.\nif (!pm.collectionVariables.get(\"runtimeToken\")) {\n    const baseUrl = pm.environment.get(\"baseUrl\") || \"http://localhost:8080\";\n    const username = pm.environment.get(\"loginUsername\") || (\"cartuser_\" + Date.now());\n    const password = pm.environment.get(\"loginPassword\") || \"Cart@Test123\";\n\n    pm.sendRequest({\n        url: baseUrl + \"/api/auth/login\",\n        method: \"POST\",\n        header: { \"Content-Type\": \"application/json\" },\n        body: { mode: \"raw\", raw: JSON.stringify({ username, password }) }\n    }, function (err, res) {\n        let token = null;\n        try { token = res && res.json() && res.json().token; } catch (e) {}\n\n        if (token) {\n            pm.collectionVariables.set(\"runtimeToken\", token);\n            return;\n        }\n\n        const newUsername = \"cartuser_\" + Date.now();\n        const newEmail = newUsername + \"@example.com\";\n        const newPassword = \"Cart@Test123\";\n\n        pm.sendRequest({\n            url: baseUrl + \"/api/auth/register\",\n            method: \"POST\",\n            header: { \"Content-Type\": \"application/json\" },\n            body: { mode: \"raw\", raw: JSON.stringify({\n                username: newUsername,\n                email: newEmail,\n                password: newPassword,\n                fullName: \"Cart BlackBox User\"\n            }) }\n        }, function (regErr, regRes) {\n            let regToken = null;\n            try { regToken = regRes && regRes.json() && regRes.json().token; } catch (e) {}\n            if (regToken) {\n                pm.collectionVariables.set(\"runtimeToken\", regToken);\n            }\n        });\n    });\n}"
+            ],
+            "type": "text/javascript"
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"TC_CART_002 - status code = 200\", function () {",
+              "    pm.expect(pm.response.code).to.eql(200);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{runtimeToken}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/cart",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "cart"
+          ]
+        }
+      }
     },
     {
-      "key": "invalidProductId",
-      "value": ""
+      "name": "TC_CART_003 - Add product quantity 1",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              "// Auto-login once for Cart requests. Does not modify environment file.\nif (!pm.collectionVariables.get(\"runtimeToken\")) {\n    const baseUrl = pm.environment.get(\"baseUrl\") || \"http://localhost:8080\";\n    const username = pm.environment.get(\"loginUsername\") || (\"cartuser_\" + Date.now());\n    const password = pm.environment.get(\"loginPassword\") || \"Cart@Test123\";\n\n    pm.sendRequest({\n        url: baseUrl + \"/api/auth/login\",\n        method: \"POST\",\n        header: { \"Content-Type\": \"application/json\" },\n        body: { mode: \"raw\", raw: JSON.stringify({ username, password }) }\n    }, function (err, res) {\n        let token = null;\n        try { token = res && res.json() && res.json().token; } catch (e) {}\n\n        if (token) {\n            pm.collectionVariables.set(\"runtimeToken\", token);\n            return;\n        }\n\n        const newUsername = \"cartuser_\" + Date.now();\n        const newEmail = newUsername + \"@example.com\";\n        const newPassword = \"Cart@Test123\";\n\n        pm.sendRequest({\n            url: baseUrl + \"/api/auth/register\",\n            method: \"POST\",\n            header: { \"Content-Type\": \"application/json\" },\n            body: { mode: \"raw\", raw: JSON.stringify({\n                username: newUsername,\n                email: newEmail,\n                password: newPassword,\n                fullName: \"Cart BlackBox User\"\n            }) }\n        }, function (regErr, regRes) {\n            let regToken = null;\n            try { regToken = regRes && regRes.json() && regRes.json().token; } catch (e) {}\n            if (regToken) {\n                pm.collectionVariables.set(\"runtimeToken\", regToken);\n            }\n        });\n    });\n}"
+            ],
+            "type": "text/javascript"
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"TC_CART_003 - status code = 200\", function () {",
+              "    pm.expect(pm.response.code).to.eql(200);",
+              "});",
+              "if (pm.response.code === 200) {",
+              "    const json = pm.response.json();",
+              "    const items = json && json.data && json.data.items ? json.data.items : [];",
+              "    if (items.length > 0) {",
+              "        const latest = items[items.length - 1];",
+              "        pm.collectionVariables.set(\"latestCartItemId\", latest.cartItemId || latest.id);",
+              "    }",
+              "}"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{runtimeToken}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/cart/add",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "cart",
+            "add"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\"productId\": \"{{validProductId}}\", \"quantity\": 1}"
+        }
+      }
     },
     {
-      "key": "cartItemId",
-      "value": ""
+      "name": "TC_CART_004 - Add same product duplicate",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              "// Auto-login once for Cart requests. Does not modify environment file.\nif (!pm.collectionVariables.get(\"runtimeToken\")) {\n    const baseUrl = pm.environment.get(\"baseUrl\") || \"http://localhost:8080\";\n    const username = pm.environment.get(\"loginUsername\") || (\"cartuser_\" + Date.now());\n    const password = pm.environment.get(\"loginPassword\") || \"Cart@Test123\";\n\n    pm.sendRequest({\n        url: baseUrl + \"/api/auth/login\",\n        method: \"POST\",\n        header: { \"Content-Type\": \"application/json\" },\n        body: { mode: \"raw\", raw: JSON.stringify({ username, password }) }\n    }, function (err, res) {\n        let token = null;\n        try { token = res && res.json() && res.json().token; } catch (e) {}\n\n        if (token) {\n            pm.collectionVariables.set(\"runtimeToken\", token);\n            return;\n        }\n\n        const newUsername = \"cartuser_\" + Date.now();\n        const newEmail = newUsername + \"@example.com\";\n        const newPassword = \"Cart@Test123\";\n\n        pm.sendRequest({\n            url: baseUrl + \"/api/auth/register\",\n            method: \"POST\",\n            header: { \"Content-Type\": \"application/json\" },\n            body: { mode: \"raw\", raw: JSON.stringify({\n                username: newUsername,\n                email: newEmail,\n                password: newPassword,\n                fullName: \"Cart BlackBox User\"\n            }) }\n        }, function (regErr, regRes) {\n            let regToken = null;\n            try { regToken = regRes && regRes.json() && regRes.json().token; } catch (e) {}\n            if (regToken) {\n                pm.collectionVariables.set(\"runtimeToken\", regToken);\n            }\n        });\n    });\n}"
+            ],
+            "type": "text/javascript"
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"TC_CART_004 - status code = 200\", function () {",
+              "    pm.expect(pm.response.code).to.eql(200);",
+              "});",
+              "if (pm.response.code === 200) {",
+              "    const json = pm.response.json();",
+              "    const items = json && json.data && json.data.items ? json.data.items : [];",
+              "    if (items.length > 0) {",
+              "        const latest = items[items.length - 1];",
+              "        pm.collectionVariables.set(\"latestCartItemId\", latest.cartItemId || latest.id);",
+              "    }",
+              "}"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{runtimeToken}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/cart/add",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "cart",
+            "add"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\"productId\": \"{{validProductId}}\", \"quantity\": 1}"
+        }
+      }
     },
     {
-      "key": "invalidCartItemId",
-      "value": ""
+      "name": "TC_CART_005 - Add quantity zero",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              "// Auto-login once for Cart requests. Does not modify environment file.\nif (!pm.collectionVariables.get(\"runtimeToken\")) {\n    const baseUrl = pm.environment.get(\"baseUrl\") || \"http://localhost:8080\";\n    const username = pm.environment.get(\"loginUsername\") || (\"cartuser_\" + Date.now());\n    const password = pm.environment.get(\"loginPassword\") || \"Cart@Test123\";\n\n    pm.sendRequest({\n        url: baseUrl + \"/api/auth/login\",\n        method: \"POST\",\n        header: { \"Content-Type\": \"application/json\" },\n        body: { mode: \"raw\", raw: JSON.stringify({ username, password }) }\n    }, function (err, res) {\n        let token = null;\n        try { token = res && res.json() && res.json().token; } catch (e) {}\n\n        if (token) {\n            pm.collectionVariables.set(\"runtimeToken\", token);\n            return;\n        }\n\n        const newUsername = \"cartuser_\" + Date.now();\n        const newEmail = newUsername + \"@example.com\";\n        const newPassword = \"Cart@Test123\";\n\n        pm.sendRequest({\n            url: baseUrl + \"/api/auth/register\",\n            method: \"POST\",\n            header: { \"Content-Type\": \"application/json\" },\n            body: { mode: \"raw\", raw: JSON.stringify({\n                username: newUsername,\n                email: newEmail,\n                password: newPassword,\n                fullName: \"Cart BlackBox User\"\n            }) }\n        }, function (regErr, regRes) {\n            let regToken = null;\n            try { regToken = regRes && regRes.json() && regRes.json().token; } catch (e) {}\n            if (regToken) {\n                pm.collectionVariables.set(\"runtimeToken\", regToken);\n            }\n        });\n    });\n}"
+            ],
+            "type": "text/javascript"
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"TC_CART_005 - status code = 400\", function () {",
+              "    pm.expect(pm.response.code).to.eql(400);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{runtimeToken}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/cart/add",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "cart",
+            "add"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\"productId\": \"{{validProductId}}\", \"quantity\": 0}"
+        }
+      }
+    },
+    {
+      "name": "TC_CART_006 - Add quantity negative",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              "// Auto-login once for Cart requests. Does not modify environment file.\nif (!pm.collectionVariables.get(\"runtimeToken\")) {\n    const baseUrl = pm.environment.get(\"baseUrl\") || \"http://localhost:8080\";\n    const username = pm.environment.get(\"loginUsername\") || (\"cartuser_\" + Date.now());\n    const password = pm.environment.get(\"loginPassword\") || \"Cart@Test123\";\n\n    pm.sendRequest({\n        url: baseUrl + \"/api/auth/login\",\n        method: \"POST\",\n        header: { \"Content-Type\": \"application/json\" },\n        body: { mode: \"raw\", raw: JSON.stringify({ username, password }) }\n    }, function (err, res) {\n        let token = null;\n        try { token = res && res.json() && res.json().token; } catch (e) {}\n\n        if (token) {\n            pm.collectionVariables.set(\"runtimeToken\", token);\n            return;\n        }\n\n        const newUsername = \"cartuser_\" + Date.now();\n        const newEmail = newUsername + \"@example.com\";\n        const newPassword = \"Cart@Test123\";\n\n        pm.sendRequest({\n            url: baseUrl + \"/api/auth/register\",\n            method: \"POST\",\n            header: { \"Content-Type\": \"application/json\" },\n            body: { mode: \"raw\", raw: JSON.stringify({\n                username: newUsername,\n                email: newEmail,\n                password: newPassword,\n                fullName: \"Cart BlackBox User\"\n            }) }\n        }, function (regErr, regRes) {\n            let regToken = null;\n            try { regToken = regRes && regRes.json() && regRes.json().token; } catch (e) {}\n            if (regToken) {\n                pm.collectionVariables.set(\"runtimeToken\", regToken);\n            }\n        });\n    });\n}"
+            ],
+            "type": "text/javascript"
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"TC_CART_006 - status code = 400\", function () {",
+              "    pm.expect(pm.response.code).to.eql(400);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{runtimeToken}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/cart/add",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "cart",
+            "add"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\"productId\": \"{{validProductId}}\", \"quantity\": -1}"
+        }
+      }
+    },
+    {
+      "name": "TC_CART_007 - Add missing productId",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              "// Auto-login once for Cart requests. Does not modify environment file.\nif (!pm.collectionVariables.get(\"runtimeToken\")) {\n    const baseUrl = pm.environment.get(\"baseUrl\") || \"http://localhost:8080\";\n    const username = pm.environment.get(\"loginUsername\") || (\"cartuser_\" + Date.now());\n    const password = pm.environment.get(\"loginPassword\") || \"Cart@Test123\";\n\n    pm.sendRequest({\n        url: baseUrl + \"/api/auth/login\",\n        method: \"POST\",\n        header: { \"Content-Type\": \"application/json\" },\n        body: { mode: \"raw\", raw: JSON.stringify({ username, password }) }\n    }, function (err, res) {\n        let token = null;\n        try { token = res && res.json() && res.json().token; } catch (e) {}\n\n        if (token) {\n            pm.collectionVariables.set(\"runtimeToken\", token);\n            return;\n        }\n\n        const newUsername = \"cartuser_\" + Date.now();\n        const newEmail = newUsername + \"@example.com\";\n        const newPassword = \"Cart@Test123\";\n\n        pm.sendRequest({\n            url: baseUrl + \"/api/auth/register\",\n            method: \"POST\",\n            header: { \"Content-Type\": \"application/json\" },\n            body: { mode: \"raw\", raw: JSON.stringify({\n                username: newUsername,\n                email: newEmail,\n                password: newPassword,\n                fullName: \"Cart BlackBox User\"\n            }) }\n        }, function (regErr, regRes) {\n            let regToken = null;\n            try { regToken = regRes && regRes.json() && regRes.json().token; } catch (e) {}\n            if (regToken) {\n                pm.collectionVariables.set(\"runtimeToken\", regToken);\n            }\n        });\n    });\n}"
+            ],
+            "type": "text/javascript"
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"TC_CART_007 - status code = 400\", function () {",
+              "    pm.expect(pm.response.code).to.eql(400);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{runtimeToken}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/cart/add",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "cart",
+            "add"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\"quantity\": 1}"
+        }
+      }
+    },
+    {
+      "name": "TC_CART_008 - Add product not found",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              "// Auto-login once for Cart requests. Does not modify environment file.\nif (!pm.collectionVariables.get(\"runtimeToken\")) {\n    const baseUrl = pm.environment.get(\"baseUrl\") || \"http://localhost:8080\";\n    const username = pm.environment.get(\"loginUsername\") || (\"cartuser_\" + Date.now());\n    const password = pm.environment.get(\"loginPassword\") || \"Cart@Test123\";\n\n    pm.sendRequest({\n        url: baseUrl + \"/api/auth/login\",\n        method: \"POST\",\n        header: { \"Content-Type\": \"application/json\" },\n        body: { mode: \"raw\", raw: JSON.stringify({ username, password }) }\n    }, function (err, res) {\n        let token = null;\n        try { token = res && res.json() && res.json().token; } catch (e) {}\n\n        if (token) {\n            pm.collectionVariables.set(\"runtimeToken\", token);\n            return;\n        }\n\n        const newUsername = \"cartuser_\" + Date.now();\n        const newEmail = newUsername + \"@example.com\";\n        const newPassword = \"Cart@Test123\";\n\n        pm.sendRequest({\n            url: baseUrl + \"/api/auth/register\",\n            method: \"POST\",\n            header: { \"Content-Type\": \"application/json\" },\n            body: { mode: \"raw\", raw: JSON.stringify({\n                username: newUsername,\n                email: newEmail,\n                password: newPassword,\n                fullName: \"Cart BlackBox User\"\n            }) }\n        }, function (regErr, regRes) {\n            let regToken = null;\n            try { regToken = regRes && regRes.json() && regRes.json().token; } catch (e) {}\n            if (regToken) {\n                pm.collectionVariables.set(\"runtimeToken\", regToken);\n            }\n        });\n    });\n}"
+            ],
+            "type": "text/javascript"
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"TC_CART_008 - status code = 404\", function () {",
+              "    pm.expect(pm.response.code).to.eql(404);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{runtimeToken}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/cart/add",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "cart",
+            "add"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\"productId\": \"{{invalidProductId}}\", \"quantity\": 1}"
+        }
+      }
+    },
+    {
+      "name": "TC_CART_009 - Add quantity exceeds stock",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              "// Auto-login once for Cart requests. Does not modify environment file.\nif (!pm.collectionVariables.get(\"runtimeToken\")) {\n    const baseUrl = pm.environment.get(\"baseUrl\") || \"http://localhost:8080\";\n    const username = pm.environment.get(\"loginUsername\") || (\"cartuser_\" + Date.now());\n    const password = pm.environment.get(\"loginPassword\") || \"Cart@Test123\";\n\n    pm.sendRequest({\n        url: baseUrl + \"/api/auth/login\",\n        method: \"POST\",\n        header: { \"Content-Type\": \"application/json\" },\n        body: { mode: \"raw\", raw: JSON.stringify({ username, password }) }\n    }, function (err, res) {\n        let token = null;\n        try { token = res && res.json() && res.json().token; } catch (e) {}\n\n        if (token) {\n            pm.collectionVariables.set(\"runtimeToken\", token);\n            return;\n        }\n\n        const newUsername = \"cartuser_\" + Date.now();\n        const newEmail = newUsername + \"@example.com\";\n        const newPassword = \"Cart@Test123\";\n\n        pm.sendRequest({\n            url: baseUrl + \"/api/auth/register\",\n            method: \"POST\",\n            header: { \"Content-Type\": \"application/json\" },\n            body: { mode: \"raw\", raw: JSON.stringify({\n                username: newUsername,\n                email: newEmail,\n                password: newPassword,\n                fullName: \"Cart BlackBox User\"\n            }) }\n        }, function (regErr, regRes) {\n            let regToken = null;\n            try { regToken = regRes && regRes.json() && regRes.json().token; } catch (e) {}\n            if (regToken) {\n                pm.collectionVariables.set(\"runtimeToken\", regToken);\n            }\n        });\n    });\n}"
+            ],
+            "type": "text/javascript"
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"TC_CART_009 - status code = 400\", function () {",
+              "    pm.expect(pm.response.code).to.eql(400);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{runtimeToken}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/cart/add",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "cart",
+            "add"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\"productId\": \"{{validProductId}}\", \"quantity\": 999999}"
+        }
+      }
+    },
+    {
+      "name": "TC_CART_010 - Add no auth",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              "// Auto-login once for Cart requests. Does not modify environment file.\nif (!pm.collectionVariables.get(\"runtimeToken\")) {\n    const baseUrl = pm.environment.get(\"baseUrl\") || \"http://localhost:8080\";\n    const username = pm.environment.get(\"loginUsername\") || (\"cartuser_\" + Date.now());\n    const password = pm.environment.get(\"loginPassword\") || \"Cart@Test123\";\n\n    pm.sendRequest({\n        url: baseUrl + \"/api/auth/login\",\n        method: \"POST\",\n        header: { \"Content-Type\": \"application/json\" },\n        body: { mode: \"raw\", raw: JSON.stringify({ username, password }) }\n    }, function (err, res) {\n        let token = null;\n        try { token = res && res.json() && res.json().token; } catch (e) {}\n\n        if (token) {\n            pm.collectionVariables.set(\"runtimeToken\", token);\n            return;\n        }\n\n        const newUsername = \"cartuser_\" + Date.now();\n        const newEmail = newUsername + \"@example.com\";\n        const newPassword = \"Cart@Test123\";\n\n        pm.sendRequest({\n            url: baseUrl + \"/api/auth/register\",\n            method: \"POST\",\n            header: { \"Content-Type\": \"application/json\" },\n            body: { mode: \"raw\", raw: JSON.stringify({\n                username: newUsername,\n                email: newEmail,\n                password: newPassword,\n                fullName: \"Cart BlackBox User\"\n            }) }\n        }, function (regErr, regRes) {\n            let regToken = null;\n            try { regToken = regRes && regRes.json() && regRes.json().token; } catch (e) {}\n            if (regToken) {\n                pm.collectionVariables.set(\"runtimeToken\", regToken);\n            }\n        });\n    });\n}"
+            ],
+            "type": "text/javascript"
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"TC_CART_010 - status code = 403\", function () {",
+              "    pm.expect(pm.response.code).to.eql(403);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/cart/add",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "cart",
+            "add"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\"productId\": \"{{validProductId}}\", \"quantity\": 1}"
+        }
+      }
+    },
+    {
+      "name": "TC_CART_011 - Add invalid token",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              "// Auto-login once for Cart requests. Does not modify environment file.\nif (!pm.collectionVariables.get(\"runtimeToken\")) {\n    const baseUrl = pm.environment.get(\"baseUrl\") || \"http://localhost:8080\";\n    const username = pm.environment.get(\"loginUsername\") || (\"cartuser_\" + Date.now());\n    const password = pm.environment.get(\"loginPassword\") || \"Cart@Test123\";\n\n    pm.sendRequest({\n        url: baseUrl + \"/api/auth/login\",\n        method: \"POST\",\n        header: { \"Content-Type\": \"application/json\" },\n        body: { mode: \"raw\", raw: JSON.stringify({ username, password }) }\n    }, function (err, res) {\n        let token = null;\n        try { token = res && res.json() && res.json().token; } catch (e) {}\n\n        if (token) {\n            pm.collectionVariables.set(\"runtimeToken\", token);\n            return;\n        }\n\n        const newUsername = \"cartuser_\" + Date.now();\n        const newEmail = newUsername + \"@example.com\";\n        const newPassword = \"Cart@Test123\";\n\n        pm.sendRequest({\n            url: baseUrl + \"/api/auth/register\",\n            method: \"POST\",\n            header: { \"Content-Type\": \"application/json\" },\n            body: { mode: \"raw\", raw: JSON.stringify({\n                username: newUsername,\n                email: newEmail,\n                password: newPassword,\n                fullName: \"Cart BlackBox User\"\n            }) }\n        }, function (regErr, regRes) {\n            let regToken = null;\n            try { regToken = regRes && regRes.json() && regRes.json().token; } catch (e) {}\n            if (regToken) {\n                pm.collectionVariables.set(\"runtimeToken\", regToken);\n            }\n        });\n    });\n}"
+            ],
+            "type": "text/javascript"
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"TC_CART_011 - status code = 403\", function () {",
+              "    pm.expect(pm.response.code).to.eql(403);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer invalid.cart.token",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/cart/add",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "cart",
+            "add"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\"productId\": \"{{validProductId}}\", \"quantity\": 1}"
+        }
+      }
+    },
+    {
+      "name": "TC_CART_012 - Update quantity valid",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              "// Auto-login once for Cart requests. Does not modify environment file.\nif (!pm.collectionVariables.get(\"runtimeToken\")) {\n    const baseUrl = pm.environment.get(\"baseUrl\") || \"http://localhost:8080\";\n    const username = pm.environment.get(\"loginUsername\") || (\"cartuser_\" + Date.now());\n    const password = pm.environment.get(\"loginPassword\") || \"Cart@Test123\";\n\n    pm.sendRequest({\n        url: baseUrl + \"/api/auth/login\",\n        method: \"POST\",\n        header: { \"Content-Type\": \"application/json\" },\n        body: { mode: \"raw\", raw: JSON.stringify({ username, password }) }\n    }, function (err, res) {\n        let token = null;\n        try { token = res && res.json() && res.json().token; } catch (e) {}\n\n        if (token) {\n            pm.collectionVariables.set(\"runtimeToken\", token);\n            return;\n        }\n\n        const newUsername = \"cartuser_\" + Date.now();\n        const newEmail = newUsername + \"@example.com\";\n        const newPassword = \"Cart@Test123\";\n\n        pm.sendRequest({\n            url: baseUrl + \"/api/auth/register\",\n            method: \"POST\",\n            header: { \"Content-Type\": \"application/json\" },\n            body: { mode: \"raw\", raw: JSON.stringify({\n                username: newUsername,\n                email: newEmail,\n                password: newPassword,\n                fullName: \"Cart BlackBox User\"\n            }) }\n        }, function (regErr, regRes) {\n            let regToken = null;\n            try { regToken = regRes && regRes.json() && regRes.json().token; } catch (e) {}\n            if (regToken) {\n                pm.collectionVariables.set(\"runtimeToken\", regToken);\n            }\n        });\n    });\n}"
+            ],
+            "type": "text/javascript"
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"TC_CART_012 - status code = 200\", function () {",
+              "    pm.expect(pm.response.code).to.eql(200);",
+              "});",
+              "if (pm.response.code === 200) {",
+              "    const json = pm.response.json();",
+              "    const items = json && json.data && json.data.items ? json.data.items : [];",
+              "    if (items.length > 0) {",
+              "        const latest = items[items.length - 1];",
+              "        pm.collectionVariables.set(\"latestCartItemId\", latest.cartItemId || latest.id);",
+              "    }",
+              "}"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{runtimeToken}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/cart/items/{{latestCartItemId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "cart",
+            "items",
+            "{{latestCartItemId}}"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\"quantity\": 1}"
+        }
+      }
+    },
+    {
+      "name": "TC_CART_013 - Update quantity zero",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              "// Auto-login once for Cart requests. Does not modify environment file.\nif (!pm.collectionVariables.get(\"runtimeToken\")) {\n    const baseUrl = pm.environment.get(\"baseUrl\") || \"http://localhost:8080\";\n    const username = pm.environment.get(\"loginUsername\") || (\"cartuser_\" + Date.now());\n    const password = pm.environment.get(\"loginPassword\") || \"Cart@Test123\";\n\n    pm.sendRequest({\n        url: baseUrl + \"/api/auth/login\",\n        method: \"POST\",\n        header: { \"Content-Type\": \"application/json\" },\n        body: { mode: \"raw\", raw: JSON.stringify({ username, password }) }\n    }, function (err, res) {\n        let token = null;\n        try { token = res && res.json() && res.json().token; } catch (e) {}\n\n        if (token) {\n            pm.collectionVariables.set(\"runtimeToken\", token);\n            return;\n        }\n\n        const newUsername = \"cartuser_\" + Date.now();\n        const newEmail = newUsername + \"@example.com\";\n        const newPassword = \"Cart@Test123\";\n\n        pm.sendRequest({\n            url: baseUrl + \"/api/auth/register\",\n            method: \"POST\",\n            header: { \"Content-Type\": \"application/json\" },\n            body: { mode: \"raw\", raw: JSON.stringify({\n                username: newUsername,\n                email: newEmail,\n                password: newPassword,\n                fullName: \"Cart BlackBox User\"\n            }) }\n        }, function (regErr, regRes) {\n            let regToken = null;\n            try { regToken = regRes && regRes.json() && regRes.json().token; } catch (e) {}\n            if (regToken) {\n                pm.collectionVariables.set(\"runtimeToken\", regToken);\n            }\n        });\n    });\n}"
+            ],
+            "type": "text/javascript"
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"TC_CART_013 - status code = 400\", function () {",
+              "    pm.expect(pm.response.code).to.eql(400);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{runtimeToken}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/cart/items/{{latestCartItemId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "cart",
+            "items",
+            "{{latestCartItemId}}"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\"quantity\": 0}"
+        }
+      }
+    },
+    {
+      "name": "TC_CART_014 - Update quantity negative",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              "// Auto-login once for Cart requests. Does not modify environment file.\nif (!pm.collectionVariables.get(\"runtimeToken\")) {\n    const baseUrl = pm.environment.get(\"baseUrl\") || \"http://localhost:8080\";\n    const username = pm.environment.get(\"loginUsername\") || (\"cartuser_\" + Date.now());\n    const password = pm.environment.get(\"loginPassword\") || \"Cart@Test123\";\n\n    pm.sendRequest({\n        url: baseUrl + \"/api/auth/login\",\n        method: \"POST\",\n        header: { \"Content-Type\": \"application/json\" },\n        body: { mode: \"raw\", raw: JSON.stringify({ username, password }) }\n    }, function (err, res) {\n        let token = null;\n        try { token = res && res.json() && res.json().token; } catch (e) {}\n\n        if (token) {\n            pm.collectionVariables.set(\"runtimeToken\", token);\n            return;\n        }\n\n        const newUsername = \"cartuser_\" + Date.now();\n        const newEmail = newUsername + \"@example.com\";\n        const newPassword = \"Cart@Test123\";\n\n        pm.sendRequest({\n            url: baseUrl + \"/api/auth/register\",\n            method: \"POST\",\n            header: { \"Content-Type\": \"application/json\" },\n            body: { mode: \"raw\", raw: JSON.stringify({\n                username: newUsername,\n                email: newEmail,\n                password: newPassword,\n                fullName: \"Cart BlackBox User\"\n            }) }\n        }, function (regErr, regRes) {\n            let regToken = null;\n            try { regToken = regRes && regRes.json() && regRes.json().token; } catch (e) {}\n            if (regToken) {\n                pm.collectionVariables.set(\"runtimeToken\", regToken);\n            }\n        });\n    });\n}"
+            ],
+            "type": "text/javascript"
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"TC_CART_014 - status code = 400\", function () {",
+              "    pm.expect(pm.response.code).to.eql(400);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{runtimeToken}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/cart/items/{{latestCartItemId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "cart",
+            "items",
+            "{{latestCartItemId}}"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\"quantity\": -1}"
+        }
+      }
+    },
+    {
+      "name": "TC_CART_015 - Update missing quantity",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              "// Auto-login once for Cart requests. Does not modify environment file.\nif (!pm.collectionVariables.get(\"runtimeToken\")) {\n    const baseUrl = pm.environment.get(\"baseUrl\") || \"http://localhost:8080\";\n    const username = pm.environment.get(\"loginUsername\") || (\"cartuser_\" + Date.now());\n    const password = pm.environment.get(\"loginPassword\") || \"Cart@Test123\";\n\n    pm.sendRequest({\n        url: baseUrl + \"/api/auth/login\",\n        method: \"POST\",\n        header: { \"Content-Type\": \"application/json\" },\n        body: { mode: \"raw\", raw: JSON.stringify({ username, password }) }\n    }, function (err, res) {\n        let token = null;\n        try { token = res && res.json() && res.json().token; } catch (e) {}\n\n        if (token) {\n            pm.collectionVariables.set(\"runtimeToken\", token);\n            return;\n        }\n\n        const newUsername = \"cartuser_\" + Date.now();\n        const newEmail = newUsername + \"@example.com\";\n        const newPassword = \"Cart@Test123\";\n\n        pm.sendRequest({\n            url: baseUrl + \"/api/auth/register\",\n            method: \"POST\",\n            header: { \"Content-Type\": \"application/json\" },\n            body: { mode: \"raw\", raw: JSON.stringify({\n                username: newUsername,\n                email: newEmail,\n                password: newPassword,\n                fullName: \"Cart BlackBox User\"\n            }) }\n        }, function (regErr, regRes) {\n            let regToken = null;\n            try { regToken = regRes && regRes.json() && regRes.json().token; } catch (e) {}\n            if (regToken) {\n                pm.collectionVariables.set(\"runtimeToken\", regToken);\n            }\n        });\n    });\n}"
+            ],
+            "type": "text/javascript"
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"TC_CART_015 - status code = 400\", function () {",
+              "    pm.expect(pm.response.code).to.eql(400);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{runtimeToken}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/cart/items/{{latestCartItemId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "cart",
+            "items",
+            "{{latestCartItemId}}"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{}"
+        }
+      }
+    },
+    {
+      "name": "TC_CART_016 - Update exceeds stock",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              "// Auto-login once for Cart requests. Does not modify environment file.\nif (!pm.collectionVariables.get(\"runtimeToken\")) {\n    const baseUrl = pm.environment.get(\"baseUrl\") || \"http://localhost:8080\";\n    const username = pm.environment.get(\"loginUsername\") || (\"cartuser_\" + Date.now());\n    const password = pm.environment.get(\"loginPassword\") || \"Cart@Test123\";\n\n    pm.sendRequest({\n        url: baseUrl + \"/api/auth/login\",\n        method: \"POST\",\n        header: { \"Content-Type\": \"application/json\" },\n        body: { mode: \"raw\", raw: JSON.stringify({ username, password }) }\n    }, function (err, res) {\n        let token = null;\n        try { token = res && res.json() && res.json().token; } catch (e) {}\n\n        if (token) {\n            pm.collectionVariables.set(\"runtimeToken\", token);\n            return;\n        }\n\n        const newUsername = \"cartuser_\" + Date.now();\n        const newEmail = newUsername + \"@example.com\";\n        const newPassword = \"Cart@Test123\";\n\n        pm.sendRequest({\n            url: baseUrl + \"/api/auth/register\",\n            method: \"POST\",\n            header: { \"Content-Type\": \"application/json\" },\n            body: { mode: \"raw\", raw: JSON.stringify({\n                username: newUsername,\n                email: newEmail,\n                password: newPassword,\n                fullName: \"Cart BlackBox User\"\n            }) }\n        }, function (regErr, regRes) {\n            let regToken = null;\n            try { regToken = regRes && regRes.json() && regRes.json().token; } catch (e) {}\n            if (regToken) {\n                pm.collectionVariables.set(\"runtimeToken\", regToken);\n            }\n        });\n    });\n}"
+            ],
+            "type": "text/javascript"
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"TC_CART_016 - status code = 400\", function () {",
+              "    pm.expect(pm.response.code).to.eql(400);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{runtimeToken}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/cart/items/{{latestCartItemId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "cart",
+            "items",
+            "{{latestCartItemId}}"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\"quantity\": 999999}"
+        }
+      }
+    },
+    {
+      "name": "TC_CART_017 - Update item not found",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              "// Auto-login once for Cart requests. Does not modify environment file.\nif (!pm.collectionVariables.get(\"runtimeToken\")) {\n    const baseUrl = pm.environment.get(\"baseUrl\") || \"http://localhost:8080\";\n    const username = pm.environment.get(\"loginUsername\") || (\"cartuser_\" + Date.now());\n    const password = pm.environment.get(\"loginPassword\") || \"Cart@Test123\";\n\n    pm.sendRequest({\n        url: baseUrl + \"/api/auth/login\",\n        method: \"POST\",\n        header: { \"Content-Type\": \"application/json\" },\n        body: { mode: \"raw\", raw: JSON.stringify({ username, password }) }\n    }, function (err, res) {\n        let token = null;\n        try { token = res && res.json() && res.json().token; } catch (e) {}\n\n        if (token) {\n            pm.collectionVariables.set(\"runtimeToken\", token);\n            return;\n        }\n\n        const newUsername = \"cartuser_\" + Date.now();\n        const newEmail = newUsername + \"@example.com\";\n        const newPassword = \"Cart@Test123\";\n\n        pm.sendRequest({\n            url: baseUrl + \"/api/auth/register\",\n            method: \"POST\",\n            header: { \"Content-Type\": \"application/json\" },\n            body: { mode: \"raw\", raw: JSON.stringify({\n                username: newUsername,\n                email: newEmail,\n                password: newPassword,\n                fullName: \"Cart BlackBox User\"\n            }) }\n        }, function (regErr, regRes) {\n            let regToken = null;\n            try { regToken = regRes && regRes.json() && regRes.json().token; } catch (e) {}\n            if (regToken) {\n                pm.collectionVariables.set(\"runtimeToken\", regToken);\n            }\n        });\n    });\n}"
+            ],
+            "type": "text/javascript"
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"TC_CART_017 - status code = 404\", function () {",
+              "    pm.expect(pm.response.code).to.eql(404);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{runtimeToken}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/cart/items/{{invalidCartItemId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "cart",
+            "items",
+            "{{invalidCartItemId}}"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\"quantity\": 1}"
+        }
+      }
+    },
+    {
+      "name": "TC_CART_018 - Update cartItemId invalid type",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              "// Auto-login once for Cart requests. Does not modify environment file.\nif (!pm.collectionVariables.get(\"runtimeToken\")) {\n    const baseUrl = pm.environment.get(\"baseUrl\") || \"http://localhost:8080\";\n    const username = pm.environment.get(\"loginUsername\") || (\"cartuser_\" + Date.now());\n    const password = pm.environment.get(\"loginPassword\") || \"Cart@Test123\";\n\n    pm.sendRequest({\n        url: baseUrl + \"/api/auth/login\",\n        method: \"POST\",\n        header: { \"Content-Type\": \"application/json\" },\n        body: { mode: \"raw\", raw: JSON.stringify({ username, password }) }\n    }, function (err, res) {\n        let token = null;\n        try { token = res && res.json() && res.json().token; } catch (e) {}\n\n        if (token) {\n            pm.collectionVariables.set(\"runtimeToken\", token);\n            return;\n        }\n\n        const newUsername = \"cartuser_\" + Date.now();\n        const newEmail = newUsername + \"@example.com\";\n        const newPassword = \"Cart@Test123\";\n\n        pm.sendRequest({\n            url: baseUrl + \"/api/auth/register\",\n            method: \"POST\",\n            header: { \"Content-Type\": \"application/json\" },\n            body: { mode: \"raw\", raw: JSON.stringify({\n                username: newUsername,\n                email: newEmail,\n                password: newPassword,\n                fullName: \"Cart BlackBox User\"\n            }) }\n        }, function (regErr, regRes) {\n            let regToken = null;\n            try { regToken = regRes && regRes.json() && regRes.json().token; } catch (e) {}\n            if (regToken) {\n                pm.collectionVariables.set(\"runtimeToken\", regToken);\n            }\n        });\n    });\n}"
+            ],
+            "type": "text/javascript"
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"TC_CART_018 - status code = 400\", function () {",
+              "    pm.expect(pm.response.code).to.eql(400);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{runtimeToken}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/cart/items/abc",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "cart",
+            "items",
+            "abc"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\"quantity\": 1}"
+        }
+      }
+    },
+    {
+      "name": "TC_CART_019 - Update no auth",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              "// Auto-login once for Cart requests. Does not modify environment file.\nif (!pm.collectionVariables.get(\"runtimeToken\")) {\n    const baseUrl = pm.environment.get(\"baseUrl\") || \"http://localhost:8080\";\n    const username = pm.environment.get(\"loginUsername\") || (\"cartuser_\" + Date.now());\n    const password = pm.environment.get(\"loginPassword\") || \"Cart@Test123\";\n\n    pm.sendRequest({\n        url: baseUrl + \"/api/auth/login\",\n        method: \"POST\",\n        header: { \"Content-Type\": \"application/json\" },\n        body: { mode: \"raw\", raw: JSON.stringify({ username, password }) }\n    }, function (err, res) {\n        let token = null;\n        try { token = res && res.json() && res.json().token; } catch (e) {}\n\n        if (token) {\n            pm.collectionVariables.set(\"runtimeToken\", token);\n            return;\n        }\n\n        const newUsername = \"cartuser_\" + Date.now();\n        const newEmail = newUsername + \"@example.com\";\n        const newPassword = \"Cart@Test123\";\n\n        pm.sendRequest({\n            url: baseUrl + \"/api/auth/register\",\n            method: \"POST\",\n            header: { \"Content-Type\": \"application/json\" },\n            body: { mode: \"raw\", raw: JSON.stringify({\n                username: newUsername,\n                email: newEmail,\n                password: newPassword,\n                fullName: \"Cart BlackBox User\"\n            }) }\n        }, function (regErr, regRes) {\n            let regToken = null;\n            try { regToken = regRes && regRes.json() && regRes.json().token; } catch (e) {}\n            if (regToken) {\n                pm.collectionVariables.set(\"runtimeToken\", regToken);\n            }\n        });\n    });\n}"
+            ],
+            "type": "text/javascript"
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"TC_CART_019 - status code = 403\", function () {",
+              "    pm.expect(pm.response.code).to.eql(403);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/cart/items/{{latestCartItemId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "cart",
+            "items",
+            "{{latestCartItemId}}"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\"quantity\": 1}"
+        }
+      }
+    },
+    {
+      "name": "TC_CART_020 - Update invalid token",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              "// Auto-login once for Cart requests. Does not modify environment file.\nif (!pm.collectionVariables.get(\"runtimeToken\")) {\n    const baseUrl = pm.environment.get(\"baseUrl\") || \"http://localhost:8080\";\n    const username = pm.environment.get(\"loginUsername\") || (\"cartuser_\" + Date.now());\n    const password = pm.environment.get(\"loginPassword\") || \"Cart@Test123\";\n\n    pm.sendRequest({\n        url: baseUrl + \"/api/auth/login\",\n        method: \"POST\",\n        header: { \"Content-Type\": \"application/json\" },\n        body: { mode: \"raw\", raw: JSON.stringify({ username, password }) }\n    }, function (err, res) {\n        let token = null;\n        try { token = res && res.json() && res.json().token; } catch (e) {}\n\n        if (token) {\n            pm.collectionVariables.set(\"runtimeToken\", token);\n            return;\n        }\n\n        const newUsername = \"cartuser_\" + Date.now();\n        const newEmail = newUsername + \"@example.com\";\n        const newPassword = \"Cart@Test123\";\n\n        pm.sendRequest({\n            url: baseUrl + \"/api/auth/register\",\n            method: \"POST\",\n            header: { \"Content-Type\": \"application/json\" },\n            body: { mode: \"raw\", raw: JSON.stringify({\n                username: newUsername,\n                email: newEmail,\n                password: newPassword,\n                fullName: \"Cart BlackBox User\"\n            }) }\n        }, function (regErr, regRes) {\n            let regToken = null;\n            try { regToken = regRes && regRes.json() && regRes.json().token; } catch (e) {}\n            if (regToken) {\n                pm.collectionVariables.set(\"runtimeToken\", regToken);\n            }\n        });\n    });\n}"
+            ],
+            "type": "text/javascript"
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"TC_CART_020 - status code = 403\", function () {",
+              "    pm.expect(pm.response.code).to.eql(403);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer invalid.cart.token",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/cart/items/{{latestCartItemId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "cart",
+            "items",
+            "{{latestCartItemId}}"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\"quantity\": 1}"
+        }
+      }
+    },
+    {
+      "name": "TC_CART_021 - View cart after add/update",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              "// Auto-login once for Cart requests. Does not modify environment file.\nif (!pm.collectionVariables.get(\"runtimeToken\")) {\n    const baseUrl = pm.environment.get(\"baseUrl\") || \"http://localhost:8080\";\n    const username = pm.environment.get(\"loginUsername\") || (\"cartuser_\" + Date.now());\n    const password = pm.environment.get(\"loginPassword\") || \"Cart@Test123\";\n\n    pm.sendRequest({\n        url: baseUrl + \"/api/auth/login\",\n        method: \"POST\",\n        header: { \"Content-Type\": \"application/json\" },\n        body: { mode: \"raw\", raw: JSON.stringify({ username, password }) }\n    }, function (err, res) {\n        let token = null;\n        try { token = res && res.json() && res.json().token; } catch (e) {}\n\n        if (token) {\n            pm.collectionVariables.set(\"runtimeToken\", token);\n            return;\n        }\n\n        const newUsername = \"cartuser_\" + Date.now();\n        const newEmail = newUsername + \"@example.com\";\n        const newPassword = \"Cart@Test123\";\n\n        pm.sendRequest({\n            url: baseUrl + \"/api/auth/register\",\n            method: \"POST\",\n            header: { \"Content-Type\": \"application/json\" },\n            body: { mode: \"raw\", raw: JSON.stringify({\n                username: newUsername,\n                email: newEmail,\n                password: newPassword,\n                fullName: \"Cart BlackBox User\"\n            }) }\n        }, function (regErr, regRes) {\n            let regToken = null;\n            try { regToken = regRes && regRes.json() && regRes.json().token; } catch (e) {}\n            if (regToken) {\n                pm.collectionVariables.set(\"runtimeToken\", regToken);\n            }\n        });\n    });\n}"
+            ],
+            "type": "text/javascript"
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"TC_CART_021 - status code = 200\", function () {",
+              "    pm.expect(pm.response.code).to.eql(200);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{runtimeToken}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/cart",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "cart"
+          ]
+        }
+      }
+    },
+    {
+      "name": "TC_CART_022 - View cart no auth",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              "// Auto-login once for Cart requests. Does not modify environment file.\nif (!pm.collectionVariables.get(\"runtimeToken\")) {\n    const baseUrl = pm.environment.get(\"baseUrl\") || \"http://localhost:8080\";\n    const username = pm.environment.get(\"loginUsername\") || (\"cartuser_\" + Date.now());\n    const password = pm.environment.get(\"loginPassword\") || \"Cart@Test123\";\n\n    pm.sendRequest({\n        url: baseUrl + \"/api/auth/login\",\n        method: \"POST\",\n        header: { \"Content-Type\": \"application/json\" },\n        body: { mode: \"raw\", raw: JSON.stringify({ username, password }) }\n    }, function (err, res) {\n        let token = null;\n        try { token = res && res.json() && res.json().token; } catch (e) {}\n\n        if (token) {\n            pm.collectionVariables.set(\"runtimeToken\", token);\n            return;\n        }\n\n        const newUsername = \"cartuser_\" + Date.now();\n        const newEmail = newUsername + \"@example.com\";\n        const newPassword = \"Cart@Test123\";\n\n        pm.sendRequest({\n            url: baseUrl + \"/api/auth/register\",\n            method: \"POST\",\n            header: { \"Content-Type\": \"application/json\" },\n            body: { mode: \"raw\", raw: JSON.stringify({\n                username: newUsername,\n                email: newEmail,\n                password: newPassword,\n                fullName: \"Cart BlackBox User\"\n            }) }\n        }, function (regErr, regRes) {\n            let regToken = null;\n            try { regToken = regRes && regRes.json() && regRes.json().token; } catch (e) {}\n            if (regToken) {\n                pm.collectionVariables.set(\"runtimeToken\", regToken);\n            }\n        });\n    });\n}"
+            ],
+            "type": "text/javascript"
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"TC_CART_022 - status code = 403\", function () {",
+              "    pm.expect(pm.response.code).to.eql(403);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/cart",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "cart"
+          ]
+        }
+      }
+    },
+    {
+      "name": "TC_CART_023 - View cart invalid token",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              "// Auto-login once for Cart requests. Does not modify environment file.\nif (!pm.collectionVariables.get(\"runtimeToken\")) {\n    const baseUrl = pm.environment.get(\"baseUrl\") || \"http://localhost:8080\";\n    const username = pm.environment.get(\"loginUsername\") || (\"cartuser_\" + Date.now());\n    const password = pm.environment.get(\"loginPassword\") || \"Cart@Test123\";\n\n    pm.sendRequest({\n        url: baseUrl + \"/api/auth/login\",\n        method: \"POST\",\n        header: { \"Content-Type\": \"application/json\" },\n        body: { mode: \"raw\", raw: JSON.stringify({ username, password }) }\n    }, function (err, res) {\n        let token = null;\n        try { token = res && res.json() && res.json().token; } catch (e) {}\n\n        if (token) {\n            pm.collectionVariables.set(\"runtimeToken\", token);\n            return;\n        }\n\n        const newUsername = \"cartuser_\" + Date.now();\n        const newEmail = newUsername + \"@example.com\";\n        const newPassword = \"Cart@Test123\";\n\n        pm.sendRequest({\n            url: baseUrl + \"/api/auth/register\",\n            method: \"POST\",\n            header: { \"Content-Type\": \"application/json\" },\n            body: { mode: \"raw\", raw: JSON.stringify({\n                username: newUsername,\n                email: newEmail,\n                password: newPassword,\n                fullName: \"Cart BlackBox User\"\n            }) }\n        }, function (regErr, regRes) {\n            let regToken = null;\n            try { regToken = regRes && regRes.json() && regRes.json().token; } catch (e) {}\n            if (regToken) {\n                pm.collectionVariables.set(\"runtimeToken\", regToken);\n            }\n        });\n    });\n}"
+            ],
+            "type": "text/javascript"
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"TC_CART_023 - status code = 403\", function () {",
+              "    pm.expect(pm.response.code).to.eql(403);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer invalid.cart.token",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/cart",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "cart"
+          ]
+        }
+      }
+    },
+    {
+      "name": "TC_CART_024 - Delete item not found",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              "// Auto-login once for Cart requests. Does not modify environment file.\nif (!pm.collectionVariables.get(\"runtimeToken\")) {\n    const baseUrl = pm.environment.get(\"baseUrl\") || \"http://localhost:8080\";\n    const username = pm.environment.get(\"loginUsername\") || (\"cartuser_\" + Date.now());\n    const password = pm.environment.get(\"loginPassword\") || \"Cart@Test123\";\n\n    pm.sendRequest({\n        url: baseUrl + \"/api/auth/login\",\n        method: \"POST\",\n        header: { \"Content-Type\": \"application/json\" },\n        body: { mode: \"raw\", raw: JSON.stringify({ username, password }) }\n    }, function (err, res) {\n        let token = null;\n        try { token = res && res.json() && res.json().token; } catch (e) {}\n\n        if (token) {\n            pm.collectionVariables.set(\"runtimeToken\", token);\n            return;\n        }\n\n        const newUsername = \"cartuser_\" + Date.now();\n        const newEmail = newUsername + \"@example.com\";\n        const newPassword = \"Cart@Test123\";\n\n        pm.sendRequest({\n            url: baseUrl + \"/api/auth/register\",\n            method: \"POST\",\n            header: { \"Content-Type\": \"application/json\" },\n            body: { mode: \"raw\", raw: JSON.stringify({\n                username: newUsername,\n                email: newEmail,\n                password: newPassword,\n                fullName: \"Cart BlackBox User\"\n            }) }\n        }, function (regErr, regRes) {\n            let regToken = null;\n            try { regToken = regRes && regRes.json() && regRes.json().token; } catch (e) {}\n            if (regToken) {\n                pm.collectionVariables.set(\"runtimeToken\", regToken);\n            }\n        });\n    });\n}"
+            ],
+            "type": "text/javascript"
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"TC_CART_024 - status code = 404\", function () {",
+              "    pm.expect(pm.response.code).to.eql(404);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{runtimeToken}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/cart/items/{{invalidCartItemId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "cart",
+            "items",
+            "{{invalidCartItemId}}"
+          ]
+        }
+      }
+    },
+    {
+      "name": "TC_CART_025 - Delete cartItemId invalid type",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              "// Auto-login once for Cart requests. Does not modify environment file.\nif (!pm.collectionVariables.get(\"runtimeToken\")) {\n    const baseUrl = pm.environment.get(\"baseUrl\") || \"http://localhost:8080\";\n    const username = pm.environment.get(\"loginUsername\") || (\"cartuser_\" + Date.now());\n    const password = pm.environment.get(\"loginPassword\") || \"Cart@Test123\";\n\n    pm.sendRequest({\n        url: baseUrl + \"/api/auth/login\",\n        method: \"POST\",\n        header: { \"Content-Type\": \"application/json\" },\n        body: { mode: \"raw\", raw: JSON.stringify({ username, password }) }\n    }, function (err, res) {\n        let token = null;\n        try { token = res && res.json() && res.json().token; } catch (e) {}\n\n        if (token) {\n            pm.collectionVariables.set(\"runtimeToken\", token);\n            return;\n        }\n\n        const newUsername = \"cartuser_\" + Date.now();\n        const newEmail = newUsername + \"@example.com\";\n        const newPassword = \"Cart@Test123\";\n\n        pm.sendRequest({\n            url: baseUrl + \"/api/auth/register\",\n            method: \"POST\",\n            header: { \"Content-Type\": \"application/json\" },\n            body: { mode: \"raw\", raw: JSON.stringify({\n                username: newUsername,\n                email: newEmail,\n                password: newPassword,\n                fullName: \"Cart BlackBox User\"\n            }) }\n        }, function (regErr, regRes) {\n            let regToken = null;\n            try { regToken = regRes && regRes.json() && regRes.json().token; } catch (e) {}\n            if (regToken) {\n                pm.collectionVariables.set(\"runtimeToken\", regToken);\n            }\n        });\n    });\n}"
+            ],
+            "type": "text/javascript"
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"TC_CART_025 - status code = 400\", function () {",
+              "    pm.expect(pm.response.code).to.eql(400);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{runtimeToken}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/cart/items/abc",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "cart",
+            "items",
+            "abc"
+          ]
+        }
+      }
+    },
+    {
+      "name": "TC_CART_026 - Delete no auth",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              "// Auto-login once for Cart requests. Does not modify environment file.\nif (!pm.collectionVariables.get(\"runtimeToken\")) {\n    const baseUrl = pm.environment.get(\"baseUrl\") || \"http://localhost:8080\";\n    const username = pm.environment.get(\"loginUsername\") || (\"cartuser_\" + Date.now());\n    const password = pm.environment.get(\"loginPassword\") || \"Cart@Test123\";\n\n    pm.sendRequest({\n        url: baseUrl + \"/api/auth/login\",\n        method: \"POST\",\n        header: { \"Content-Type\": \"application/json\" },\n        body: { mode: \"raw\", raw: JSON.stringify({ username, password }) }\n    }, function (err, res) {\n        let token = null;\n        try { token = res && res.json() && res.json().token; } catch (e) {}\n\n        if (token) {\n            pm.collectionVariables.set(\"runtimeToken\", token);\n            return;\n        }\n\n        const newUsername = \"cartuser_\" + Date.now();\n        const newEmail = newUsername + \"@example.com\";\n        const newPassword = \"Cart@Test123\";\n\n        pm.sendRequest({\n            url: baseUrl + \"/api/auth/register\",\n            method: \"POST\",\n            header: { \"Content-Type\": \"application/json\" },\n            body: { mode: \"raw\", raw: JSON.stringify({\n                username: newUsername,\n                email: newEmail,\n                password: newPassword,\n                fullName: \"Cart BlackBox User\"\n            }) }\n        }, function (regErr, regRes) {\n            let regToken = null;\n            try { regToken = regRes && regRes.json() && regRes.json().token; } catch (e) {}\n            if (regToken) {\n                pm.collectionVariables.set(\"runtimeToken\", regToken);\n            }\n        });\n    });\n}"
+            ],
+            "type": "text/javascript"
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"TC_CART_026 - status code = 403\", function () {",
+              "    pm.expect(pm.response.code).to.eql(403);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/cart/items/{{latestCartItemId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "cart",
+            "items",
+            "{{latestCartItemId}}"
+          ]
+        }
+      }
+    },
+    {
+      "name": "TC_CART_027 - Delete invalid token",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              "// Auto-login once for Cart requests. Does not modify environment file.\nif (!pm.collectionVariables.get(\"runtimeToken\")) {\n    const baseUrl = pm.environment.get(\"baseUrl\") || \"http://localhost:8080\";\n    const username = pm.environment.get(\"loginUsername\") || (\"cartuser_\" + Date.now());\n    const password = pm.environment.get(\"loginPassword\") || \"Cart@Test123\";\n\n    pm.sendRequest({\n        url: baseUrl + \"/api/auth/login\",\n        method: \"POST\",\n        header: { \"Content-Type\": \"application/json\" },\n        body: { mode: \"raw\", raw: JSON.stringify({ username, password }) }\n    }, function (err, res) {\n        let token = null;\n        try { token = res && res.json() && res.json().token; } catch (e) {}\n\n        if (token) {\n            pm.collectionVariables.set(\"runtimeToken\", token);\n            return;\n        }\n\n        const newUsername = \"cartuser_\" + Date.now();\n        const newEmail = newUsername + \"@example.com\";\n        const newPassword = \"Cart@Test123\";\n\n        pm.sendRequest({\n            url: baseUrl + \"/api/auth/register\",\n            method: \"POST\",\n            header: { \"Content-Type\": \"application/json\" },\n            body: { mode: \"raw\", raw: JSON.stringify({\n                username: newUsername,\n                email: newEmail,\n                password: newPassword,\n                fullName: \"Cart BlackBox User\"\n            }) }\n        }, function (regErr, regRes) {\n            let regToken = null;\n            try { regToken = regRes && regRes.json() && regRes.json().token; } catch (e) {}\n            if (regToken) {\n                pm.collectionVariables.set(\"runtimeToken\", regToken);\n            }\n        });\n    });\n}"
+            ],
+            "type": "text/javascript"
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"TC_CART_027 - status code = 403\", function () {",
+              "    pm.expect(pm.response.code).to.eql(403);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer invalid.cart.token",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/cart/items/{{latestCartItemId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "cart",
+            "items",
+            "{{latestCartItemId}}"
+          ]
+        }
+      }
+    },
+    {
+      "name": "TC_CART_028 - Delete item valid",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              "// Auto-login once for Cart requests. Does not modify environment file.\nif (!pm.collectionVariables.get(\"runtimeToken\")) {\n    const baseUrl = pm.environment.get(\"baseUrl\") || \"http://localhost:8080\";\n    const username = pm.environment.get(\"loginUsername\") || (\"cartuser_\" + Date.now());\n    const password = pm.environment.get(\"loginPassword\") || \"Cart@Test123\";\n\n    pm.sendRequest({\n        url: baseUrl + \"/api/auth/login\",\n        method: \"POST\",\n        header: { \"Content-Type\": \"application/json\" },\n        body: { mode: \"raw\", raw: JSON.stringify({ username, password }) }\n    }, function (err, res) {\n        let token = null;\n        try { token = res && res.json() && res.json().token; } catch (e) {}\n\n        if (token) {\n            pm.collectionVariables.set(\"runtimeToken\", token);\n            return;\n        }\n\n        const newUsername = \"cartuser_\" + Date.now();\n        const newEmail = newUsername + \"@example.com\";\n        const newPassword = \"Cart@Test123\";\n\n        pm.sendRequest({\n            url: baseUrl + \"/api/auth/register\",\n            method: \"POST\",\n            header: { \"Content-Type\": \"application/json\" },\n            body: { mode: \"raw\", raw: JSON.stringify({\n                username: newUsername,\n                email: newEmail,\n                password: newPassword,\n                fullName: \"Cart BlackBox User\"\n            }) }\n        }, function (regErr, regRes) {\n            let regToken = null;\n            try { regToken = regRes && regRes.json() && regRes.json().token; } catch (e) {}\n            if (regToken) {\n                pm.collectionVariables.set(\"runtimeToken\", regToken);\n            }\n        });\n    });\n}"
+            ],
+            "type": "text/javascript"
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"TC_CART_028 - status code = 200\", function () {",
+              "    pm.expect(pm.response.code).to.eql(200);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{runtimeToken}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/cart/items/{{latestCartItemId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "cart",
+            "items",
+            "{{latestCartItemId}}"
+          ]
+        }
+      }
+    },
+    {
+      "name": "TC_CART_029 - Delete same item again",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              "// Auto-login once for Cart requests. Does not modify environment file.\nif (!pm.collectionVariables.get(\"runtimeToken\")) {\n    const baseUrl = pm.environment.get(\"baseUrl\") || \"http://localhost:8080\";\n    const username = pm.environment.get(\"loginUsername\") || (\"cartuser_\" + Date.now());\n    const password = pm.environment.get(\"loginPassword\") || \"Cart@Test123\";\n\n    pm.sendRequest({\n        url: baseUrl + \"/api/auth/login\",\n        method: \"POST\",\n        header: { \"Content-Type\": \"application/json\" },\n        body: { mode: \"raw\", raw: JSON.stringify({ username, password }) }\n    }, function (err, res) {\n        let token = null;\n        try { token = res && res.json() && res.json().token; } catch (e) {}\n\n        if (token) {\n            pm.collectionVariables.set(\"runtimeToken\", token);\n            return;\n        }\n\n        const newUsername = \"cartuser_\" + Date.now();\n        const newEmail = newUsername + \"@example.com\";\n        const newPassword = \"Cart@Test123\";\n\n        pm.sendRequest({\n            url: baseUrl + \"/api/auth/register\",\n            method: \"POST\",\n            header: { \"Content-Type\": \"application/json\" },\n            body: { mode: \"raw\", raw: JSON.stringify({\n                username: newUsername,\n                email: newEmail,\n                password: newPassword,\n                fullName: \"Cart BlackBox User\"\n            }) }\n        }, function (regErr, regRes) {\n            let regToken = null;\n            try { regToken = regRes && regRes.json() && regRes.json().token; } catch (e) {}\n            if (regToken) {\n                pm.collectionVariables.set(\"runtimeToken\", regToken);\n            }\n        });\n    });\n}"
+            ],
+            "type": "text/javascript"
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"TC_CART_029 - status code = 404\", function () {",
+              "    pm.expect(pm.response.code).to.eql(404);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{runtimeToken}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/cart/items/{{latestCartItemId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "cart",
+            "items",
+            "{{latestCartItemId}}"
+          ]
+        }
+      }
+    },
+    {
+      "name": "TC_CART_030 - Clear cart valid",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              "// Auto-login once for Cart requests. Does not modify environment file.\nif (!pm.collectionVariables.get(\"runtimeToken\")) {\n    const baseUrl = pm.environment.get(\"baseUrl\") || \"http://localhost:8080\";\n    const username = pm.environment.get(\"loginUsername\") || (\"cartuser_\" + Date.now());\n    const password = pm.environment.get(\"loginPassword\") || \"Cart@Test123\";\n\n    pm.sendRequest({\n        url: baseUrl + \"/api/auth/login\",\n        method: \"POST\",\n        header: { \"Content-Type\": \"application/json\" },\n        body: { mode: \"raw\", raw: JSON.stringify({ username, password }) }\n    }, function (err, res) {\n        let token = null;\n        try { token = res && res.json() && res.json().token; } catch (e) {}\n\n        if (token) {\n            pm.collectionVariables.set(\"runtimeToken\", token);\n            return;\n        }\n\n        const newUsername = \"cartuser_\" + Date.now();\n        const newEmail = newUsername + \"@example.com\";\n        const newPassword = \"Cart@Test123\";\n\n        pm.sendRequest({\n            url: baseUrl + \"/api/auth/register\",\n            method: \"POST\",\n            header: { \"Content-Type\": \"application/json\" },\n            body: { mode: \"raw\", raw: JSON.stringify({\n                username: newUsername,\n                email: newEmail,\n                password: newPassword,\n                fullName: \"Cart BlackBox User\"\n            }) }\n        }, function (regErr, regRes) {\n            let regToken = null;\n            try { regToken = regRes && regRes.json() && regRes.json().token; } catch (e) {}\n            if (regToken) {\n                pm.collectionVariables.set(\"runtimeToken\", regToken);\n            }\n        });\n    });\n}"
+            ],
+            "type": "text/javascript"
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"TC_CART_030 - status code = 200\", function () {",
+              "    pm.expect(pm.response.code).to.eql(200);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{runtimeToken}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/cart",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "cart"
+          ]
+        }
+      }
+    },
+    {
+      "name": "TC_CART_031 - View cart after clear",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              "// Auto-login once for Cart requests. Does not modify environment file.\nif (!pm.collectionVariables.get(\"runtimeToken\")) {\n    const baseUrl = pm.environment.get(\"baseUrl\") || \"http://localhost:8080\";\n    const username = pm.environment.get(\"loginUsername\") || (\"cartuser_\" + Date.now());\n    const password = pm.environment.get(\"loginPassword\") || \"Cart@Test123\";\n\n    pm.sendRequest({\n        url: baseUrl + \"/api/auth/login\",\n        method: \"POST\",\n        header: { \"Content-Type\": \"application/json\" },\n        body: { mode: \"raw\", raw: JSON.stringify({ username, password }) }\n    }, function (err, res) {\n        let token = null;\n        try { token = res && res.json() && res.json().token; } catch (e) {}\n\n        if (token) {\n            pm.collectionVariables.set(\"runtimeToken\", token);\n            return;\n        }\n\n        const newUsername = \"cartuser_\" + Date.now();\n        const newEmail = newUsername + \"@example.com\";\n        const newPassword = \"Cart@Test123\";\n\n        pm.sendRequest({\n            url: baseUrl + \"/api/auth/register\",\n            method: \"POST\",\n            header: { \"Content-Type\": \"application/json\" },\n            body: { mode: \"raw\", raw: JSON.stringify({\n                username: newUsername,\n                email: newEmail,\n                password: newPassword,\n                fullName: \"Cart BlackBox User\"\n            }) }\n        }, function (regErr, regRes) {\n            let regToken = null;\n            try { regToken = regRes && regRes.json() && regRes.json().token; } catch (e) {}\n            if (regToken) {\n                pm.collectionVariables.set(\"runtimeToken\", regToken);\n            }\n        });\n    });\n}"
+            ],
+            "type": "text/javascript"
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"TC_CART_031 - status code = 200\", function () {",
+              "    pm.expect(pm.response.code).to.eql(200);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{runtimeToken}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/cart",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "cart"
+          ]
+        }
+      }
     }
   ]
 }
