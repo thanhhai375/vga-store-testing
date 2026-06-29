@@ -44,6 +44,34 @@ jobs:
           cache: npm
           cache-dependency-path: automation/package-lock.json
 
+      - name: Setup Java for white-box tests
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+          cache: maven
+
+      - name: Run white-box tests with Maven
+        working-directory: backend/vgashop
+        run: |
+          set +e
+          chmod +x ./mvnw
+          ./mvnw -Pwhitebox test 2>&1 | tee whitebox.log
+          whitebox_status=${PIPESTATUS[0]}
+
+          if [ "$whitebox_status" -ne 0 ]; then
+            {
+              echo "FAILED FILE: Backend white-box tests"
+              echo "  - Maven profile: whitebox"
+              echo "  - Branch: ${GITHUB_HEAD_REF:-${GITHUB_REF_NAME:-unknown}}"
+              echo "  - Commit: ${GITHUB_SHA:-unknown}"
+              echo ""
+              echo "===== Last Maven log ====="
+              tail -n 220 whitebox.log
+            } > ../../error_reason_WHITEBOX_backend.txt
+            exit "$whitebox_status"
+          fi
+
       - name: Start application with Docker Compose
         run: |
           rm -f error_reason*.txt
@@ -326,6 +354,9 @@ jobs:
             automation/*.log
             automation/reports/**
             automation/E2E/output/**
+            backend/vgashop/whitebox.log
+            backend/vgashop/target/surefire-reports/**
+            backend/vgashop/target/site/jacoco/**
           if-no-files-found: ignore
 
       - name: Create or update Jira failure subtask
