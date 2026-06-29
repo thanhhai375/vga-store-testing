@@ -1,46 +1,47 @@
-# Quy Tac Automation, Branch Va Jira CI
+# Quy Dinh Chung Ve Automation, CI Va Jira
 
-File nay la quy uoc chung cho ca nhom khi viet automation test va de GitHub Actions log loi len Jira dung module, dung task.
+Tai lieu nay dung cho tat ca thanh vien khi viet test automation. Muc tieu la moi nguoi dat branch, commit va chay CI thong nhat de GitHub Actions chi test dung phan minh lam, dong thoi log loi dung Jira task.
 
 ---
 
-## 1. Nguyen tac chung
+## 1. Nguyen tac bat buoc
 
-Moi commit phai co ma task Jira, vi du:
+- Moi commit phai co ma Jira, vi du `KCPM-81`.
+- Branch phai the hien ro dang lam API/Postman hay FE UI.
+- Chi commit file lien quan den task cua minh.
+- Khong commit file sinh ra khi chay test, vi du `automation/reports/`.
+- Khong dung `git add .` neu workspace co file khong lien quan.
+
+Vi du commit dung:
 
 ```bash
-git commit -m "KCPM-81 add auth UI testcases"
+git commit -m "KCPM-81 add auth UI tests"
 ```
-
-GitHub Actions se lay ma task tu:
-
-- Ten branch.
-- Commit message.
-- PR title.
-
-Neu test fail, CI se tao hoac cap nhat subtask/issue loi duoi task cha do.
 
 ---
 
 ## 2. Quy uoc branch
 
-### 2.1 API/Postman blackbox
+### API/Postman
 
-Dung branch `feature/...`, `fix/...`, `bugfix/...` nhu cu.
+Dung cho black-box API/Postman:
+
+```text
+feature/<jira-key>-<module>-api
+fix/<jira-key>-<module>-api
+bugfix/<jira-key>-<module>-api
+```
 
 Vi du:
 
 ```text
 feature/KCPM-87-auth-api
-feature/KCPM-90-product-admin
 fix/KCPM-88-user-api
 ```
 
-CI se chay Postman/API theo selector trong ten branch hoac commit.
+### FE UI
 
-### 2.2 FE UI test
-
-Dung branch:
+Dung cho UI/E2E test hoac fix loi FE:
 
 ```text
 fe/<ten-nguoi>-<module>-ui
@@ -51,57 +52,35 @@ Vi du:
 
 ```text
 fe/tanvinh-auth-ui
-fixFe/tanvinh-auth-ui
-fe/hai-cart-payment-ui
-fixFe/minh-product-category-ui
+fixFe/hai-cart-payment-ui
 ```
 
-Y nghia:
+`fe/...` dung khi viet testcase UI.  
+`fixFe/...` dung khi fix loi FE do testcase UI phat hien.
 
-| Prefix | Dung khi nao |
+---
+
+## 3. CI se chay module nao
+
+### FE UI
+
+CI chon UI test theo ten module trong branch/commit:
+
+| Tu khoa | Thu muc test |
 | --- | --- |
-| `fe/` | Viet moi hoac bo sung testcase UI |
-| `fixFe/` | Fix loi FE do testcase UI phat hien |
+| `auth`, `authentication` | `automation/E2E/modules/1_Authentication/*_test.js` |
+| `shopping`, `shopping-experience`, `shop` | `automation/E2E/modules/2_Shopping_Experience/*_test.js` |
+| `cart-payment`, `cart`, `payment` | `automation/E2E/modules/3_Cart&Payment/*_test.js` |
+| `product-category`, `product`, `category` | `automation/E2E/modules/4_Product&Category_Management/*_test.js` |
+| `order`, `order-management` | `automation/E2E/modules/5_Order_Management/*_test.js` |
+| `dashboard`, `user-management`, `dashboard-user` | `automation/E2E/modules/6_Dashboard&User_Management/*_test.js` |
+| `profile`, `user-profile` | `automation/E2E/modules/7_User_Profile/*_test.js` |
 
-Khi branch la `fe/...` hoac `fixFe/...`, CI se bo qua Postman/API va chi chay UI test cua module phu hop.
+Neu branch la `fe/...` hoac `fixFe/...`, CI se bo qua Postman/API va chi chay UI test cua module phu hop.
 
----
+### API/Postman
 
-## 3. Mapping module FE UI
-
-CI chon file UI test theo ten module trong branch/commit:
-
-| Module | Tu khoa branch/commit | Thu muc test |
-| --- | --- | --- |
-| Auth | `auth`, `authentication`, `KCPM-81` | `automation/E2E/modules/1_Authentication/*_test.js` |
-| Shopping Experience | `shopping`, `shopping-experience`, `shop`, `KCPM-82` | `automation/E2E/modules/2_Shopping_Experience/*_test.js` |
-| Cart & Payment | `cart-payment`, `cart`, `payment`, `KCPM-83` | `automation/E2E/modules/3_Cart&Payment/*_test.js` |
-| Product & Category | `product-category`, `product`, `category`, `KCPM-84` | `automation/E2E/modules/4_Product&Category_Management/*_test.js` |
-| Order | `order`, `order-management`, `KCPM-85` | `automation/E2E/modules/5_Order_Management/*_test.js` |
-| Dashboard & User Management | `dashboard-user`, `dashboard`, `user-management`, `KCPM-86` | `automation/E2E/modules/6_Dashboard&User_Management/*_test.js` |
-| User Profile | `profile`, `user-profile`, `KCPM-88` | `automation/E2E/modules/7_User_Profile/*_test.js` |
-
-Vi du:
-
-```text
-fe/tanvinh-auth-ui
-```
-
-CI se chay:
-
-```text
-automation/E2E/modules/1_Authentication/*_test.js
-```
-
-Luu y: file helper nhu `auth_helpers.js` khong phai testcase, vi khong co duoi `_test.js`, nen CI khong chay truc tiep.
-
----
-
-## 4. Script automation
-
-### 4.1 API/Postman
-
-Moi module API nen co script dung format:
+CI chay script co format:
 
 ```text
 test:<module>:blackbox
@@ -118,70 +97,77 @@ Vi du:
 }
 ```
 
-### 4.2 FE UI
+---
 
-Co the them script rieng de chay local cho tung module:
+## 4. Cach lam viec
 
-```json
-{
-  "scripts": {
-    "test:auth:fe": "codeceptjs run \"E2E/modules/1_Authentication/*_test.js\" --steps",
-    "test:cart_payment:fe": "codeceptjs run \"E2E/modules/3_Cart&Payment/*_test.js\" --steps"
-  }
-}
+### Tao branch moi
+
+Luon tao branch tu `sprint7` moi nhat:
+
+```bash
+git switch sprint7
+git pull origin sprint7
+git switch -c fe/<ten-nguoi>-<module>-ui
 ```
 
-Chay local:
+Hoac voi API:
+
+```bash
+git switch -c feature/<jira-key>-<module>-api
+```
+
+### Chay test local
+
+Vao thu muc automation:
 
 ```bash
 cd automation
+npm install
+```
+
+Chay FE UI theo module:
+
+```bash
 npm run test:auth:fe
 ```
 
----
+Hoac chay truc tiep:
 
-## 5. Quy tac Postman CSV
-
-Moi module API nen co file CSV data-driven test trong:
-
-```text
-automation/postman/<module-folder>/
+```bash
+npx codeceptjs run "E2E/modules/1_Authentication/*_test.js" --steps
 ```
 
-CSV nen co cac cot:
+Chay API/Postman:
 
-```csv
-testId,testType,expectedStatus,expectedMessage,ExpectedResult
+```bash
+npm run test:auth:blackbox
 ```
 
-Y nghia:
+### Commit va push
 
-| Cot | Bat buoc | Y nghia |
-| --- | --- | --- |
-| `testId` | Co | Ma testcase, vi du `R-001`, `U-002` |
-| `testType` | Co | Chuc nang/module, vi du `REGISTER`, `LOGIN` |
-| `expectedStatus` | Co | HTTP status mong muon |
-| `expectedMessage` | Co | Chuoi mong muon trong response |
-| `ExpectedResult` | Co | Mo ta ngan ket qua mong doi |
+Chi add file lien quan:
 
-Khong commit file report sinh ra trong:
-
-```text
-automation/reports/
+```bash
+git add <file-lien-quan>
+git commit -m "KCPM-81 add auth UI tests"
+git push -u origin <branch>
 ```
 
 ---
 
-## 6. Quy tac testcase FE UI
+## 5. Quy tac testcase
 
-FE UI test la black-box theo hanh vi nguoi dung:
+### FE UI
+
+FE UI test theo hanh vi nguoi dung:
 
 1. Mo man hinh/form.
 2. Nhap du lieu.
 3. Bam Submit/Action.
 4. Kiem tra UI phan hoi.
 
-Testcase nen dat ten co ID ro rang:
+Ten testcase nen co ID ro rang:
 
 ```javascript
 Scenario('UI-RG-010: Register voi password qua ngan bi tu choi sau submit', ({ I }) => {
@@ -189,38 +175,25 @@ Scenario('UI-RG-010: Register voi password qua ngan bi tu choi sau submit', ({ I
 });
 ```
 
-Nen uu tien assert:
+### API/Postman
 
-- Modal/form con mo khi submit fail.
-- Khong co token/session khi login fail.
-- Field invalid hoac message loi hien ro.
-- Success state hien dung sau thao tac thanh cong.
-- Session/logout/protected route dung hanh vi nguoi dung.
+CSV nen co cac cot chinh:
+
+```csv
+testId,testType,expectedStatus,expectedMessage,ExpectedResult
+```
+
+Moi assertion trong Postman nen co `testId` de khi fail Jira doc duoc loi.
 
 ---
 
-## 7. Jira log khi fail
+## 6. Jira se ghi gi khi fail
 
-### 7.1 API/Postman fail
+Khi CI fail, workflow se tao hoac cap nhat subtask/issue duoi task cha.
 
-Subtask Jira se ghi ngan gon:
+### FE UI fail
 
-```text
-FAILED FILE
-Script
-Branch
-Commit
-Failed API request/assertion summary
-Failure reason
-Response/status context
-Fix hint
-```
-
-Khong dua toan bo Newman log dai vao Jira. Log day du nam trong GitHub Actions artifact.
-
-### 7.2 FE UI fail
-
-Subtask Jira se ghi ngan gon:
+Jira se ghi ngan gon:
 
 ```text
 FAILED FILE
@@ -231,135 +204,105 @@ Screenshot artifact
 Fix hint
 ```
 
-Vi du:
+### API/Postman fail
+
+Jira se ghi ngan gon:
 
 ```text
-FAILED FILE: ./E2E/modules/1_Authentication/change_password_test.js
-FAILED TESTCASE:
-- FE-CP-001: Doi mat khau thanh cong va dang nhap bang mat khau moi
-
-Failure reason:
-element (.alert-message.success) still not visible after 10 sec
-
-Failure location:
-change_password_test.js:27
-
-Fix hint:
-Expected UI element did not appear in time. Check action result, selector, and FE feedback rendering.
+FAILED FILE
+Script
+Failed API request/assertion summary
+Failure reason
+Response/status context
+Fix hint
 ```
 
-Khong dua toan bo step log `I fill field...`, `I click...` vao Jira. Log day du va screenshot nam trong GitHub Actions artifact.
+Log day du va screenshot nam trong GitHub Actions artifact, khong dua log dai vao Jira.
 
 ---
 
-## 8. Loi moi va loi lap lai
+## 7. Loi moi va loi lap lai
 
-CI dung fingerprint de phan biet:
+CI phan biet loi bang:
 
 ```text
 Task Jira + file fail + testcase fail
 ```
 
-Neu cung testcase fail lai:
-
-```text
-Trang thai loi: LOI CU TAI PHAT
-```
-
-CI se comment/update subtask cu.
-
-Neu testcase fail khac:
-
-```text
-Trang thai loi: LOI MOI
-```
-
-CI se tao subtask/issue moi.
+- Cung testcase fail lai: update/comment vao subtask cu.
+- Testcase fail moi: tao subtask/issue moi.
 
 ---
 
-## 9. Jira fields tu dong
+## 8. Labels va due date
 
-Workflow se tu set khi fail:
+Workflow tu set:
 
 ```text
-Parent = task co trong commit/branch, vi du KCPM-81
+Parent = task Jira trong commit/branch
 Assignee = nguoi commit neu map duoc email Jira
-Priority = JIRA_DEFAULT_PRIORITY, mac dinh High
 Due date = ngay hien tai + JIRA_DUE_DAYS
 ```
 
-Neu `JIRA_DUE_DAYS` khong co, workflow fallback sang due date cua task cha neu Jira co.
-
-Labels khi API/Postman fail:
+Labels API/Postman:
 
 ```text
-automation-test
-blackbox
-github-actions
-ci-failure
-api
-newman
-postman
-module-...
+automation-test, blackbox, github-actions, ci-failure, api, newman, postman, module-...
 ```
 
-Labels khi FE UI fail:
+Labels FE UI:
 
 ```text
-automation-test
-blackbox
-github-actions
-ci-failure
-ui
-fe
-codeceptjs
-module-...
+automation-test, blackbox, github-actions, ci-failure, ui, fe, codeceptjs, module-...
 ```
 
-Khi CI pass, workflow co gang:
-
-- Comment CI passed.
-- Them label `ci-passed`, `ci-resolved`.
-- Go label loi cu.
-- Chuyen subtask loi sang Done/Resolved neu Jira workflow cho phep.
+Khi CI pass, workflow co gang comment pass va chuyen subtask loi sang Done/Resolved.
 
 ---
 
-## 10. Quy tac fix loi
+## 9. Quy trinh fix loi
 
 1. Mo subtask loi tren Jira.
-2. Doc `FAILED TESTCASE` hoac `Failed API request/assertion summary`.
+2. Doc `FAILED TESTCASE` hoac API assertion summary.
 3. Xem `Failure reason`, `Fix hint`, screenshot/log artifact.
 4. Tao branch fix:
 
 ```text
 fixFe/<ten-nguoi>-<module>-ui
-```
-
-hoac voi API:
-
-```text
 fix/<jira-key>-<module>-api
 ```
 
-5. Commit voi cung ma task Jira:
-
-```bash
-git commit -m "KCPM-81 fix auth UI feedback"
-```
-
-6. Push len GitHub.
-7. Neu CI pass, subtask loi se duoc comment va co gang chuyen sang Done.
+5. Sua code/test.
+6. Chay test local.
+7. Commit voi cung ma Jira.
+8. Push de CI chay lai.
 
 ---
 
-## 11. Nhung loi can tranh
+## 10. Merge vao sprint7
 
-- Khong commit ma thieu ma Jira.
-- Khong dung `git add .` neu workspace co nhieu file khong lien quan.
-- Khong commit `automation/reports/`.
-- Khong dat branch FE chung chung nhu `fe/tanvinh`; phai co module, vi du `fe/tanvinh-auth-ui`.
-- Khong dua log CodeceptJS/Newman qua dai vao Jira; Jira chi can loi chinh va hint fix.
-- Khong dung chung `testId` cho nhieu testcase API khac nhau trong cung module.
-- Khong dat script API sai format `test:<module>:blackbox`.
+Nen tao PR vao `sprint7`, khong merge truc tiep neu team chua thong nhat.
+
+PR nen ghi:
+
+```text
+Summary
+Module
+Test da them/sua
+Ket qua local
+Known failures neu co
+```
+
+Neu `sprint7` can xanh/pass, khong merge branch con test fail chua duoc chap nhan.
+
+---
+
+## 11. Loi can tranh
+
+- Commit thieu ma Jira.
+- Branch FE khong co ten module, vi du `fe/tanvinh`.
+- Dung `git add .` khi co file khong lien quan.
+- Commit `automation/reports/`.
+- Dua log CodeceptJS/Newman qua dai vao Jira.
+- Dung chung `testId` cho nhieu testcase API trong cung module.
+- Merge branch test fail vao `sprint7` khi team yeu cau CI xanh.
