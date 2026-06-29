@@ -6,7 +6,9 @@ on:
       - main
       - develop
       - "feature/**"
+      - "fe/**"
       - "fix/**"
+      - "fixFe/**"
       - "bugfix/**"
   pull_request:
     branches:
@@ -95,6 +97,11 @@ jobs:
             full_regression=true
           fi
 
+          if [ "$full_regression" != "true" ] && echo "$selector_text" | grep -Eq '(^|[[:space:]])(fe|fixfe)/|kcpm-81|auth-ui|ui-auth|auth ui|fe auth|auth fe|authentication ui'; then
+            echo "FE UI branch/commit detected. Skipping API blackbox tests."
+            exit 0
+          fi
+
           scripts="$(node -e "const p=require('./package.json'); console.log(Object.keys(p.scripts||{}).filter(s=>/^test:.*:blackbox$/.test(s)).join('\n'))")"
           selected_scripts=""
 
@@ -146,7 +153,7 @@ jobs:
           exit "$failed"
 
       - name: Run UI tests with CodeceptJS
-        if: always() && ((github.event_name == 'pull_request' && (github.base_ref == 'main' || github.base_ref == 'develop')) || (github.event_name == 'push' && (github.ref_name == 'main' || github.ref_name == 'develop')))
+        if: always()
         working-directory: automation
         env:
           HEADLESS: "true"
@@ -158,6 +165,61 @@ jobs:
           set +e
           failed=0
           npx playwright install chromium
+
+          branch_name="${GITHUB_HEAD_REF:-${GITHUB_REF_NAME:-}}"
+          base_branch="${GITHUB_BASE_REF:-}"
+          commit_message="$(git log -1 --pretty=%B)"
+          selector_text="$(printf '%s\n%s\n%s\n' "$branch_name" "$base_branch" "$commit_message" | tr '[:upper:]' '[:lower:]')"
+
+          full_regression=false
+          if [ "$GITHUB_EVENT_NAME" = "pull_request" ]; then
+            if [ "$base_branch" = "main" ] || [ "$base_branch" = "develop" ]; then
+              full_regression=true
+            fi
+          elif [ "$branch_name" = "main" ] || [ "$branch_name" = "develop" ]; then
+            full_regression=true
+          fi
+
+          selected_files=""
+
+          if [ "$full_regression" = "true" ]; then
+            echo "Full UI regression mode: running all UI test files."
+            selected_files="$(find ./E2E/modules -name "*_test.js" | sort)"
+          else
+            echo "Personal branch mode: selecting UI test files from branch/commit."
+
+            if echo "$selector_text" | grep -Eq '(^|[[:space:]])(fe|fixfe)/(auth|authentication)|kcpm-81|auth-ui|ui-auth|auth ui|fe auth|auth fe|authentication ui'; then
+              selected_files="$(printf '%s\n%s\n' "$selected_files" "$(find ./E2E/modules/1_Authentication -name "*_test.js" | sort)")"
+            fi
+            if echo "$selector_text" | grep -Eq '(^|[[:space:]])(fe|fixfe)/(shopping|shopping-experience|shop)|shopping-experience|shop ui|kcpm-82'; then
+              selected_files="$(printf '%s\n%s\n' "$selected_files" "$(find ./E2E/modules/2_Shopping_Experience -name "*_test.js" | sort)")"
+            fi
+            if echo "$selector_text" | grep -Eq '(^|[[:space:]])(fe|fixfe)/(cart-payment|cart_payment|cart|payment)|cart-payment|cart_payment|kcpm-83'; then
+              selected_files="$(printf '%s\n%s\n' "$selected_files" "$(find ./E2E/modules/3_Cart\&Payment -name "*_test.js" | sort)")"
+            fi
+            if echo "$selector_text" | grep -Eq '(^|[[:space:]])(fe|fixfe)/(product-category|product_category|product|category)|product-category|product category|category-management|product-management|kcpm-84'; then
+              selected_files="$(printf '%s\n%s\n' "$selected_files" "$(find ./E2E/modules/4_Product\&Category_Management -name "*_test.js" | sort)")"
+            fi
+            if echo "$selector_text" | grep -Eq '(^|[[:space:]])(fe|fixfe)/(order|order-management)|order-management|kcpm-85'; then
+              selected_files="$(printf '%s\n%s\n' "$selected_files" "$(find ./E2E/modules/5_Order_Management -name "*_test.js" | sort)")"
+            fi
+            if echo "$selector_text" | grep -Eq '(^|[[:space:]])(fe|fixfe)/(dashboard-user|dashboard|user-management)|dashboard|user-management|dashboard-user|kcpm-86'; then
+              selected_files="$(printf '%s\n%s\n' "$selected_files" "$(find ./E2E/modules/6_Dashboard\&User_Management -name "*_test.js" | sort)")"
+            fi
+            if echo "$selector_text" | grep -Eq '(^|[[:space:]])(fe|fixfe)/(profile|user-profile)|user-profile|kcpm-88'; then
+              selected_files="$(printf '%s\n%s\n' "$selected_files" "$(find ./E2E/modules/7_User_Profile -name "*_test.js" | sort)")"
+            fi
+
+            selected_files="$(printf '%s\n' "$selected_files" | sed '/^$/d' | sort -u)"
+
+            if [ -z "$selected_files" ]; then
+              echo "No UI selector found. Skipping UI tests on personal branch."
+              exit 0
+            fi
+          fi
+
+          echo "UI test files to run:"
+          printf '%s\n' "$selected_files" | sed 's/^/- /'
 
           while read -r test_file; do
             safe_name=$(echo "$test_file" | sed 's#^./##; s#[/\\ ]#_#g; s#[^A-Za-z0-9_.-]#_#g')
@@ -181,7 +243,7 @@ jobs:
                 tail -n 180 "$log_file"
               } > "$error_file"
             fi
-          done < <(find ./E2E/modules -name "*_test.js" | sort)
+          done < <(printf '%s\n' "$selected_files")
 
           exit "$failed"
 
