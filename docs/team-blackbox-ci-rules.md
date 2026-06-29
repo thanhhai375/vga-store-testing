@@ -1,107 +1,25 @@
-# Quy Tac Automation, Branch Va Jira CI
+# Quy Tac Lam Blackbox Automation Va Jira CI
 
-File nay la quy uoc chung cho ca nhom khi viet automation test va de GitHub Actions log loi len Jira dung module, dung task.
+File nay la quy uoc chung de moi thanh vien trong nhom lam automation giong nhau, de GitHub Actions chay duoc va Jira log loi du thong tin.
 
----
+## 1. Quy trinh lam viec
 
-## 1. Nguyen tac chung
-
-Moi commit phai co ma task Jira, vi du:
+1. Nhan task tren Jira, vi du `KCPM-88`.
+2. Tao hoac dung branch cua minh.
+3. Khi commit bat buoc co ma task Jira:
 
 ```bash
-git commit -m "KCPM-81 add auth UI testcases"
+git commit -m "KCPM-88 add user blackbox automation"
 ```
 
-GitHub Actions se lay ma task tu:
+4. Push len GitHub.
+5. GitHub Actions tu chay tat ca blackbox scripts.
+6. Neu fail, workflow se tao hoac update sub-task CI fail trong Jira task cha.
+7. Neu pass, workflow se comment `CI passed`, doi label sang `ci-passed/ci-resolved`, va co gang chuyen sub-task sang Done.
 
-- Ten branch.
-- Commit message.
-- PR title.
+## 2. Quy tac dat script trong package.json
 
-Neu test fail, CI se tao hoac cap nhat subtask/issue loi duoi task cha do.
-
----
-
-## 2. Quy uoc branch
-
-### 2.1 API/Postman blackbox
-
-Dung branch `feature/...`, `fix/...`, `bugfix/...` nhu cu.
-
-Vi du:
-
-```text
-feature/KCPM-87-auth-api
-feature/KCPM-90-product-admin
-fix/KCPM-88-user-api
-```
-
-CI se chay Postman/API theo selector trong ten branch hoac commit.
-
-### 2.2 FE UI test
-
-Dung branch:
-
-```text
-fe/<ten-nguoi>-<module>-ui
-fixFe/<ten-nguoi>-<module>-ui
-```
-
-Vi du:
-
-```text
-fe/tanvinh-auth-ui
-fixFe/tanvinh-auth-ui
-fe/hai-cart-payment-ui
-fixFe/minh-product-category-ui
-```
-
-Y nghia:
-
-| Prefix | Dung khi nao |
-| --- | --- |
-| `fe/` | Viet moi hoac bo sung testcase UI |
-| `fixFe/` | Fix loi FE do testcase UI phat hien |
-
-Khi branch la `fe/...` hoac `fixFe/...`, CI se bo qua Postman/API va chi chay UI test cua module phu hop.
-
----
-
-## 3. Mapping module FE UI
-
-CI chon file UI test theo ten module trong branch/commit:
-
-| Module | Tu khoa branch/commit | Thu muc test |
-| --- | --- | --- |
-| Auth | `auth`, `authentication`, `KCPM-81` | `automation/E2E/modules/1_Authentication/*_test.js` |
-| Shopping Experience | `shopping`, `shopping-experience`, `shop`, `KCPM-82` | `automation/E2E/modules/2_Shopping_Experience/*_test.js` |
-| Cart & Payment | `cart-payment`, `cart`, `payment`, `KCPM-83` | `automation/E2E/modules/3_Cart&Payment/*_test.js` |
-| Product & Category | `product-category`, `product`, `category`, `KCPM-84` | `automation/E2E/modules/4_Product&Category_Management/*_test.js` |
-| Order | `order`, `order-management`, `KCPM-85` | `automation/E2E/modules/5_Order_Management/*_test.js` |
-| Dashboard & User Management | `dashboard-user`, `dashboard`, `user-management`, `KCPM-86` | `automation/E2E/modules/6_Dashboard&User_Management/*_test.js` |
-| User Profile | `profile`, `user-profile`, `KCPM-88` | `automation/E2E/modules/7_User_Profile/*_test.js` |
-
-Vi du:
-
-```text
-fe/tanvinh-auth-ui
-```
-
-CI se chay:
-
-```text
-automation/E2E/modules/1_Authentication/*_test.js
-```
-
-Luu y: file helper nhu `auth_helpers.js` khong phai testcase, vi khong co duoi `_test.js`, nen CI khong chay truc tiep.
-
----
-
-## 4. Script automation
-
-### 4.1 API/Postman
-
-Moi module API nen co script dung format:
+Moi module phai co script theo dung format:
 
 ```text
 test:<module>:blackbox
@@ -113,42 +31,41 @@ Vi du:
 {
   "scripts": {
     "test:auth:blackbox": "newman run ...",
-    "test:product-admin:blackbox": "newman run ..."
+    "test:user:blackbox": "newman run ...",
+    "test:product:blackbox": "newman run ..."
   }
 }
 ```
 
-### 4.2 FE UI
+Workflow chi tu dong chay script dung format tren. Script sai ten se khong duoc CI chay.
 
-Co the them script rieng de chay local cho tung module:
+## 3. Quy tac dat file report Newman
 
-```json
-{
-  "scripts": {
-    "test:auth:fe": "codeceptjs run \"E2E/modules/1_Authentication/*_test.js\" --steps",
-    "test:cart_payment:fe": "codeceptjs run \"E2E/modules/3_Cart&Payment/*_test.js\" --steps"
-  }
-}
+Moi script nen export JSON report vao:
+
+```text
+automation/reports/<module>-blackbox-newman.json
 ```
 
-Chay local:
+Vi du:
 
 ```bash
-cd automation
-npm run test:auth:fe
+--reporters cli,json --reporter-json-export "reports/user-blackbox-newman.json"
 ```
 
----
+Khong commit file trong `automation/reports`. Day la file sinh ra khi chay test.
 
-## 5. Quy tac Postman CSV
+## 4. Quy tac CSV de Jira log dep
 
-Moi module API nen co file CSV data-driven test trong:
+Moi module nen co 1 file CSV data-driven test. CSV nen nam trong:
 
 ```text
 automation/postman/<module-folder>/
 ```
 
-CSV nen co cac cot:
+Workflow se tu quet cac file `.csv` trong `automation/postman`.
+
+CSV nen co it nhat cac cot bat buoc:
 
 ```csv
 testId,testType,expectedStatus,expectedMessage,ExpectedResult
@@ -158,208 +75,133 @@ Y nghia:
 
 | Cot | Bat buoc | Y nghia |
 | --- | --- | --- |
-| `testId` | Co | Ma testcase, vi du `R-001`, `U-002` |
-| `testType` | Co | Chuc nang/module, vi du `REGISTER`, `LOGIN` |
-| `expectedStatus` | Co | HTTP status mong muon |
-| `expectedMessage` | Co | Chuoi mong muon trong response |
-| `ExpectedResult` | Co | Mo ta ngan ket qua mong doi |
+| `testId` | Co | Ma testcase, vi du `R-001`, `U-002`, `P-003` |
+| `testType` | Co | Ten chuc nang/module, vi du `REGISTER`, `LOGIN`, `USER_CREATE` |
+| `expectedStatus` | Co | HTTP status mong muon, vi du `200`, `400`, `422` |
+| `expectedMessage` | Co | Chuoi mong muon co trong response, vi du `password`, `validation`, `token` |
+| `ExpectedResult` | Co | Mo ta ngan muc tieu testcase |
 
-Khong commit file report sinh ra trong:
+Ngoai cac cot tren, moi module them cac cot input rieng.
 
-```text
-automation/reports/
+## 5. Mau CSV cho Auth
+
+```csv
+testId,testType,username,email,password,fullName,oldPassword,newPassword,confirmPassword,expectedStatus,expectedMessage,ExpectedResult
+R-033,REGISTER,user33,user33@test.com,Pass@1,User 33,,,,400,password,Reject weak password missing length
+C-006,CHANGE_PASSWORD,,,,,Oldpass@1,short,short,400,password,Reject too short new password
 ```
 
----
+## 6. Mau CSV cho Product
 
-## 6. Quy tac testcase FE UI
+```csv
+testId,testType,productName,price,stock,categoryId,expectedStatus,expectedMessage,ExpectedResult
+P-001,PRODUCT_CREATE,Keyboard,100000,10,1,201,created,Create product successfully
+P-002,PRODUCT_CREATE,,100000,10,1,400,name,Reject empty product name
+P-003,PRODUCT_CREATE,Mouse,-1,10,1,400,price,Reject negative price
+```
 
-FE UI test la black-box theo hanh vi nguoi dung:
+## 7. Mau CSV cho User
 
-1. Mo man hinh/form.
-2. Nhap du lieu.
-3. Bam Submit/Action.
-4. Kiem tra UI phan hoi.
+```csv
+testId,testType,userId,username,email,role,expectedStatus,expectedMessage,ExpectedResult
+U-001,USER_GET,1,,,,200,id,Get user by valid id
+U-002,USER_GET,999999,,,,404,not found,Reject unknown user id
+U-003,USER_UPDATE,1,newname,new@test.com,USER,200,success,Update user successfully
+```
 
-Testcase nen dat ten co ID ro rang:
+## 8. Quy tac Postman collection
+
+Moi request trong Postman nen:
+
+1. Doc input tu CSV bang bien `{{columnName}}`.
+2. Assert status theo `expectedStatus`.
+3. Assert message theo `expectedMessage`.
+4. Ten assertion nen co `testId` de log de doc.
+
+Vi du assertion:
 
 ```javascript
-Scenario('UI-RG-010: Register voi password qua ngan bi tu choi sau submit', ({ I }) => {
-  ...
+const expectedStatus = Number(pm.iterationData.get("expectedStatus"));
+const expectedMessage = pm.iterationData.get("expectedMessage");
+const testId = pm.iterationData.get("testId");
+
+pm.test(`${testId}: Expected HTTP status ${expectedStatus}`, function () {
+  pm.response.to.have.status(expectedStatus);
+});
+
+pm.test(`${testId}: Response contains expected message`, function () {
+  pm.expect(pm.response.text().toLowerCase()).to.include(expectedMessage.toLowerCase());
 });
 ```
 
-Nen uu tien assert:
+## 9. Jira log se co nhung thong tin gi
 
-- Modal/form con mo khi submit fail.
-- Khong co token/session khi login fail.
-- Field invalid hoac message loi hien ro.
-- Success state hien dung sau thao tac thanh cong.
-- Session/logout/protected route dung hanh vi nguoi dung.
-
----
-
-## 7. Jira log khi fail
-
-### 7.1 API/Postman fail
-
-Subtask Jira se ghi ngan gon:
+Khi CI fail, Jira sub-task se co:
 
 ```text
-FAILED FILE
-Script
+Run link
 Branch
 Commit
-Failed API request/assertion summary
-Failure reason
-Response/status context
-Fix hint
-```
-
-Khong dua toan bo Newman log dai vao Jira. Log day du nam trong GitHub Actions artifact.
-
-### 7.2 FE UI fail
-
-Subtask Jira se ghi ngan gon:
-
-```text
-FAILED FILE
-FAILED TESTCASE
-Failure reason
-Failure location
-Screenshot artifact
+CSV source
+testId
+testType
+Endpoint
+Input
+Expected status/message
+Actual status/response
+Assertion
+Error
 Fix hint
 ```
 
 Vi du:
 
 ```text
-FAILED FILE: ./E2E/modules/1_Authentication/change_password_test.js
-FAILED TESTCASE:
-- FE-CP-001: Doi mat khau thanh cong va dang nhap bang mat khau moi
-
-Failure reason:
-element (.alert-message.success) still not visible after 10 sec
-
-Failure location:
-change_password_test.js:27
-
-Fix hint:
-Expected UI element did not appear in time. Check action result, selector, and FE feedback rendering.
+1. [R-033] REGISTER / Register
+CSV: automation/postman/.../Auth-Testcase.csv
+Report: auth-blackbox-newman.json, iteration: 33
+Endpoint: POST http://localhost:8080/api/auth/register
+Input: username=user33, email=user33@test.com, password=Pass@1
+Expected: HTTP 400, message contains "password"
+Actual: HTTP 200, response: registration successful ...
+Assertion: R-033: Expected HTTP status 400
+Error: expected 200 to deeply equal 400
+Fix hint: check backend validation/handler for REGISTER.
 ```
 
-Khong dua toan bo step log `I fill field...`, `I click...` vao Jira. Log day du va screenshot nam trong GitHub Actions artifact.
+## 10. Jira fields tu dong
 
----
-
-## 8. Loi moi va loi lap lai
-
-CI dung fingerprint de phan biet:
+Workflow se tu set cho sub-task CI fail:
 
 ```text
-Task Jira + file fail + testcase fail
-```
-
-Neu cung testcase fail lai:
-
-```text
-Trang thai loi: LOI CU TAI PHAT
-```
-
-CI se comment/update subtask cu.
-
-Neu testcase fail khac:
-
-```text
-Trang thai loi: LOI MOI
-```
-
-CI se tao subtask/issue moi.
-
----
-
-## 9. Jira fields tu dong
-
-Workflow se tu set khi fail:
-
-```text
-Parent = task co trong commit/branch, vi du KCPM-81
+Parent = task co trong commit, vi du KCPM-88
 Assignee = nguoi commit neu map duoc email Jira
 Priority = JIRA_DEFAULT_PRIORITY, mac dinh High
 Due date = ngay hien tai + JIRA_DUE_DAYS
+Labels khi fail = ci-fail, github-actions, automation-test, blackbox, newman
+Labels khi pass = ci-passed, ci-resolved, github-actions, automation-test, blackbox, newman
 ```
 
-Neu `JIRA_DUE_DAYS` khong co, workflow fallback sang due date cua task cha neu Jira co.
+## 11. Quy tac fix loi
 
-Labels khi API/Postman fail:
-
-```text
-automation-test
-blackbox
-github-actions
-ci-failure
-api
-newman
-postman
-module-...
-```
-
-Labels khi FE UI fail:
-
-```text
-automation-test
-blackbox
-github-actions
-ci-failure
-ui
-fe
-codeceptjs
-module-...
-```
-
-Khi CI pass, workflow co gang:
-
-- Comment CI passed.
-- Them label `ci-passed`, `ci-resolved`.
-- Go label loi cu.
-- Chuyen subtask loi sang Done/Resolved neu Jira workflow cho phep.
-
----
-
-## 10. Quy tac fix loi
-
-1. Mo subtask loi tren Jira.
-2. Doc `FAILED TESTCASE` hoac `Failed API request/assertion summary`.
-3. Xem `Failure reason`, `Fix hint`, screenshot/log artifact.
-4. Tao branch fix:
-
-```text
-fixFe/<ten-nguoi>-<module>-ui
-```
-
-hoac voi API:
-
-```text
-fix/<jira-key>-<module>-api
-```
-
-5. Commit voi cung ma task Jira:
+1. Mo sub-task CI fail tren Jira.
+2. Doc `Failure summary`.
+3. Xem `testId`, `Endpoint`, `Input`, `Expected`, `Actual`.
+4. Sua backend hoac testcase neu testcase sai.
+5. Commit lai voi cung ma task Jira:
 
 ```bash
-git commit -m "KCPM-81 fix auth UI feedback"
+git commit -m "KCPM-88 fix user validation"
 ```
 
 6. Push len GitHub.
-7. Neu CI pass, subtask loi se duoc comment va co gang chuyen sang Done.
+7. Neu CI pass, sub-task se duoc comment `CI passed` va co gang chuyen sang Done.
 
----
+## 12. Nhung loi can tranh
 
-## 11. Nhung loi can tranh
-
-- Khong commit ma thieu ma Jira.
-- Khong dung `git add .` neu workspace co nhieu file khong lien quan.
-- Khong commit `automation/reports/`.
-- Khong dat branch FE chung chung nhu `fe/tanvinh`; phai co module, vi du `fe/tanvinh-auth-ui`.
-- Khong dua log CodeceptJS/Newman qua dai vao Jira; Jira chi can loi chinh va hint fix.
-- Khong dung chung `testId` cho nhieu testcase API khac nhau trong cung module.
-- Khong dat script API sai format `test:<module>:blackbox`.
+- Khong commit ma khong co ma Jira.
+- Khong dat script sai format, vi CI se khong chay.
+- Khong commit file report trong `automation/reports`.
+- Khong dat CSV thieu `testId`, `testType`, `expectedStatus`, `expectedMessage`.
+- Khong dung chung `testId` cho nhieu testcase khac nhau trong cung module.
+- Khong sua workflow neu chi them module moi; chi can them script `test:<module>:blackbox`.
