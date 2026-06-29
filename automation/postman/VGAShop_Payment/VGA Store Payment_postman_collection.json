@@ -1,0 +1,645 @@
+{
+  "info": {
+    "_postman_id": "ab58eec2-529e-44f0-af20-68d1d535c33c",
+    "name": "VGA Store Payment",
+    "description": "Black-box Payment automation. Collection tự đăng ký và đăng nhập tài khoản test ở iteration đầu tiên để GitHub Actions không phụ thuộc token cố định; dùng runtimeOrderId để tránh cột orderId rỗng trong CSV ghi đè.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{authToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "Setup Auth - Register",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {},
+            "exec": [
+              "if (pm.info.iteration !== 0) { return; }",
+              "",
+              "pm.test(\"AUTH_SETUP: Register test user returns 200 or 201\", function () {",
+              "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+              "});"
+            ]
+          }
+        },
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {},
+            "exec": [
+              "if (pm.info.iteration !== 0) {",
+              "    pm.execution.skipRequest();",
+              "}",
+              "",
+              "var suffix = Date.now().toString(36);",
+              "var username = \"payment_ci_\" + suffix;",
+              "var email = \"payment_ci_\" + suffix + \"@test.com\";",
+              "var password = \"123456\";",
+              "",
+              "pm.collectionVariables.set(\"ciUsername\", username);",
+              "pm.collectionVariables.set(\"ciEmail\", email);",
+              "pm.collectionVariables.set(\"ciPassword\", password);",
+              "",
+              "pm.request.body.raw = JSON.stringify({",
+              "    username: username,",
+              "    email: email,",
+              "    password: password,",
+              "    fullName: \"Payment CI User\"",
+              "});",
+              "",
+              "console.log(\"AUTH_SETUP register user:\", username);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "noauth"
+        },
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/auth/register",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "auth",
+            "register"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Setup Auth - Login",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {},
+            "exec": [
+              "if (pm.info.iteration !== 0) { return; }",
+              "",
+              "var jsonData = {};",
+              "try { jsonData = pm.response.json(); } catch (error) {}",
+              "",
+              "var token = jsonData.token || (jsonData.data && jsonData.data.token);",
+              "",
+              "pm.test(\"AUTH_SETUP: Login returns 200\", function () {",
+              "    pm.expect(pm.response.code).to.eql(200);",
+              "});",
+              "",
+              "pm.test(\"AUTH_SETUP: Login response contains token\", function () {",
+              "    pm.expect(token, \"token\").to.exist;",
+              "});",
+              "",
+              "if (token) {",
+              "    pm.environment.set(\"authToken\", token);",
+              "    pm.environment.set(\"token\", token);",
+              "    pm.collectionVariables.set(\"authToken\", token);",
+              "}"
+            ]
+          }
+        },
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {},
+            "exec": [
+              "if (pm.info.iteration !== 0) {",
+              "    pm.execution.skipRequest();",
+              "}",
+              "",
+              "pm.request.body.raw = JSON.stringify({",
+              "    username: pm.collectionVariables.get(\"ciUsername\"),",
+              "    password: pm.collectionVariables.get(\"ciPassword\")",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "noauth"
+        },
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/auth/login",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "auth",
+            "login"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Create Order",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {},
+            "exec": [
+              "function parseJsonSafely() {",
+              "    try { return pm.response.json(); } catch (error) { return {}; }",
+              "}",
+              "",
+              "var testId = pm.iterationData.get(\"testId\");",
+              "var expectedStatus = Number(pm.iterationData.get(\"expectedStatus\"));",
+              "var expectedMessage = String(pm.iterationData.get(\"expectedMessage\") || \"\").toLowerCase();",
+              "var responseText = pm.response.text().toLowerCase();",
+              "var jsonData = parseJsonSafely();",
+              "",
+              "pm.test(testId + \": Expected HTTP status \" + expectedStatus, function () {",
+              "    pm.expect(pm.response.code).to.eql(expectedStatus);",
+              "});",
+              "",
+              "if (expectedMessage) {",
+              "    pm.test(testId + \": Response contains expected message\", function () {",
+              "        pm.expect(responseText).to.include(expectedMessage);",
+              "    });",
+              "}",
+              "",
+              "if (expectedStatus >= 200 && expectedStatus < 300) {",
+              "    pm.test(testId + \": Response contains orderId\", function () {",
+              "        var orderId = jsonData.orderId || (jsonData.data && jsonData.data.orderId);",
+              "        pm.expect(orderId, \"orderId\").to.exist;",
+              "        pm.collectionVariables.set(\"runtimeOrderId\", String(orderId));",
+              "    });",
+              "}",
+              "",
+              "console.log(\"ORDER_CREATE \" + testId + \" completed with status \" + pm.response.code);"
+            ]
+          }
+        },
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {},
+            "exec": [
+              "var testType = pm.iterationData.get(\"testType\");",
+              "var testId = pm.iterationData.get(\"testId\");",
+              "",
+              "if (testType !== \"ORDER_CREATE\") {",
+              "    pm.execution.skipRequest();",
+              "}",
+              "",
+              "function parseItems(raw) {",
+              "    try {",
+              "        return JSON.parse(raw || \"[]\");",
+              "    } catch (error) {",
+              "        throw new Error(testId + \": itemsJson không phải JSON hợp lệ\");",
+              "    }",
+              "}",
+              "",
+              "var body = {",
+              "    fullName: pm.iterationData.get(\"fullName\") || \"\",",
+              "    phone: (function () { var value = pm.iterationData.get(\"phone\"); var text = value === undefined || value === null ? \"\" : String(value); return text && !text.startsWith(\"0\") ? \"0\" + text : text; })(),",
+              "    shippingAddress: pm.iterationData.get(\"shippingAddress\") || \"\",",
+              "    address: pm.iterationData.get(\"address\") || \"\",",
+              "    note: pm.iterationData.get(\"note\") || \"\",",
+              "    items: parseItems(pm.iterationData.get(\"itemsJson\"))",
+              "};",
+              "",
+              "var omitFields = String(pm.iterationData.get(\"omitFields\") || \"\")",
+              "    .split(\"|\")",
+              "    .map(function (field) { return field.trim(); })",
+              "    .filter(Boolean);",
+              "",
+              "omitFields.forEach(function (field) {",
+              "    delete body[field];",
+              "});",
+              "",
+              "pm.request.body.raw = JSON.stringify(body);",
+              "console.log(\"ORDER_CREATE \" + testId + \" body:\", pm.request.body.raw);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/orders",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "orders"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Setup Order",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {},
+            "exec": [
+              "var testId = pm.iterationData.get(\"testId\");",
+              "var jsonData = {};",
+              "try { jsonData = pm.response.json(); } catch (error) {}",
+              "",
+              "pm.test(testId + \" SETUP: Create order returns 200 or 201\", function () {",
+              "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+              "});",
+              "",
+              "var orderId = jsonData.orderId || (jsonData.data && jsonData.data.orderId);",
+              "",
+              "pm.test(testId + \" SETUP: Response contains orderId\", function () {",
+              "    pm.expect(orderId, \"orderId\").to.exist;",
+              "});",
+              "",
+              "if (orderId !== undefined && orderId !== null) {",
+              "    pm.collectionVariables.set(\"runtimeOrderId\", String(orderId));",
+              "}",
+              "",
+              "console.log(\"SETUP_ORDER \" + testId + \" saved orderId:\", orderId);"
+            ]
+          }
+        },
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {},
+            "exec": [
+              "var testType = pm.iterationData.get(\"testType\");",
+              "var testId = pm.iterationData.get(\"testId\");",
+              "var setupOrder = String(pm.iterationData.get(\"setupOrder\") || \"false\").toLowerCase() === \"true\";",
+              "",
+              "if (!setupOrder || (testType !== \"PAYMENT_CREATE\" && testType !== \"ORDER_STATUS\")) {",
+              "    pm.execution.skipRequest();",
+              "}",
+              "",
+              "var items = [];",
+              "try {",
+              "    items = JSON.parse(pm.iterationData.get(\"itemsJson\") || \"[]\");",
+              "} catch (error) {",
+              "    throw new Error(testId + \": itemsJson không phải JSON hợp lệ\");",
+              "}",
+              "",
+              "var body = {",
+              "    fullName: pm.iterationData.get(\"fullName\") || \"\",",
+              "    phone: (function () { var value = pm.iterationData.get(\"phone\"); var text = value === undefined || value === null ? \"\" : String(value); return text && !text.startsWith(\"0\") ? \"0\" + text : text; })(),",
+              "    shippingAddress: pm.iterationData.get(\"shippingAddress\") || \"\",",
+              "    address: pm.iterationData.get(\"address\") || \"\",",
+              "    note: pm.iterationData.get(\"note\") || \"\",",
+              "    items: items",
+              "};",
+              "",
+              "pm.request.body.raw = JSON.stringify(body);",
+              "console.log(\"SETUP_ORDER \" + testId + \" body:\", pm.request.body.raw);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/orders",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "orders"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Create Payment",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {},
+            "exec": [
+              "function parseJsonSafely() {",
+              "    try { return pm.response.json(); } catch (error) { return {}; }",
+              "}",
+              "",
+              "var testId = pm.iterationData.get(\"testId\");",
+              "var expectedStatus = Number(pm.iterationData.get(\"expectedStatus\"));",
+              "var expectedMessage = String(pm.iterationData.get(\"expectedMessage\") || \"\").toLowerCase();",
+              "var expectedSuccessRaw = pm.iterationData.get(\"expectedSuccess\");",
+              "var expectedPaymentStatus = pm.iterationData.get(\"expectedPaymentStatus\");",
+              "var expectedPaymentMethod = pm.iterationData.get(\"paymentMethod\");",
+              "var responseText = pm.response.text().toLowerCase();",
+              "var jsonData = parseJsonSafely();",
+              "",
+              "pm.test(testId + \": Expected HTTP status \" + expectedStatus, function () {",
+              "    pm.expect(pm.response.code).to.eql(expectedStatus);",
+              "});",
+              "",
+              "if (expectedMessage) {",
+              "    pm.test(testId + \": Response contains expected message\", function () {",
+              "        pm.expect(responseText).to.include(expectedMessage);",
+              "    });",
+              "}",
+              "",
+              "if (expectedSuccessRaw !== null && expectedSuccessRaw !== undefined && expectedSuccessRaw !== \"\") {",
+              "    var expectedSuccess = String(expectedSuccessRaw).toLowerCase() === \"true\";",
+              "    if (Object.prototype.hasOwnProperty.call(jsonData, \"success\")) {",
+              "        pm.test(testId + \": Expected success value\", function () {",
+              "            pm.expect(jsonData.success).to.eql(expectedSuccess);",
+              "        });",
+              "    }",
+              "}",
+              "",
+              "if (expectedStatus >= 200 && expectedStatus < 300) {",
+              "    pm.test(testId + \": Response contains payment data\", function () {",
+              "        pm.expect(jsonData.data, \"data\").to.be.an(\"object\");",
+              "        pm.expect(jsonData.data.paymentId, \"paymentId\").to.exist;",
+              "        pm.expect(jsonData.data.orderId, \"orderId\").to.exist;",
+              "    });",
+              "",
+              "    if (expectedPaymentMethod) {",
+              "        pm.test(testId + \": Payment method is correct\", function () {",
+              "            pm.expect(jsonData.data && jsonData.data.paymentMethod).to.eql(expectedPaymentMethod);",
+              "        });",
+              "    }",
+              "",
+              "    if (expectedPaymentStatus) {",
+              "        pm.test(testId + \": Payment status is correct\", function () {",
+              "            pm.expect(jsonData.data && jsonData.data.paymentStatus).to.eql(expectedPaymentStatus);",
+              "        });",
+              "    }",
+              "}",
+              "",
+              "console.log(\"PAYMENT_CREATE \" + testId + \" completed with status \" + pm.response.code);"
+            ]
+          }
+        },
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {},
+            "exec": [
+              "var testType = pm.iterationData.get(\"testType\");",
+              "var testId = pm.iterationData.get(\"testId\");",
+              "",
+              "if (testType !== \"PAYMENT_CREATE\") {",
+              "    pm.execution.skipRequest();",
+              "}",
+              "",
+              "var setupOrder = String(pm.iterationData.get(\"setupOrder\") || \"false\").toLowerCase() === \"true\";",
+              "",
+              "if (!setupOrder) {",
+              "    pm.collectionVariables.set(\"runtimeOrderId\", String(pm.iterationData.get(\"orderId\") || \"\"));",
+              "}",
+              "",
+              "var paymentBody = {",
+              "    paymentMethod: pm.iterationData.get(\"paymentMethod\") || \"\"",
+              "};",
+              "",
+              "var omitFields = String(pm.iterationData.get(\"omitFields\") || \"\")",
+              "    .split(\"|\")",
+              "    .map(function (field) { return field.trim(); })",
+              "    .filter(Boolean);",
+              "",
+              "omitFields.forEach(function (field) {",
+              "    delete paymentBody[field];",
+              "});",
+              "",
+              "pm.request.body.raw = JSON.stringify(paymentBody);",
+              "console.log(\"PAYMENT_CREATE \" + testId + \" orderId:\", pm.collectionVariables.get(\"runtimeOrderId\"));",
+              "console.log(\"PAYMENT_CREATE \" + testId + \" body:\", pm.request.body.raw);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/payments/orders/{{runtimeOrderId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "payments",
+            "orders",
+            "{{runtimeOrderId}}"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Get Order Status",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {},
+            "exec": [
+              "function parseJsonSafely() {",
+              "    try { return pm.response.json(); } catch (error) { return {}; }",
+              "}",
+              "",
+              "var testId = pm.iterationData.get(\"testId\");",
+              "var expectedStatus = Number(pm.iterationData.get(\"expectedStatus\"));",
+              "var expectedMessage = String(pm.iterationData.get(\"expectedMessage\") || \"\").toLowerCase();",
+              "var expectedOrderStatus = pm.iterationData.get(\"expectedOrderStatus\");",
+              "var responseText = pm.response.text().toLowerCase();",
+              "var jsonData = parseJsonSafely();",
+              "",
+              "pm.test(testId + \": Expected HTTP status \" + expectedStatus, function () {",
+              "    pm.expect(pm.response.code).to.eql(expectedStatus);",
+              "});",
+              "",
+              "if (expectedMessage) {",
+              "    pm.test(testId + \": Response contains expected message\", function () {",
+              "        pm.expect(responseText).to.include(expectedMessage);",
+              "    });",
+              "}",
+              "",
+              "if (expectedOrderStatus && expectedStatus >= 200 && expectedStatus < 300) {",
+              "    pm.test(testId + \": Order status is correct\", function () {",
+              "        var actualStatus = jsonData.status || jsonData.orderStatus ||",
+              "            (jsonData.data && (jsonData.data.status || jsonData.data.orderStatus));",
+              "        pm.expect(actualStatus).to.eql(expectedOrderStatus);",
+              "    });",
+              "}",
+              "",
+              "console.log(\"ORDER_STATUS \" + testId + \" completed with status \" + pm.response.code);"
+            ]
+          }
+        },
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {},
+            "exec": [
+              "var testType = pm.iterationData.get(\"testType\");",
+              "var testId = pm.iterationData.get(\"testId\");",
+              "",
+              "if (testType !== \"ORDER_STATUS\") {",
+              "    pm.execution.skipRequest();",
+              "}",
+              "",
+              "var setupOrder = String(pm.iterationData.get(\"setupOrder\") || \"false\").toLowerCase() === \"true\";",
+              "",
+              "if (!setupOrder) {",
+              "    pm.collectionVariables.set(\"runtimeOrderId\", String(pm.iterationData.get(\"orderId\") || \"\"));",
+              "}",
+              "",
+              "console.log(\"ORDER_STATUS \" + testId + \" orderId:\", pm.collectionVariables.get(\"runtimeOrderId\"));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/orders/{{runtimeOrderId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "orders",
+            "{{runtimeOrderId}}"
+          ]
+        }
+      },
+      "response": []
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [
+          "// Đồng bộ token để collection dùng được với environment cũ hoặc mới.",
+          "var authToken = pm.environment.get(\"authToken\");",
+          "var legacyToken = pm.environment.get(\"token\");",
+          "",
+          "if (!authToken && legacyToken) {",
+          "    pm.environment.set(\"authToken\", legacyToken);",
+          "}"
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [
+          ""
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "runtimeOrderId",
+      "value": ""
+    },
+    {
+      "key": "baseUrl",
+      "value": ""
+    }
+  ]
+}
