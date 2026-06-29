@@ -8,6 +8,8 @@ on:
       - tanvinh
       - "feature/**"
       - "fix/**"
+      - "fe/**"
+      - "fixFe/**"
       - "bugfix/**"
   pull_request:
     branches:
@@ -87,6 +89,11 @@ jobs:
           commit_message="$(git log -1 --pretty=%B)"
           selector_text="$(printf '%s\n%s\n%s\n' "$branch_name" "$base_branch" "$commit_message" | tr '[:upper:]' '[:lower:]')"
 
+          if echo "$branch_name" | grep -Eq '^fe/|^fixFe/'; then
+            echo "FE branch detected. Skipping API blackbox tests."
+            exit 0
+          fi
+
           full_regression=false
           if [ "$GITHUB_EVENT_NAME" = "pull_request" ]; then
             if [ "$base_branch" = "main" ] || [ "$base_branch" = "develop" ]; then
@@ -104,17 +111,55 @@ jobs:
             echo "Full regression mode: running all blackbox scripts."
           else
             echo "Personal branch mode: selecting blackbox scripts from branch/commit."
-            if [ "$branch_name" = "tanvinh" ] || echo "$selector_text" | grep -Eq 'kcpm-87|auth|authentication'; then
+
+            while read -r script_name; do
+              [ -z "$script_name" ] && continue
+              module_name="$(echo "$script_name" | cut -d: -f2)"
+              module_pattern="$(echo "$module_name" | sed 's/-/[ -_]/g')"
+
+              if echo "$selector_text" | grep -Eq "(^|[^a-z0-9])${module_pattern}([^a-z0-9]|$)"; then
+                selected_scripts="$(printf '%s\n%s\n' "$selected_scripts" "$script_name")"
+              fi
+            done < <(printf '%s\n' "$scripts")
+
+            if [ "$branch_name" = "tanvinh" ] || echo "$selector_text" | grep -Eq 'kcpm-87|authentication'; then
               selected_scripts="$(printf '%s\n%s\n' "$selected_scripts" "test:auth:blackbox")"
             fi
-            if echo "$selector_text" | grep -Eq 'product-admin|product admin|admin-product|kcpm-90'; then
+            if echo "$selector_text" | grep -Eq 'kcpm-88|user-api|user blackbox|module user'; then
+              selected_scripts="$(printf '%s\n%s\n' "$selected_scripts" "test:user:blackbox")"
+            fi
+            if echo "$selector_text" | grep -Eq 'kcpm-89|product-user'; then
+              selected_scripts="$(printf '%s\n%s\n' "$selected_scripts" "test:product-user:blackbox")"
+            fi
+            if echo "$selector_text" | grep -Eq 'kcpm-90|product-admin|admin-product'; then
               selected_scripts="$(printf '%s\n%s\n' "$selected_scripts" "test:product-admin:blackbox")"
             fi
+            if echo "$selector_text" | grep -Eq 'kcpm-91|cart'; then
+              selected_scripts="$(printf '%s\n%s\n' "$selected_scripts" "test:cart:blackbox")"
+            fi
+            if echo "$selector_text" | grep -Eq 'kcpm-92|payment'; then
+              selected_scripts="$(printf '%s\n%s\n' "$selected_scripts" "test:payment:blackbox")"
+            fi
+            if echo "$selector_text" | grep -Eq 'kcpm-93|admin-api|admin blackbox|module admin'; then
+              selected_scripts="$(printf '%s\n%s\n' "$selected_scripts" "test:admin:blackbox")"
+            fi
+
             selected_scripts="$(printf '%s\n' "$selected_scripts" | sed '/^$/d' | sort -u)"
 
             if [ -z "$selected_scripts" ]; then
-              echo "No module selector found. Fallback: running all blackbox scripts."
-              selected_scripts="$scripts"
+              failed=1
+              {
+                echo "FAILED FILE: API blackbox module selection"
+                echo "  - Branch: $branch_name"
+                echo "  - Commit: ${GITHUB_SHA:-unknown}"
+                echo ""
+                echo "===== Failure reason ====="
+                echo "No API blackbox script matched this branch or commit."
+                echo ""
+                echo "===== Fix hint ====="
+                echo "Use branch/commit keyword matching an npm script such as auth, user, admin, cart, payment, product-admin, or product-user."
+              } > "../error_reason_API_module_selection.txt"
+              echo "No API blackbox script matched this branch or commit."
             fi
           fi
 
@@ -147,7 +192,7 @@ jobs:
           exit "$failed"
 
       - name: Run UI tests with CodeceptJS
-        if: always() && ((github.event_name == 'pull_request' && (github.base_ref == 'main' || github.base_ref == 'develop')) || (github.event_name == 'push' && (github.ref_name == 'main' || github.ref_name == 'develop')))
+        if: always()
         working-directory: automation
         env:
           HEADLESS: "true"
@@ -160,19 +205,102 @@ jobs:
           failed=0
           npx playwright install chromium
 
-          while read -r test_file; do
-            safe_name=$(echo "$test_file" | sed 's#^./##; s#[/\\ ]#_#g; s#[^A-Za-z0-9_.-]#_#g')
+          branch_name="${GITHUB_HEAD_REF:-${GITHUB_REF_NAME:-}}"
+          base_branch="${GITHUB_BASE_REF:-}"
+          commit_message="$(git log -1 --pretty=%B)"
+          selector_text="$(printf '%s\n%s\n%s\n' "$branch_name" "$base_branch" "$commit_message" | tr '[:upper:]' '[:lower:]')"
+
+          full_regression=false
+          if [ "$GITHUB_EVENT_NAME" = "pull_request" ]; then
+            if [ "$base_branch" = "main" ] || [ "$base_branch" = "develop" ]; then
+              full_regression=true
+            fi
+          elif [ "$branch_name" = "main" ] || [ "$branch_name" = "develop" ]; then
+            full_regression=true
+          fi
+
+          if ! echo "$branch_name" | grep -Eq '^fe/|^fixFe/' && [ "$full_regression" != "true" ]; then
+            echo "Not an FE branch and not full regression. Skipping UI tests."
+            exit 0
+          fi
+
+          scripts="$(node -e "const p=require('./package.json'); console.log(Object.keys(p.scripts||{}).filter(s=>/^test:.*:fe$/.test(s)).join('\n'))")"
+          selected_scripts=""
+
+          if [ "$full_regression" = "true" ]; then
+            selected_scripts="$scripts"
+            echo "Full regression mode: running all UI scripts."
+          else
+            echo "FE branch mode: selecting UI scripts from branch/commit."
+
+            while read -r script_name; do
+              [ -z "$script_name" ] && continue
+              module_name="$(echo "$script_name" | cut -d: -f2)"
+              module_pattern="$(echo "$module_name" | sed 's/-/[ -_]/g')"
+
+              if echo "$selector_text" | grep -Eq "(^|[^a-z0-9])${module_pattern}([^a-z0-9]|$)"; then
+                selected_scripts="$(printf '%s\n%s\n' "$selected_scripts" "$script_name")"
+              fi
+            done < <(printf '%s\n' "$scripts")
+
+            if echo "$selector_text" | grep -Eq 'kcpm-81|auth|authentication'; then
+              selected_scripts="$(printf '%s\n%s\n' "$selected_scripts" "test:auth:fe")"
+            fi
+            if echo "$selector_text" | grep -Eq 'kcpm-82|shopping'; then
+              selected_scripts="$(printf '%s\n%s\n' "$selected_scripts" "test:shopping:fe")"
+            fi
+            if echo "$selector_text" | grep -Eq 'kcpm-83|cart|payment'; then
+              selected_scripts="$(printf '%s\n%s\n' "$selected_scripts" "test:cart:fe")"
+            fi
+            if echo "$selector_text" | grep -Eq 'kcpm-84|product|category'; then
+              selected_scripts="$(printf '%s\n%s\n' "$selected_scripts" "test:product:fe")"
+            fi
+            if echo "$selector_text" | grep -Eq 'kcpm-85|order'; then
+              selected_scripts="$(printf '%s\n%s\n' "$selected_scripts" "test:order:fe")"
+            fi
+            if echo "$selector_text" | grep -Eq 'kcpm-86|dashboard'; then
+              selected_scripts="$(printf '%s\n%s\n' "$selected_scripts" "test:dashboard:fe")"
+            fi
+            if echo "$selector_text" | grep -Eq 'kcpm-116|profile|user-profile'; then
+              selected_scripts="$(printf '%s\n%s\n' "$selected_scripts" "test:profile:fe")"
+            fi
+
+            selected_scripts="$(printf '%s\n' "$selected_scripts" | sed '/^$/d' | sort -u)"
+
+            if [ -z "$selected_scripts" ]; then
+              failed=1
+              {
+                echo "FAILED FILE: UI module selection"
+                echo "  - Branch: $branch_name"
+                echo "  - Commit: ${GITHUB_SHA:-unknown}"
+                echo ""
+                echo "===== Failure reason ====="
+                echo "No UI test script matched this branch or commit."
+                echo ""
+                echo "===== Fix hint ====="
+                echo "Use branch/commit keyword matching an npm script such as auth, shopping, cart, product, order, dashboard, or profile."
+              } > "../error_reason_UI_module_selection.txt"
+              echo "No UI test script matched this branch or commit."
+            fi
+          fi
+
+          echo "UI scripts to run:"
+          printf '%s\n' "$selected_scripts" | sed 's/^/- /'
+
+          while read -r script_name; do
+            [ -z "$script_name" ] && continue
+            safe_name=$(echo "$script_name" | sed 's#[^A-Za-z0-9_.-]#_#g')
             log_file="codecept_${safe_name}.log"
             error_file="../error_reason_UI_${safe_name}.txt"
 
-            echo "Running UI test: $test_file"
-            npx codeceptjs run "$test_file" --steps 2>&1 | tee "$log_file"
+            echo "Running UI npm script: $script_name"
+            npm run "$script_name" 2>&1 | tee "$log_file"
             ui_status=${PIPESTATUS[0]}
 
             if [ "$ui_status" -ne 0 ]; then
               failed=1
               {
-                echo "FAILED FILE: $test_file"
+                echo "FAILED FILE: npm script $script_name"
                 echo "  - Testcase: UI test failed in CodeceptJS"
                 echo ""
                 echo "===== Failed test summary ====="
@@ -182,7 +310,7 @@ jobs:
                 tail -n 180 "$log_file"
               } > "$error_file"
             fi
-          done < <(find ./E2E/modules -name "*_test.js" | sort)
+          done < <(printf '%s\n' "$selected_scripts")
 
           exit "$failed"
 
