@@ -646,7 +646,7 @@ jobs:
           }
 
           async function getIssue(issueKey) {
-            return jira(`/rest/api/3/issue/${issueKey}?fields=summary,status,issuetype,assignee,parent,priority,duedate`);
+            return jira(`/rest/api/3/issue/${issueKey}?fields=summary,description,status,issuetype,assignee,parent,priority,duedate`);
           }
 
           async function assignIssue(issueKey, jiraUser) {
@@ -832,6 +832,35 @@ jobs:
             return lines.join('\n');
           }
 
+          function buildFailureDescription(parentIssue, labels) {
+            const parentDescription = extractCommentText(parentIssue.fields && parentIssue.fields.description).trim();
+            if (parentDescription) return parentDescription;
+
+            const kind = detectFailureKind(labels);
+            if (kind === 'API_POSTMAN') {
+              return [
+                `Subtask tu dong duoc tao boi GitHub Actions cho task cha ${parentIssue.key}.`,
+                'Pham vi: API/Postman black-box automation.',
+                'Mo ta: Theo doi loi CI cua Postman/Newman test. Chi tiet loi, request/status context va huong fix nam trong comment cua subtask nay.'
+              ].join('\n');
+            }
+            if (kind === 'FE_UI') {
+              return [
+                `Subtask tu dong duoc tao boi GitHub Actions cho task cha ${parentIssue.key}.`,
+                'Pham vi: FE UI/E2E automation.',
+                'Mo ta: Theo doi loi CI cua UI test. Chi tiet loi, log va huong fix nam trong comment cua subtask nay.'
+              ].join('\n');
+            }
+            if (kind === 'WHITEBOX_BACKEND') {
+              return [
+                `Subtask tu dong duoc tao boi GitHub Actions cho task cha ${parentIssue.key}.`,
+                'Pham vi: Backend white-box/JUnit automation.',
+                'Mo ta: Theo doi loi CI cua white-box test. Chi tiet loi, coverage artifact va huong fix nam trong comment cua subtask nay.'
+              ].join('\n');
+            }
+            return '';
+          }
+
           async function createFailureIssue(parentIssue, summary, description, priorityName, jiraUser, labels = ['ci-failure']) {
             const issueTypeCandidates = [
               jiraFailureIssueType,
@@ -992,7 +1021,8 @@ jobs:
                 await assignIssue(existingFailureIssue.key, jiraUser);
                 console.log(`Updated existing Jira failure issue ${existingFailureIssue.key} for ${issueKey}`);
               } else {
-                const created = await createFailureIssue(parentIssue, failureSummary, failureBody, parentPriority, jiraUser, failureLabels);
+                const failureDescription = buildFailureDescription(parentIssue, failureLabels) || failureBody;
+                const created = await createFailureIssue(parentIssue, failureSummary, failureDescription, parentPriority, jiraUser, failureLabels);
                 await addComment(created.key, failureBody);
                 console.log(`Created Jira failure issue ${created.key} under ${issueKey}`);
               }
