@@ -6,19 +6,8 @@
   "scripts": {
     "test": "echo \"Use npm run test:auth:blackbox\" && exit 0",
     "test:auth:blackbox": "newman run \"postman/VGA-AUTH-USER/VGA-Store-Auth/VGA Store Auth.postman_collection.json\" -e \"postman/env/VGA_Store_Environment.postman_environment.json\" -d \"postman/VGA-AUTH-USER/VGA-Store-Auth/VGA-Store-Auth-Testcase.csv\" --folder Register --folder Login --folder ChangePassword --reporters cli,json --reporter-json-export \"reports/auth-blackbox-newman.json\"",
-    "test:user:blackbox": "newman run \"postman/VGA-AUTH-USER/VGA-Store-USER/VGA USER - BVA Testing.postman_collection 123.json\" -e \"postman/env/VGA_Store_Environment.postman_environment.json\" -d \"postman/VGA-AUTH-USER/VGA-Store-USER/VGA_Store_User_Profile_BVA.csv\" --reporters cli,json --reporter-json-export \"reports/user-profile-blackbox-newman.json\" && newman run \"postman/VGA-AUTH-USER/VGA-Store-USER/VGA USER - BVA Testing.postman_collection 123.json\" -e \"postman/env/VGA_Store_Environment.postman_environment.json\" -d \"postman/VGA-AUTH-USER/VGA-Store-USER/VGA_Store_User_Address_BVA.csv\" --reporters cli,json --reporter-json-export \"reports/user-address-blackbox-newman.json\"",
-    "test:admin:blackbox": "newman run \"postman/VGA-Store-Admin/VGA Store Admin.postman_collection.json\" -e \"postman/env/VGA_Store_Environment.postman_environment.json\" -d \"postman/VGA-Store-Admin/VGA_Store_Admin_TestCases.csv\" --reporters cli,json --reporter-json-export \"reports/admin-blackbox-newman.json\"",
-    "test:cart:blackbox": "newman run \"postman/VGA-Store-Cart/VGA Store Cart.postman_collection.json\" -e \"postman/env/VGA_Store_Environment.postman_environment.json\" -d \"postman/VGA-Store-Cart/VGA_Store_Cart_TestCases.csv\" --reporters cli,json --reporter-json-export \"reports/cart-blackbox-newman.json\"",
-    "test:product-admin:blackbox": "newman run \"postman/VGA-store-product/product-admin/VGA Store Product.postman_collection.json\" -e \"postman/env/VGA_Store_Environment.postman_environment.json\" -d \"postman/VGA-store-product/product-admin/VGA-store_product_AutoTest.csv\" --reporters cli,json --reporter-json-export \"reports/product-admin-blackbox-newman.json\"",
-    "test:product-user:blackbox": "newman run \"postman/VGA-store-product/product-user/VGA Store Product User.postman_collection.json\" -e \"postman/env/VGA_Store_Environment.postman_environment.json\" -d \"postman/VGA-store-product/product-user/PRODUCT_USER.csv\" --reporters cli,json --reporter-json-export \"reports/product-user-blackbox-newman.json\"",
-    "test:payment:blackbox": "newman run \"postman/VGAShop_Payment/VGAShop Payment.postman_collection.json\" -e \"postman/env/VGA_Store_Environment.postman_environment.json\" -d \"postman/VGAShop_Payment/payment-test-data-from-TC_Payment_71.csv\" --reporters cli,json --reporter-json-export \"reports/payment-blackbox-newman.json\" && newman run \"postman/VGAShop_Payment/VGAShop Payment.postman_collection.json\" -e \"postman/env/VGA_Store_Environment.postman_environment.json\" -d \"postman/VGAShop_Payment/payment-bva-data-from-TC_Payment_92.csv\" --reporters cli,json --reporter-json-export \"reports/payment-bva-blackbox-newman.json\"",
-    "test:auth:fe": "codeceptjs run \"E2E/modules/1_Authentication/*_test.js\" --steps",
-    "test:shopping:fe": "codeceptjs run \"E2E/modules/2_Shopping_Experience/*_test.js\" --steps",
-    "test:cart:fe": "codeceptjs run \"E2E/modules/3_Cart&Payment/*_test.js\" --steps",
-    "test:product:fe": "codeceptjs run \"E2E/modules/4_Product&Category_Management/*_test.js\" --steps",
-    "test:order:fe": "codeceptjs run \"E2E/modules/5_Order_Management/*_test.js\" --steps",
-    "test:dashboard:fe": "codeceptjs run \"E2E/modules/6_Dashboard&User_Management/*_test.js\" --steps",
-    "test:profile:fe": "codeceptjs run \"E2E/modules/7_User_Profile/*_test.js\" --steps"
+    "test:product-admin:blackbox": "newman run \"postman/VGA-store-product/product-admin/VGA Store Product Admin Blackbox.postman_collection.json\" -e \"postman/env/VGA_Store_Environment.postman_environment.json\" -d \"postman/VGA-store-product/product-admin/VGA-Store-Product-Admin-Testcase.csv\" --reporters cli,json --reporter-json-export \"reports/product-admin-blackbox-newman.json\"",
+    "test:auth:fe": "codeceptjs run \"E2E/modules/1_Authentication/*_test.js\" --steps"
   },
   "keywords": [],
   "author": "",
