@@ -137,8 +137,10 @@ jobs:
             if echo "$selector_text" | grep -Eq 'product-admin|product admin|admin-product|kcpm-90'; then
               selected_scripts="$(printf '%s\n%s\n' "$selected_scripts" "test:product-admin:blackbox")"
             fi
+            if echo "$selector_text" | grep -Eiq 'kcpm-91|cart'; then
+            selected_scripts="$(printf '%s\n%s\n' "$selected_scripts" "test:cart:blackbox")"
+            fi
             selected_scripts="$(printf '%s\n' "$selected_scripts" | sed '/^$/d' | sort -u)"
-
             if [ -z "$selected_scripts" ]; then
               echo "No module selector found. Fallback: running all blackbox scripts."
               selected_scripts="$scripts"
@@ -163,24 +165,94 @@ jobs:
               failed_assertions="$(grep -E "AssertionError|expected .* to |expected response|Expected|actual|Actual|FAIL|failed|error" "$log_file" | sed 's/^[[:space:]]*//' | tail -n 40 || true)"
               failed_statuses="$(grep -E "^[[:space:]]*(GET|POST|PUT|DELETE|PATCH)|[[:space:]][1-5][0-9][0-9][[:space:]]" "$log_file" | tail -n 30 || true)"
               api_fix_hint="Check the failed Postman assertion, request data, expected status/message, backend validation, and environment variables."
+              failed_testcases="$(printf '%s\n' "$failed_assertions" | grep -E "AssertionError" | sed -E 's/^([0-9]+\.[[:space:]]*)?AssertionError[[:space:]]*//' | sed -E 's/[[:space:]]+- Expected .*//' | sed 's/[[:space:]]*$//' || true)"
+              failure_summary="$(printf '%s\n' "$failed_assertions" | awk '
+                /AssertionError/ {
+                  if (case_id != "") {
+                    print idx ". " case_id;
+                    print "   Method: " method;
+                    print "   Endpoint: " endpoint;
+                    print "   Input: " input;
+                    print "   Expected status: " expected;
+                    print "   Actual status: " actual;
+                    print "   Iteration: " iteration;
+                    print "";
+                  }
+                  idx++;
+                  line=$0;
+                  sub(/^([0-9]+\.[[:space:]]*)?AssertionError[[:space:]]*/, "", line);
+                  sub(/[[:space:]]+- Expected .*/, "", line);
+                  case_id=line;
+                  method="unknown";
+                  endpoint="unknown";
+                  input="unknown";
+                  expected="unknown";
+                  actual="unknown";
+                  iteration="unknown";
+                  if (match(line, /(GET|POST|PUT|PATCH|DELETE)[[:space:]]+[^[:space:]]+/)) {
+                    request=substr(line, RSTART, RLENGTH);
+                    split(request, request_parts, " ");
+                    method=request_parts[1];
+                    endpoint=request_parts[2];
+                  }
+                  if (match(line, /input=[^[:space:]]+/)) {
+                    input=substr(line, RSTART + 6, RLENGTH - 6);
+                  }
+                  if (match($0, /Expected HTTP status[[:space:]][0-9]+/)) {
+                    expected=substr($0, RSTART + 21, RLENGTH - 21);
+                  }
+                  next;
+                }
+                /iteration:/ {
+                  if (match($0, /iteration:[[:space:]]*[0-9]+/)) {
+                    iteration=substr($0, RSTART + 10, RLENGTH - 10);
+                    gsub(/[[:space:]]/, "", iteration);
+                  }
+                  if (match($0, /expected[[:space:]][0-9]+[[:space:]]+to be one of[[:space:]]+\[[[:space:]]*[0-9]+[[:space:]]*\]/)) {
+                    actual_line=substr($0, RSTART, RLENGTH);
+                    split(actual_line, parts, " ");
+                    actual=parts[2];
+                    expected=actual_line;
+                    sub(/^.*\[[[:space:]]*/, "", expected);
+                    sub(/[[:space:]]*\].*$/, "", expected);
+                  }
+                  next;
+                }
+                END {
+                  if (case_id != "") {
+                    print idx ". " case_id;
+                    print "   Method: " method;
+                    print "   Endpoint: " endpoint;
+                    print "   Input: " input;
+                    print "   Expected status: " expected;
+                    print "   Actual status: " actual;
+                    print "   Iteration: " iteration;
+                  }
+                }
+              ' || true)"
               if echo "$failed_assertions" | grep -qi "status"; then
-                api_fix_hint="HTTP status assertion failed. Check endpoint behavior, test data, expectedStatus in CSV, and backend validation/handler."
+                api_fix_hint="HTTP status mismatch. Backend returned an unexpected status for invalid/edge input. Check backend validation/handler and expectedStatus in CSV."
               elif echo "$failed_assertions" | grep -qi "message"; then
-                api_fix_hint="Response message assertion failed. Check backend error/success message format and Postman expectedMessage."
+                api_fix_hint="Response message mismatch. Check backend response body and expectedMessage in CSV."
               elif echo "$failed_assertions" | grep -qi "token"; then
-                api_fix_hint="Token/session assertion failed. Check login/register response payload and environment variable persistence."
+                api_fix_hint="Token/session mismatch. Check login/register response payload and Postman environment variable persistence."
               fi
               {
                 echo "FAILED FILE: npm script $script_name"
                 echo "  - Script: $script_name"
                 echo "  - Branch: $branch_name"
                 echo "  - Commit: ${GITHUB_SHA:-unknown}"
+                if [ -n "$failed_testcases" ]; then
+                  printf '%s\n' "$failed_testcases" | sed 's/^/FAILED TESTCASE: /'
+                else
+                  echo "FAILED TESTCASE: Newman API test failed"
+                fi
                 echo ""
                 echo "===== Failed API request/assertion summary ====="
-                if [ -n "$failed_requests" ]; then
-                  printf '%s\n' "$failed_requests"
+                if [ -n "$failure_summary" ]; then
+                  printf '%s\n' "$failure_summary"
                 else
-                  echo "Could not extract failed request names from Newman log."
+                  echo "Could not extract structured API failure summary. Check the GitHub Actions log artifact."
                 fi
                 echo ""
                 echo "===== Failure reason ====="
@@ -936,9 +1008,8 @@ jobs:
             ];
 
             if (likelyRootCauses.length) body.push('', 'LIKELY ROOT CAUSE:', prefixBullets(likelyRootCauses));
-            if (failureReasons.length) body.push('', 'FAILURE REASON:', prefixBullets(failureReasons));
-            if (apiSummaries.length) body.push('', 'API/POSTMAN SUMMARY:', prefixBullets(apiSummaries));
-            if (statusContexts.length) body.push('', 'HTTP/STATUS CONTEXT:', prefixBullets(statusContexts));
+            if (failureReasons.length && kind !== 'API_POSTMAN') body.push('', 'FAILURE REASON:', prefixBullets(failureReasons));
+            if (apiSummaries.length) body.push('', 'FAILURE SUMMARY:', apiSummaries.join('\n'));
             if (coverageArtifacts.length) body.push('', 'COVERAGE:', prefixBullets(coverageArtifacts.map(compactPath)));
             if (fixHints.length) body.push('', 'FIX HINT:', prefixBullets(fixHints));
 
