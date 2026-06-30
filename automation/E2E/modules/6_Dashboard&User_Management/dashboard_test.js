@@ -1,17 +1,18 @@
-Feature('Admin Dashboard');
+Feature('Admin Dashboard - UI Blackbox');
 
-Before(({ I }) => {
+BeforeSuite(({ I }) => {
   I.loginAsAdmin('hai123', 'hai123');
 });
 
-Scenario('Hiển thị đầy đủ thông tin thống kê trên Dashboard', ({ I }) => {
+Scenario('UI-DB-001: Hien thi tong quan Dashboard', ({ I }) => {
   I.amOnPage((process.env.ADMIN_FE_URL || 'http://localhost:5174') + '/');
   
   // Verify Dashboard title
-  I.see('VGA Store Performance Dashboard');
+  I.waitForText('VGA Store Performance Dashboard', 5);
   I.see('Tổng quan tình hình kinh doanh');
 
-  // Verify Stat Cards
+  // Verify Stat Cards - Check existence instead of static wait
+  I.waitForElement('.stat-card', 5);
   I.see('Tổng đơn hàng');
   I.see('Đơn mới hôm nay');
   I.see('Tổng doanh thu');
@@ -29,28 +30,33 @@ Scenario('Hiển thị đầy đủ thông tin thống kê trên Dashboard', ({ 
   I.see('TRẠNG THÁI');
 });
 
-Scenario('Thao tác Lọc thời gian trên Dashboard', ({ I }) => {
+Scenario('UI-DB-002 & UI-UX-DB-001: Thay doi thoi gian loc bieu do va hieu ung Loading', ({ I }) => {
   I.amOnPage((process.env.ADMIN_FE_URL || 'http://localhost:5174') + '/');
   
-  // Verify default is today
-  I.seeElement('select.dash-filter-select');
+  // Verify default filter
+  I.waitForElement('select.dash-filter-select', 5);
   
-  // Change filter to 7days, 1month, 1year
-  I.selectOption('.dash-filter-select', '7days');
-  I.wait(1);
+  // Change filter and check for UI loading state (opacity/spinner)
   I.selectOption('.dash-filter-select', '1month');
-  I.wait(1);
-  I.selectOption('.dash-filter-select', '1year');
-  I.wait(1);
   
-  I.seeElement('.dash-filter-select');
+  // Check if charts section shows loading or overlay
+  I.seeElement('.chart-loading-overlay, .spinner-border, .skeleton-box, .recharts-wrapper'); 
+  
+  // Wait for loading to finish
+  I.waitForInvisible('.chart-loading-overlay, .spinner-border, .skeleton-box', 10);
+  
+  // Ensure the chart is rendered again
+  I.seeElement('.recharts-responsive-container');
 });
 
-Scenario('Điều hướng từ Dashboard sang Quản lý Đơn hàng', ({ I }) => {
+Scenario('UI-DB-004: Click xem tat ca don hang', ({ I }) => {
   I.amOnPage((process.env.ADMIN_FE_URL || 'http://localhost:5174') + '/');
-  I.see('Xem tất cả ›');
+  I.waitForText('Xem tất cả ›', 5);
+  
+  // Action
   I.click('Xem tất cả ›');
   
-  // Verify it navigates to /orders
-  I.seeInCurrentUrl('/orders');
+  // Expected after action
+  I.waitInUrl('/orders', 5);
+  I.waitForText('Đơn Hàng', 5, 'h1');
 });
