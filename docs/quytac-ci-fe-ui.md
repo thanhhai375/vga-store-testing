@@ -7,22 +7,87 @@ File nay ap dung cho UI/E2E test bang CodeceptJS trong GitHub Actions.
 Dung branch cho FE UI:
 
 ```text
-fe/<jira-key>-<module>-fe
-fe/<jira-key>-<ten-nguoi>-<module>-fe
-fixFe/<jira-key-subtask>-<module>-fe
+fe/<jira-key>-<module>
+fe/<jira-key>-<ten-nguoi>-<module>
+fixFe/<jira-key-subtask>-<module>
 ```
 
 Vi du:
 
 ```text
-fe/KCPM-81-auth-fe
-fe/KCPM-83-cart-payment-fe
-fixFe/KCPM-158-auth-fe
+fe/KCPM-81-auth
+fe/KCPM-83-cart
+fixFe/KCPM-158-auth
+```
+
+Ten module nen dat ngan theo quy uoc:
+
+```text
+auth      -> Authentication
+shop      -> Shopping Experience
+cart      -> Cart & Payment
+product   -> Product & Category Management
+order     -> Order Management
+dashboard -> Dashboard & User Management
+profile   -> User Profile
+```
+
+Vi du branch theo module:
+
+```text
+fe/KCPM-81-auth
+fe/KCPM-82-shop
+fe/KCPM-83-cart
+fe/KCPM-84-product
+fe/KCPM-85-order
+fe/KCPM-86-dashboard
+fe/KCPM-88-profile
 ```
 
 CI doc `branch name`, `PR title`, va `commit message` de lay Jira key va module can chay.
 
-## 2. Cach chay
+## 2. Commit va fix task con
+
+Khi CI tao subtask loi, nguoi fix nen lam tren branch fix rieng theo key subtask:
+
+```text
+fixFe/<jira-key-subtask>-<module>
+```
+
+Vi du:
+
+```text
+fixFe/KCPM-157-auth
+fixFe/KCPM-158-auth
+```
+
+Commit khi fix phai co key subtask de Jira hien trong muc Development cua task con:
+
+```text
+KCPM-157 fix auth register UI message
+KCPM-158 fix auth login UI validation
+```
+
+Neu mot nguoi fix nhieu subtask trong cung mot branch, co 2 cach dung:
+
+- Moi loi/subtask mot commit rieng, moi commit ghi dung key subtask cua loi do.
+- Neu mot commit fix nhieu subtask, commit message va PR title phai ghi tat ca key subtask.
+
+Vi du:
+
+```text
+KCPM-157 KCPM-158 KCPM-159 fix auth UI feedback messages
+```
+
+Quy tac chon key:
+
+- Branch fix nen dung key subtask loi.
+- Commit fix phai co key subtask loi.
+- PR title nen co key subtask, hoac tat ca key subtask neu PR fix nhieu loi.
+- Neu CI da gom loi theo module, thuong chi can fix 1 subtask cho module do. Comment trong subtask se liet ke tat ca testcase/file dang fail.
+- Task cha van duoc CI nhan dien qua quan he parent cua subtask va fingerprint trong comment.
+
+## 3. Cach chay
 
 FE UI chay bang CodeceptJS trong thu muc `automation`.
 
@@ -60,7 +125,7 @@ automation/E2E/modules/1_Authentication/*_test.js
 automation/E2E/modules/3_Cart&Payment/*_test.js
 ```
 
-## 3. Cach log Jira
+## 4. Cach log Jira
 
 Khi FE UI fail, CI tao hoac update 1 subtask loi duoi task cha.
 
@@ -108,7 +173,7 @@ Comment khong dua raw log dai, khong dua screenshot path dai, va khong dua doan 
 
 Neu loi cu tai phat, CI comment tiep vao subtask cu. Neu cung mot module co nhieu testcase fail, CI gom vao cung 1 comment.
 
-## 4. Khi pass/fail
+## 5. Khi pass/fail
 
 Khi fail:
 

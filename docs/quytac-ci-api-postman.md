@@ -23,7 +23,47 @@ fix/KCPM-157-auth-api
 
 CI doc `branch name`, `PR title`, va `commit message` de lay Jira key va module can chay.
 
-## 2. Cach chay
+## 2. Commit va fix task con
+
+Khi CI tao subtask loi, nguoi fix nen lam tren branch fix rieng theo key subtask:
+
+```text
+fix/<jira-key-subtask>-<module>-api
+```
+
+Vi du:
+
+```text
+fix/KCPM-157-auth-api
+fix/KCPM-160-cart-api
+```
+
+Commit khi fix phai co key subtask de Jira hien trong muc Development cua task con:
+
+```text
+KCPM-157 fix auth API login assertion
+KCPM-160 fix cart API expected status
+```
+
+Neu mot nguoi fix nhieu subtask trong cung mot branch, co 2 cach dung:
+
+- Moi loi/subtask mot commit rieng, moi commit ghi dung key subtask cua loi do.
+- Neu mot commit fix nhieu subtask, commit message va PR title phai ghi tat ca key subtask.
+
+Vi du:
+
+```text
+KCPM-157 KCPM-158 fix auth API validation cases
+```
+
+Quy tac chon key:
+
+- Branch fix nen dung key subtask loi.
+- Commit fix phai co key subtask loi.
+- PR title nen co key subtask, hoac tat ca key subtask neu PR fix nhieu loi.
+- Task cha van duoc CI nhan dien qua quan he parent cua subtask va fingerprint trong comment.
+
+## 3. Cach chay
 
 API/Postman chay bang Newman script trong `automation/package.json`.
 
@@ -49,7 +89,7 @@ Tren CI:
 - CI chay dung script Postman/Newman theo module cua branch/commit.
 - Neu push vao `main` hoac `develop`, hoac PR vao `main`/`develop`, CI chay full regression tat ca script black-box.
 
-## 3. Cach log Jira
+## 4. Cach log Jira
 
 Khi API/Postman fail, CI tao hoac update 1 subtask loi duoi task cha.
 
@@ -96,7 +136,7 @@ FIX HINT
 
 Neu loi cu tai phat, CI comment tiep vao subtask cu. Neu cung mot module co nhieu loi, CI gom vao 1 comment de doc gon hon.
 
-## 4. Khi pass/fail
+## 5. Khi pass/fail
 
 Khi fail:
 
