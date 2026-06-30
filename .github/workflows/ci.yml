@@ -165,30 +165,47 @@ jobs:
               failed_assertions="$(grep -E "AssertionError|expected .* to |expected response|Expected|actual|Actual|FAIL|failed|error" "$log_file" | sed 's/^[[:space:]]*//' | tail -n 40 || true)"
               failed_statuses="$(grep -E "^[[:space:]]*(GET|POST|PUT|DELETE|PATCH)|[[:space:]][1-5][0-9][0-9][[:space:]]" "$log_file" | tail -n 30 || true)"
               api_fix_hint="Check the failed Postman assertion, request data, expected status/message, backend validation, and environment variables."
-              failed_testcases="$(printf '%s\n' "$failed_assertions" | grep -E "AssertionError" | sed -E 's/^([0-9]+\.[[:space:]]*)?AssertionError[[:space:]]*//' | sed -E 's/[[:space:]]+- Expected .*//' | sed 's/[[:space:]]*$//' || true)"
+              failed_testcases="$(printf '%s\n' "$failed_assertions" | grep -E "AssertionError" | grep -v "Response contains expected message" | sed -E 's/^([0-9]+\.[[:space:]]*)?AssertionError[[:space:]]*//' | sed -E 's/[[:space:]]+- Expected .*//' | sed 's/[[:space:]]*$//' | sort -u || true)"
               failure_summary="$(printf '%s\n' "$failed_assertions" | awk '
-                /AssertionError/ {
+                function emit() {
                   if (case_id != "") {
+                    idx++;
                     print idx ". " case_id;
-                    print "   Method: " method;
-                    print "   Endpoint: " endpoint;
-                    print "   Input: " input;
-                    print "   Expected status: " expected;
-                    print "   Actual status: " actual;
-                    print "   Iteration: " iteration;
+                    if (method != "") print "   Method: " method;
+                    if (endpoint != "") print "   Endpoint: " endpoint;
+                    if (input != "") print "   Input: " input;
+                    if (expected != "") print "   Expected status: " expected;
+                    if (actual != "") print "   Actual status: " actual;
+                    if (iteration != "") print "   Iteration: " iteration;
+                    if (assertions != "") {
+                      print "   Failed assertion:";
+                      print assertions;
+                    }
                     print "";
                   }
-                  idx++;
+                }
+                /AssertionError/ {
                   line=$0;
                   sub(/^([0-9]+\.[[:space:]]*)?AssertionError[[:space:]]*/, "", line);
+                  sub(/[[:space:]]*$/, "", line);
+
+                  if (line ~ /Response contains expected message/) {
+                    sub(/^.* - /, "", line);
+                    if (assertions != "") assertions=assertions "\n";
+                    assertions=assertions "   - " line;
+                    next;
+                  }
+
+                  emit();
                   sub(/[[:space:]]+- Expected .*/, "", line);
                   case_id=line;
-                  method="unknown";
-                  endpoint="unknown";
-                  input="unknown";
-                  expected="unknown";
-                  actual="unknown";
-                  iteration="unknown";
+                  method="";
+                  endpoint="";
+                  input="";
+                  expected="";
+                  actual="";
+                  iteration="";
+                  assertions="";
                   if (match(line, /(GET|POST|PUT|PATCH|DELETE)[[:space:]]+[^[:space:]]+/)) {
                     request=substr(line, RSTART, RLENGTH);
                     split(request, request_parts, " ");
@@ -219,15 +236,7 @@ jobs:
                   next;
                 }
                 END {
-                  if (case_id != "") {
-                    print idx ". " case_id;
-                    print "   Method: " method;
-                    print "   Endpoint: " endpoint;
-                    print "   Input: " input;
-                    print "   Expected status: " expected;
-                    print "   Actual status: " actual;
-                    print "   Iteration: " iteration;
-                  }
+                  emit();
                 }
               ' || true)"
               if echo "$failed_assertions" | grep -qi "status"; then
