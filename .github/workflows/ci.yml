@@ -724,6 +724,21 @@ jobs:
             return (result.issues || [])[0] || null;
           }
 
+          async function searchFailureIssuesByFile(parentIssueKey, failedFile) {
+            if (!failedFile) return [];
+            const escapedFailedFile = failedFile.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+            const jql = `project = ${projectKey} AND parent = ${parentIssueKey} AND summary ~ "CI Fail" AND text ~ "${escapedFailedFile}" ORDER BY created ASC`;
+            const result = await jira('/rest/api/3/search/jql', {
+              method: 'POST',
+              body: JSON.stringify({
+                jql,
+                maxResults: 20,
+                fields: ['summary', 'status', 'issuetype', 'assignee', 'priority']
+              })
+            });
+            return result.issues || [];
+          }
+
           async function updateIssueLabels(issueKey, labelsToAdd, labelsToRemove = []) {
             const update = { labels: [] };
             for (const label of labelsToRemove) update.labels.push({ remove: label });
@@ -980,7 +995,15 @@ jobs:
                 ? parentIssue.fields.priority.name
                 : jiraDefaultPriority;
               const failureSummary = `[CI Fail] ${issueKey} - ${(failedFile || summaryTitle)}`.slice(0, 250);
-              const existingFailureIssue = await searchExistingFailureIssue(issueKey, fingerprint);
+              let existingFailureIssue = await searchExistingFailureIssue(issueKey, fingerprint);
+              let duplicateFailureIssues = [];
+              if (!existingFailureIssue && failedFile) {
+                const legacyFailureIssues = await searchFailureIssuesByFile(issueKey, failedFile);
+                if (legacyFailureIssues.length > 0) {
+                  existingFailureIssue = legacyFailureIssues[0];
+                  duplicateFailureIssues = legacyFailureIssues.slice(1);
+                }
+              }
               const failureType = existingFailureIssue ? 'LOI CU TAI PHAT' : 'LOI MOI';
               const failedTestcaseText = failedTestcases.length
                 ? failedTestcases.map((item) => `- ${item}`).join('\n')
@@ -1019,6 +1042,22 @@ jobs:
                   await updateIssueFields(existingFailureIssue.key, { duedate: failureDueDate });
                 }
                 await assignIssue(existingFailureIssue.key, jiraUser);
+                for (const duplicateIssue of duplicateFailureIssues) {
+                  const duplicateStatus = String(duplicateIssue.fields && duplicateIssue.fields.status && duplicateIssue.fields.status.name || '').toLowerCase();
+                  await addComment(duplicateIssue.key, [
+                    `Duplicate CI failure was merged into ${existingFailureIssue.key}.`,
+                    '',
+                    `Reason: workflow now groups failures by FAILED FILE instead of creating one subtask per testcase.`,
+                    `FAILED FILE: ${failedFile}`,
+                    `Canonical CI failure subtask: ${existingFailureIssue.key}`,
+                    `GitHub Actions log: ${runUrl}`
+                  ].join('\n'));
+                  await updateIssueLabels(duplicateIssue.key, ['ci-duplicate', 'ci-merged'], ['ci-failure']);
+                  if (!duplicateStatus.includes('done') && !duplicateStatus.includes('resolved')) {
+                    await transitionIssue(duplicateIssue.key, ['done', 'complete', 'resolved']);
+                  }
+                  console.log(`Merged duplicate Jira CI failure subtask ${duplicateIssue.key} into ${existingFailureIssue.key}`);
+                }
                 console.log(`Updated existing Jira failure issue ${existingFailureIssue.key} for ${issueKey}`);
               } else {
                 const failureDescription = buildFailureDescription(parentIssue, failureLabels) || failureBody;

@@ -133,6 +133,8 @@ Task cha + FAILED FILE
 
 Vi vay neu 1 file/script co 3 testcase fail, Jira chi tao 1 subtask loi. Comment se liet ke ca 3 testcase fail de nguoi fix biet can sua nhung loi nao.
 
+Neu da ton tai subtask loi cu duoc tao theo co che cu, CI se tim lai theo `FAILED FILE`, chon mot subtask lam subtask chinh, comment loi moi vao do, va danh dau cac subtask cung file con lai la duplicate/merged.
+
 Description cua subtask:
 
 ```text
