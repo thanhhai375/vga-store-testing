@@ -668,15 +668,14 @@ jobs:
           }
 
           function jiraDoc(text) {
+            const paragraph = { type: 'paragraph' };
+            if (text) {
+              paragraph.content = [{ type: 'text', text }];
+            }
             return {
               type: 'doc',
               version: 1,
-              content: [
-                {
-                  type: 'paragraph',
-                  content: [{ type: 'text', text }]
-                }
-              ]
+              content: [paragraph]
             };
           }
 
@@ -849,31 +848,7 @@ jobs:
 
           function buildFailureDescription(parentIssue, labels) {
             const parentDescription = extractCommentText(parentIssue.fields && parentIssue.fields.description).trim();
-            if (parentDescription) return parentDescription;
-
-            const kind = detectFailureKind(labels);
-            if (kind === 'API_POSTMAN') {
-              return [
-                `Subtask tu dong duoc tao boi GitHub Actions cho task cha ${parentIssue.key}.`,
-                'Pham vi: API/Postman black-box automation.',
-                'Mo ta: Theo doi loi CI cua Postman/Newman test. Chi tiet loi, request/status context va huong fix nam trong comment cua subtask nay.'
-              ].join('\n');
-            }
-            if (kind === 'FE_UI') {
-              return [
-                `Subtask tu dong duoc tao boi GitHub Actions cho task cha ${parentIssue.key}.`,
-                'Pham vi: FE UI/E2E automation.',
-                'Mo ta: Theo doi loi CI cua UI test. Chi tiet loi, log va huong fix nam trong comment cua subtask nay.'
-              ].join('\n');
-            }
-            if (kind === 'WHITEBOX_BACKEND') {
-              return [
-                `Subtask tu dong duoc tao boi GitHub Actions cho task cha ${parentIssue.key}.`,
-                'Pham vi: Backend white-box/JUnit automation.',
-                'Mo ta: Theo doi loi CI cua white-box test. Chi tiet loi, coverage artifact va huong fix nam trong comment cua subtask nay.'
-              ].join('\n');
-            }
-            return '';
+            return parentDescription;
           }
 
           function detectFailureModule(labels, failedFile) {
@@ -1153,10 +1128,12 @@ jobs:
                 assigneeText,
                 runUrl
               });
+              const failureDescription = buildFailureDescription(parentIssue, failureLabels);
 
               if (existingFailureIssue) {
                 await addComment(existingFailureIssue.key, failureBody);
                 await updateIssueLabels(existingFailureIssue.key, failureLabels, labelsToRemove);
+                await updateIssueFields(existingFailureIssue.key, { description: jiraDoc(failureDescription) });
                 if (failureDueDate !== 'None') {
                   await updateIssueFields(existingFailureIssue.key, { duedate: failureDueDate });
                 }
@@ -1179,7 +1156,6 @@ jobs:
                 }
                 console.log(`Updated existing Jira failure issue ${existingFailureIssue.key} for ${issueKey}`);
               } else {
-                const failureDescription = buildFailureDescription(parentIssue, failureLabels) || failureBody;
                 const created = await createFailureIssue(parentIssue, failureSummary, failureDescription, parentPriority, jiraUser, failureLabels);
                 await addComment(created.key, failureBody);
                 console.log(`Created Jira failure issue ${created.key} under ${issueKey}`);
