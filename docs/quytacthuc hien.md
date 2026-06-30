@@ -2,6 +2,8 @@
 
 Tai lieu nay dung cho tat ca thanh vien khi viet test automation. Muc tieu la GitHub Actions chi chay dung module dang lam va ghi ket qua dung Jira task.
 
+Quy tac ngan gon cho 3 loai test theo CI xem tai `docs/quytac-ci-3-loai-test.md`.
+
 ---
 
 ## 1. Nguyen tac chung
