@@ -942,7 +942,7 @@ jobs:
                 .map((match) => match[1].trim())
                 .filter(Boolean);
               const primaryFailedTestcase = failedTestcases[0] || '';
-              const fingerprintParts = [issueKey, failedFile || summaryTitle, primaryFailedTestcase].filter(Boolean);
+              const fingerprintParts = [issueKey, failedFile || summaryTitle].filter(Boolean);
               const fingerprint = fingerprintParts.join(':');
               const failureLabels = detectFailureLabels(file, failedFile);
               const fixSummary = buildFixSummary(errorReason, failureLabels);
@@ -979,7 +979,7 @@ jobs:
               const parentPriority = parentIssue.fields && parentIssue.fields.priority
                 ? parentIssue.fields.priority.name
                 : jiraDefaultPriority;
-              const failureSummary = `[CI Fail] ${issueKey} - ${(primaryFailedTestcase || summaryTitle)}`.slice(0, 250);
+              const failureSummary = `[CI Fail] ${issueKey} - ${(failedFile || summaryTitle)}`.slice(0, 250);
               const existingFailureIssue = await searchExistingFailureIssue(issueKey, fingerprint);
               const failureType = existingFailureIssue ? 'LOI CU TAI PHAT' : 'LOI MOI';
               const failedTestcaseText = failedTestcases.length
@@ -992,7 +992,7 @@ jobs:
                 fixSummary,
                 '',
                 `FAILED FILE: ${failedFile || 'unknown'}`,
-                'FAILED TESTCASE:',
+                'FAILED TESTCASES:',
                 failedTestcaseText,
                 '',
                 `Task cha: ${issueKey} - ${parentIssue.fields.summary}`,

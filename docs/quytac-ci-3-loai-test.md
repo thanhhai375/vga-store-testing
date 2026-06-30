@@ -125,6 +125,14 @@ White-box dung de test logic ben trong code, nen co the dung Spring test/H2/test
 
 Workflow tao hoac update subtask loi duoi task cha.
 
+CI gom loi theo file/script/module fail:
+
+```text
+Task cha + FAILED FILE
+```
+
+Vi vay neu 1 file/script co 3 testcase fail, Jira chi tao 1 subtask loi. Comment se liet ke ca 3 testcase fail de nguoi fix biet can sua nhung loi nao.
+
 Description cua subtask:
 
 ```text
@@ -145,7 +153,7 @@ Noi dung chung trong comment:
 Loai test
 Loi can sua
 FAILED FILE
-FAILED TESTCASE
+FAILED TESTCASES
 Branch
 Commit
 GitHub Actions log
