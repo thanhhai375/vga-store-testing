@@ -1,0 +1,21 @@
+testId,module,function,technique,method,endpoint,input,name,price,stock,productIdMode,page,size,expectedStatus,expectedMessage,priority,status
+PA-CP-001,PRODUCT_ADMIN,CREATE_PRODUCT,EP,POST,/api/admin/products,valid payload,VGA Blackbox Valid,1500000,10,existing,,,200/201,success,High,Ready
+PA-CP-004,PRODUCT_ADMIN,CREATE_PRODUCT,EP,POST,/api/admin/products,missing name,,1500000,10,existing,,,400,name,High,Ready
+PA-CP-007,PRODUCT_ADMIN,CREATE_PRODUCT,BVA,POST,/api/admin/products,price=0,VGA Blackbox Price Zero,0,10,existing,,,400,giá,High,Ready
+PA-CP-008,PRODUCT_ADMIN,CREATE_PRODUCT,BVA,POST,/api/admin/products,price=1,VGA Blackbox Price Min,1,10,existing,,,200/201,success,High,Ready
+PA-CP-009,PRODUCT_ADMIN,CREATE_PRODUCT,BVA,POST,/api/admin/products,price=-1,VGA Blackbox Price Negative,-1,10,existing,,,400,price,High,Ready
+PA-CP-011,PRODUCT_ADMIN,CREATE_PRODUCT,BVA,POST,/api/admin/products,stock=-1,VGA Blackbox Stock Negative,1500000,-1,existing,,,400,stock,High,Ready
+PA-CP-012,PRODUCT_ADMIN,CREATE_PRODUCT,BVA,POST,/api/admin/products,stock=0,VGA Blackbox Stock Zero,1500000,0,existing,,,200/201,success,Medium,Ready
+PA-CP-014,PRODUCT_ADMIN,CREATE_PRODUCT,EP,POST,/api/admin/products,brand not found,VGA Blackbox Brand Missing,1500000,10,existing,,,400/404,không tìm thấy,High,Ready
+PA-CP-015,PRODUCT_ADMIN,CREATE_PRODUCT,EP,POST,/api/admin/products,category not found,VGA Blackbox Category Missing,1500000,10,existing,,,400/404,không tìm thấy,High,Ready
+PA-LP-001,PRODUCT_ADMIN,LIST_PRODUCT,EP,GET,/api/admin/products,"page=0,size=10",,,,,0,10,200,success,High,Ready
+PA-LP-005,PRODUCT_ADMIN,LIST_PRODUCT,BVA,GET,/api/admin/products,page=-1,,,,,-1,10,400,page,Medium,Ready
+PA-LP-006,PRODUCT_ADMIN,LIST_PRODUCT,BVA,GET,/api/admin/products,size=0,,,,,0,0,400,size,Medium,Ready
+PA-PD-001,PRODUCT_ADMIN,DETAIL_PRODUCT,StateTransition,GET,/api/admin/products/{productId},existing product,,,,existing,,,200,success,High,Ready
+PA-PD-004,PRODUCT_ADMIN,DETAIL_PRODUCT,EP,GET,/api/admin/products/{productId},productId not found,,,,notFound,,,404,không tìm thấy,High,Ready
+PA-US-001,PRODUCT_ADMIN,UPDATE_STOCK,EP,PUT,/api/admin/products/{productId}/stock,stock=200,,,200,existing,,,200,success,High,Ready
+PA-US-006,PRODUCT_ADMIN,UPDATE_STOCK,BVA,PUT,/api/admin/products/{productId}/stock,stock=-1,,,-1,existing,,,400,tham số,High,Ready
+PA-US-007,PRODUCT_ADMIN,UPDATE_STOCK,BVA,PUT,/api/admin/products/{productId}/stock,stock=0,,,0,existing,,,200,success,High,Ready
+PA-DP-001,PRODUCT_ADMIN,DELETE_PRODUCT,StateTransition,DELETE,/api/admin/products/{productId},existing product,,,,existing,,,200,success,High,Ready
+PA-DP-004,PRODUCT_ADMIN,DELETE_PRODUCT,EP,DELETE,/api/admin/products/{productId},productId not found,,,,notFound,,,404,không tìm thấy,High,Ready
+PA-DP-005,PRODUCT_ADMIN,DELETE_PRODUCT,StateTransition,DELETE,/api/admin/products/{productId},delete already deleted,,,,deleted,,,404,không tìm thấy,Medium,Ready
