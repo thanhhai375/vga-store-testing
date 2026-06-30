@@ -48,6 +48,7 @@ jobs:
           cache-dependency-path: backend/vgashop/pom.xml
 
       - name: Setup Node.js
+        if: ${{ !startsWith(github.ref_name, 'whitebox/') && !startsWith(github.ref_name, 'fixWhitebox/') && !startsWith(github.head_ref, 'whitebox/') && !startsWith(github.head_ref, 'fixWhitebox/') }}
         uses: actions/setup-node@v4
         with:
           node-version: 20
@@ -55,12 +56,14 @@ jobs:
           cache-dependency-path: automation/package-lock.json
 
       - name: Start application with Docker Compose
+        if: ${{ !startsWith(github.ref_name, 'whitebox/') && !startsWith(github.ref_name, 'fixWhitebox/') && !startsWith(github.head_ref, 'whitebox/') && !startsWith(github.head_ref, 'fixWhitebox/') }}
         run: |
           rm -f error_reason*.txt
           docker compose -p "$COMPOSE_PROJECT_NAME" down -v --remove-orphans
           docker compose -p "$COMPOSE_PROJECT_NAME" up -d --build db backend admin-frontend user-frontend
 
       - name: Wait for backend
+        if: ${{ !startsWith(github.ref_name, 'whitebox/') && !startsWith(github.ref_name, 'fixWhitebox/') && !startsWith(github.head_ref, 'whitebox/') && !startsWith(github.head_ref, 'fixWhitebox/') }}
         run: |
           max_attempts=30
           attempt=0
@@ -83,10 +86,12 @@ jobs:
           exit 1
 
       - name: Install automation dependencies
+        if: ${{ !startsWith(github.ref_name, 'whitebox/') && !startsWith(github.ref_name, 'fixWhitebox/') && !startsWith(github.head_ref, 'whitebox/') && !startsWith(github.head_ref, 'fixWhitebox/') }}
         working-directory: automation
         run: npm ci
 
       - name: Run API tests with Newman
+        if: ${{ !startsWith(github.ref_name, 'whitebox/') && !startsWith(github.ref_name, 'fixWhitebox/') && !startsWith(github.head_ref, 'whitebox/') && !startsWith(github.head_ref, 'fixWhitebox/') }}
         working-directory: automation
         run: |
           set +e
@@ -201,7 +206,7 @@ jobs:
           exit "$failed"
 
       - name: Run backend white-box tests with Maven
-        if: always()
+        if: ${{ always() && (startsWith(github.ref_name, 'whitebox/') || startsWith(github.ref_name, 'fixWhitebox/') || startsWith(github.head_ref, 'whitebox/') || startsWith(github.head_ref, 'fixWhitebox/') || github.ref_name == 'main' || github.ref_name == 'develop') }}
         working-directory: backend/vgashop
         run: |
           set +e
@@ -221,62 +226,162 @@ jobs:
             full_regression=true
           fi
 
-          selected_test=""
+          test_root="src/test/java/com/example/vgashop/whitebox_test"
+          selected_tests=""
+          selector_found=false
+
+          add_tests_by_path_keyword() {
+            keyword="$1"
+            matches="$(find "$test_root" -type f -name "*Test.java" -path "*${keyword}*" 2>/dev/null | sort || true)"
+            if [ -n "$matches" ]; then
+              selected_tests="$(printf '%s\n%s\n' "$selected_tests" "$matches")"
+            fi
+          }
+
           if [ "$full_regression" = "true" ]; then
-            selected_test="*Test"
+            selected_tests="$(find "$test_root" -type f -name "*Test.java" 2>/dev/null | sort || true)"
             echo "Full regression mode: running all white-box tests."
           else
-            if echo "$selector_text" | grep -Eq '(^|[[:space:]])(whitebox|fixwhitebox)/.*(auth|authentication)|auth.*whitebox|authentication.*whitebox|whitebox.*auth|white-box.*auth|kcpm-128|kcpm-87'; then
-              selected_test="AuthIntegrationTest"
+            echo "Personal branch mode: selecting white-box tests from branch/commit."
+
+            if echo "$selector_text" | grep -Eq 'auth|authentication|login|register|kcpm-87|kcpm-128'; then
+              selector_found=true
+              add_tests_by_path_keyword "authentication"
+              add_tests_by_path_keyword "auth"
+            fi
+            if echo "$selector_text" | grep -Eq 'user-address|address|kcpm-88'; then
+              selector_found=true
+              add_tests_by_path_keyword "address"
+              add_tests_by_path_keyword "user"
+            fi
+            if echo "$selector_text" | grep -Eq 'user-profile|profile|kcpm-116'; then
+              selector_found=true
+              add_tests_by_path_keyword "profile"
+              add_tests_by_path_keyword "user"
+            fi
+            if echo "$selector_text" | grep -Eq 'product-admin|admin-product|kcpm-90'; then
+              selector_found=true
+              add_tests_by_path_keyword "product"
+              add_tests_by_path_keyword "admin"
+            fi
+            if echo "$selector_text" | grep -Eq 'product-user|user-product|kcpm-89'; then
+              selector_found=true
+              add_tests_by_path_keyword "product"
+              add_tests_by_path_keyword "user"
+            fi
+            if echo "$selector_text" | grep -Eq 'product|category|kcpm-84'; then
+              selector_found=true
+              add_tests_by_path_keyword "product"
+              add_tests_by_path_keyword "category"
+            fi
+            if echo "$selector_text" | grep -Eq 'cart|kcpm-91'; then
+              selector_found=true
+              add_tests_by_path_keyword "cart"
+            fi
+            if echo "$selector_text" | grep -Eq 'payment|kcpm-92'; then
+              selector_found=true
+              add_tests_by_path_keyword "payment"
+            fi
+            if echo "$selector_text" | grep -Eq 'order|kcpm-85'; then
+              selector_found=true
+              add_tests_by_path_keyword "order"
+            fi
+            if echo "$selector_text" | grep -Eq 'dashboard|kcpm-86'; then
+              selector_found=true
+              add_tests_by_path_keyword "dashboard"
+            fi
+            if echo "$selector_text" | grep -Eq 'admin|kcpm-93'; then
+              selector_found=true
+              add_tests_by_path_keyword "admin"
             fi
 
-            if [ -z "$selected_test" ]; then
-              echo "No white-box selector found. Skipping backend white-box tests."
-              exit 0
+            selected_tests="$(printf '%s\n' "$selected_tests" | sed '/^$/d' | sort -u)"
+
+            if [ "$selector_found" != "true" ]; then
+              {
+                echo "FAILED FILE: backend/vgashop/src/test/java/com/example/vgashop/whitebox_test"
+                echo "  - Branch: $branch_name"
+                echo "  - Commit: ${GITHUB_SHA:-unknown}"
+                echo "FAILED TESTCASE: White-box module selector"
+                echo ""
+                echo "===== Failure reason ====="
+                echo "White-box branch/commit does not contain a supported module keyword."
+                echo ""
+                echo "===== Fix hint ====="
+                echo "Use branch format whitebox/<jira-key>-<module>, for example whitebox/KCPM-128-auth, whitebox/KCPM-91-cart, whitebox/KCPM-90-product-admin."
+              } > "../../error_reason_WHITEBOX_selector.txt"
+              exit 1
+            fi
+
+            if [ -z "$selected_tests" ]; then
+              {
+                echo "FAILED FILE: backend/vgashop/src/test/java/com/example/vgashop/whitebox_test"
+                echo "  - Branch: $branch_name"
+                echo "  - Commit: ${GITHUB_SHA:-unknown}"
+                echo "FAILED TESTCASE: White-box test file discovery"
+                echo ""
+                echo "===== Failure reason ====="
+                echo "Module keyword was detected, but no matching *Test.java file was found under whitebox_test."
+                echo ""
+                echo "===== Fix hint ====="
+                echo "Add test files under backend/vgashop/src/test/java/com/example/vgashop/whitebox_test/<module>/... and name classes with *Test.java."
+              } > "../../error_reason_WHITEBOX_missing_test_file.txt"
+              exit 1
             fi
           fi
 
-          log_file="whitebox-reports/${selected_test}.log"
-          echo "White-box tests to run: $selected_test"
-          ./mvnw -Pwhitebox -Dtest="$selected_test" test 2>&1 | tee "$log_file"
-          whitebox_status=${PIPESTATUS[0]}
+          echo "White-box test files to run:"
+          printf '%s\n' "$selected_tests" | sed 's/^/- /'
 
-          if [ "$whitebox_status" -ne 0 ]; then
-            failed_cases="$(grep -E "<<< FAILURE!|<<< ERROR!|Tests run:|Failures:|Errors:|AssertionFailedError|java\\.lang\\.|expected:|but was:" "$log_file" | sed 's/^[[:space:]]*//' | tail -n 60 || true)"
-            failure_locations="$(grep -E "at com\\.example\\.vgashop\\.|AuthIntegrationTest" "$log_file" | sed 's/^[[:space:]]*//' | head -n 40 || true)"
-            {
-              echo "FAILED FILE: backend/vgashop/src/test/java/com/example/vgashop/whitebox_test"
-              echo "  - Script: ./mvnw -Pwhitebox -Dtest=$selected_test test"
-              echo "  - Branch: $branch_name"
-              echo "  - Commit: ${GITHUB_SHA:-unknown}"
-              echo "FAILED TESTCASE: $selected_test"
-              echo ""
-              echo "===== Failure reason ====="
-              if [ -n "$failed_cases" ]; then
-                printf '%s\n' "$failed_cases"
-              else
-                echo "Could not extract a concise Maven/JUnit failure. Check the GitHub Actions log artifact."
-              fi
-              echo ""
-              echo "===== Failure location ====="
-              if [ -n "$failure_locations" ]; then
-                printf '%s\n' "$failure_locations"
-              else
-                echo "backend/vgashop/src/test/java/com/example/vgashop/whitebox_test"
-              fi
-              echo ""
-              echo "===== Coverage artifact ====="
-              echo "backend/vgashop/target/site/jacoco/index.html"
-              echo ""
-              echo "===== Fix hint ====="
-              echo "Check the failed branch/condition in the Auth service/controller, expected HTTP status/body, test data setup, and mocked/in-memory authentication state."
-            } > "../../error_reason_WHITEBOX_${selected_test}.txt"
-          fi
+          failed=0
+          while read -r test_file; do
+            [ -z "$test_file" ] && continue
+            test_class="$(basename "$test_file" .java)"
+            safe_name="$(echo "$test_class" | sed 's#[^A-Za-z0-9_.-]#_#g')"
+            log_file="whitebox-reports/${safe_name}.log"
 
-          exit "$whitebox_status"
+            echo "Running white-box test: $test_class"
+            ./mvnw -Pwhitebox -Dtest="$test_class" test 2>&1 | tee "$log_file"
+            whitebox_status=${PIPESTATUS[0]}
+
+            if [ "$whitebox_status" -ne 0 ]; then
+              failed=1
+              failed_cases="$(grep -E "<<< FAILURE!|<<< ERROR!|Tests run:|Failures:|Errors:|AssertionFailedError|java\\.lang\\.|expected:|but was:" "$log_file" | sed 's/^[[:space:]]*//' | tail -n 60 || true)"
+              failure_locations="$(grep -E "at com\\.example\\.vgashop\\.|${test_class}" "$log_file" | sed 's/^[[:space:]]*//' | head -n 40 || true)"
+              {
+                echo "FAILED FILE: backend/vgashop/$test_file"
+                echo "  - Script: ./mvnw -Pwhitebox -Dtest=$test_class test"
+                echo "  - Branch: $branch_name"
+                echo "  - Commit: ${GITHUB_SHA:-unknown}"
+                echo "FAILED TESTCASE: $test_class"
+                echo ""
+                echo "===== Failure reason ====="
+                if [ -n "$failed_cases" ]; then
+                  printf '%s\n' "$failed_cases"
+                else
+                  echo "Could not extract a concise Maven/JUnit failure. Check the GitHub Actions log artifact."
+                fi
+                echo ""
+                echo "===== Failure location ====="
+                if [ -n "$failure_locations" ]; then
+                  printf '%s\n' "$failure_locations"
+                else
+                  echo "backend/vgashop/$test_file"
+                fi
+                echo ""
+                echo "===== Coverage artifact ====="
+                echo "backend/vgashop/target/site/jacoco/index.html"
+                echo ""
+                echo "===== Fix hint ====="
+                echo "Check the failed branch/condition in the backend service/controller, expected HTTP status/body, test data setup, and mocked/in-memory authentication state."
+              } > "../../error_reason_WHITEBOX_${safe_name}.txt"
+            fi
+          done < <(printf '%s\n' "$selected_tests")
+
+          exit "$failed"
 
       - name: Run UI tests with CodeceptJS
-        if: always()
+        if: ${{ always() && !startsWith(github.ref_name, 'whitebox/') && !startsWith(github.ref_name, 'fixWhitebox/') && !startsWith(github.head_ref, 'whitebox/') && !startsWith(github.head_ref, 'fixWhitebox/') }}
         working-directory: automation
         env:
           HEADLESS: "true"

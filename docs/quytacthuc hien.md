@@ -234,6 +234,19 @@ cd backend/vgashop
 .\mvnw.cmd -Pwhitebox -Dtest=AuthIntegrationTest test
 ```
 
+Voi module khac, doi ten class test tuong ung, vi du:
+
+```bash
+.\mvnw.cmd -Pwhitebox -Dtest=CartIntegrationTest test
+.\mvnw.cmd -Pwhitebox -Dtest=ProductAdminIntegrationTest test
+```
+
+Quy uoc thu muc white-box:
+
+```text
+backend/vgashop/src/test/java/com/example/vgashop/whitebox_test/<module>/.../*Test.java
+```
+
 Neu can chay truc tiep CodeceptJS:
 
 ```bash

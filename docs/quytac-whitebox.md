@@ -37,6 +37,24 @@ cd backend/vgashop
 ./mvnw -Pwhitebox -Dtest=AuthIntegrationTest test
 ```
 
+Voi cac module khac, CI tim file test theo keyword trong branch/commit va duong dan trong `whitebox_test`.
+
+Vi du:
+
+| Branch | Thu muc/file CI se tim |
+| --- | --- |
+| `whitebox/KCPM-128-auth` | `whitebox_test/authentication/**/*Test.java`, `whitebox_test/auth/**/*Test.java` |
+| `whitebox/KCPM-91-cart` | `whitebox_test/cart/**/*Test.java` |
+| `whitebox/KCPM-92-payment` | `whitebox_test/payment/**/*Test.java` |
+| `whitebox/KCPM-90-product-admin` | `whitebox_test/product/**/*Test.java`, `whitebox_test/admin/**/*Test.java` |
+| `whitebox/KCPM-89-product-user` | `whitebox_test/product/**/*Test.java`, `whitebox_test/user/**/*Test.java` |
+| `whitebox/KCPM-85-order` | `whitebox_test/order/**/*Test.java` |
+| `whitebox/KCPM-86-dashboard` | `whitebox_test/dashboard/**/*Test.java` |
+| `whitebox/KCPM-88-address` | `whitebox_test/address/**/*Test.java`, `whitebox_test/user/**/*Test.java` |
+| `whitebox/KCPM-116-profile` | `whitebox_test/profile/**/*Test.java`, `whitebox_test/user/**/*Test.java` |
+
+Neu branch co module keyword nhung khong co file `*Test.java` tuong ung, CI se fail ro loi de nguoi lam bo sung test dung thu muc.
+
 Neu merge vao `main` hoac `develop`, CI chay tat ca test white-box bang profile `whitebox`.
 
 ## 3. Report va coverage
@@ -86,7 +104,7 @@ Neu truoc do co subtask loi CI, workflow se comment pass, doi label sang `ci-pas
 ## 6. Quy tac testcase
 
 - Test dat trong `backend/vgashop/src/test/java/.../whitebox_test/...`.
+- Moi module nen co thu muc rieng, vi du `whitebox_test/cart/integration/CartIntegrationTest.java`.
 - Ten test nen the hien nhanh logic dang bao phu.
 - Report nen co branch matrix, vi du `AUTH_BRANCH_MATRIX.csv`.
 - Khong commit file build sinh ra: `target/`, `whitebox-reports/`.
-
