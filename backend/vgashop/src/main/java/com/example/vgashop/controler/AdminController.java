@@ -148,6 +148,7 @@ public class AdminController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "12") int size,
             @RequestParam(required = false) String search) {
+        validateAdminProductPage(page, size);
         Page<ProductAdminResponse> products = adminService.getAllProductForAdmin(page, size, search);
         return ApiResponse.success("Lấy danh sách sản phẩm thành công", products);
     }
@@ -176,6 +177,7 @@ public class AdminController {
     // Product
     @PostMapping(value = "/products", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ApiResponse<Product> createProduct(@Valid @ModelAttribute ProductImageDTO dto) {
+        validateProductImageDto(dto);
         Product saved = productService.createProductWithImage(dto);
         return ApiResponse.success("Tạo sản phẩm thành công", saved);
     }
@@ -183,8 +185,23 @@ public class AdminController {
     // Product
     @PutMapping(value = "/products/{productId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ApiResponse<Product> updateProduct(@PathVariable Long productId, @ModelAttribute ProductImageDTO dto) {
+        validateProductImageDto(dto);
         Product updated = productService.updateProductWithImage(productId, dto);
         return ApiResponse.success("Cập nhật sản phẩm thành công", updated);
+    }
+    private void validateAdminProductPage(int page, int size) {
+        if (page < 0) {
+            throw new IllegalArgumentException("Page khong duoc am");
+        }
+        if (size < 1) {
+            throw new IllegalArgumentException("Size phai lon hon hoac bang 1");
+        }
+    }
+
+    private void validateProductImageDto(ProductImageDTO dto) {
+        if (dto.getPrice() == null || dto.getPrice().compareTo(java.math.BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("Gia san pham phai lon hon 0");
+        }
     }
 
 
