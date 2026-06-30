@@ -1384,6 +1384,10 @@ jobs:
             });
           }
 
+          async function getIssue(issueKey) {
+            return jira(`/rest/api/3/issue/${issueKey}?fields=summary,status,issuetype,parent`);
+          }
+
           async function findFailureSubtasks(parentIssueKey) {
             const conditions = [
               `project = ${projectKey}`,
@@ -1404,15 +1408,23 @@ jobs:
 
           async function main() {
             const event = readEventPayload();
-            const issueKey = findJiraIssueKey(collectIssueKeySources(event));
+            const sourceIssueKey = findJiraIssueKey(collectIssueKeySources(event));
 
-            if (!issueKey) {
+            if (!sourceIssueKey) {
               console.log(`No Jira task key found. Skip Jira success update.`);
               return;
             }
 
+            const sourceIssue = await getIssue(sourceIssueKey);
+            const sourceIssueType = String(sourceIssue.fields && sourceIssue.fields.issuetype && sourceIssue.fields.issuetype.name || '').toLowerCase();
+            const parentIssueKey = sourceIssue.fields && sourceIssue.fields.parent && sourceIssue.fields.parent.key
+              ? sourceIssue.fields.parent.key
+              : sourceIssueKey;
+            const isSubtask = sourceIssueType.includes('sub-task') || sourceIssueType.includes('subtask') || parentIssueKey !== sourceIssueKey;
+
             const successBody = [
-              `CI PASSED for parent task ${issueKey}.`,
+              `CI PASSED for ${sourceIssueKey}.`,
+              isSubtask ? `Parent task: ${parentIssueKey}.` : '',
               '',
               `Run: ${runUrl}`,
               `Branch: ${branchName}`,
@@ -1423,32 +1435,45 @@ jobs:
               '- Related blackbox/module tests passed.',
               '- This CI failure sub-task is being resolved automatically.',
               '- Parent task is also being moved toward Done when Jira workflow permits it.'
-            ].join('\n');
+            ].filter((line) => line !== '').join('\n');
 
-            const failureSubtasks = await findFailureSubtasks(issueKey);
+            const failureSubtasks = await findFailureSubtasks(parentIssueKey);
             if (!failureSubtasks.length) {
-              console.log(`No CI failure subtask found under ${issueKey}. Updating parent only.`);
+              console.log(`No CI failure subtask found under ${parentIssueKey}. Updating parent only.`);
             }
 
             for (const subtask of failureSubtasks) {
               const statusName = String(subtask.fields && subtask.fields.status && subtask.fields.status.name || '').toLowerCase();
-              if (statusName.includes('done')) {
-                console.log(`${subtask.key} is already Done.`);
-                continue;
-              }
               await addComment(subtask.key, successBody);
               await updateLabels(subtask.key, ['ci-passed', 'ci-resolved'], ['ci-fail', 'ci-failure']);
+              if (statusName.includes('done')) {
+                console.log(`${subtask.key} is already Done. Updated success labels only.`);
+                continue;
+              }
               await transitionIssue(subtask.key, ['done', 'complete', 'resolved']);
               console.log(`Resolved Jira CI failure subtask ${subtask.key}`);
             }
 
-            await addComment(issueKey, [
-              `CI PASSED for ${issueKey}.`,
+            if (isSubtask) {
+              await addComment(sourceIssueKey, [
+                `CI PASSED for ${sourceIssueKey}.`,
+                `Parent task: ${parentIssueKey}`,
+                `Run: ${runUrl}`,
+                `Branch: ${branchName}`,
+                `Commit: ${process.env.GITHUB_SHA || 'unknown'}`
+              ].join('\n'));
+              await updateLabels(sourceIssueKey, ['ci-passed', 'ci-resolved'], ['ci-fail', 'ci-failure']);
+              await transitionIssue(sourceIssueKey, ['done', 'complete', 'resolved']);
+            }
+
+            await addComment(parentIssueKey, [
+              `CI PASSED for ${parentIssueKey}.`,
+              isSubtask ? `Fixed by subtask: ${sourceIssueKey}` : '',
               `Run: ${runUrl}`,
               `Branch: ${branchName}`,
               `Commit: ${process.env.GITHUB_SHA || 'unknown'}`
-            ].join('\n'));
-            await transitionIssue(issueKey, ['done', 'complete', 'resolved']);
+            ].filter((line) => line !== '').join('\n'));
+            await transitionIssue(parentIssueKey, ['done', 'complete', 'resolved']);
           }
 
           main().catch((error) => {
