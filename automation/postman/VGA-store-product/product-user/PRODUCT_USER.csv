@@ -1,4 +1,4 @@
-﻿tc_id,summary,method,url,query_search,query_brand,query_minPrice,query_maxPrice,query_page,query_limit,body_name,body_price,body_brand,expected_status,expected_message
+tc_id,summary,method,url,query_search,query_brand,query_minPrice,query_maxPrice,query_page,query_limit,body_name,body_price,body_brand,expected_status,expected_message
 TC_PROD_001,Hiển thị danh sách VGA hợp lệ,GET,{{baseUrl}}/api/products,,,,,,,,,,200,products
 TC_PROD_002,Kiểm tra số lượng sản phẩm hiển thị,GET,{{baseUrl}}/api/products,,,,,,,,,,200,totalItems
 TC_PROD_003,Kiểm tra hình ảnh VGA hiển thị,GET,{{baseUrl}}/api/products,,,,,,,,,,200,imageUrl
