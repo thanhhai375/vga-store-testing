@@ -125,13 +125,23 @@ White-box dung de test logic ben trong code, nen co the dung Spring test/H2/test
 
 Workflow tao hoac update subtask loi duoi task cha.
 
-CI gom loi theo file/script/module fail:
+CI gom loi theo loai test va module:
 
 ```text
-Task cha + FAILED FILE
+Task cha + Loai test + Module
 ```
 
-Vi vay neu 1 file/script co 3 testcase fail, Jira chi tao 1 subtask loi. Comment se liet ke ca 3 testcase fail de nguoi fix biet can sua nhung loi nao.
+Vi du:
+
+```text
+KCPM-81:FE_UI_AUTH
+KCPM-91:API_POSTMAN_CART_PAYMENT
+KCPM-128:WHITEBOX_BACKEND_AUTH
+```
+
+Vi vay neu 1 module co nhieu file/testcase fail, Jira chi tao hoac update 1 subtask loi. Comment se liet ke tat ca file va testcase fail de nguoi fix biet can sua nhung loi nao.
+
+Neu da ton tai subtask loi cu duoc tao theo co che cu, CI se tim lai theo `FAILED FILE`, chon mot subtask lam subtask chinh, comment loi moi vao do, va danh dau cac subtask cung module/file con lai la duplicate/merged.
 
 Description cua subtask:
 
@@ -150,14 +160,14 @@ Ghi chi tiet loi de nguoi fix doc vao biet loi gi va sua o dau.
 Noi dung chung trong comment:
 
 ```text
+CI-FINGERPRINT
 Loai test
-Loi can sua
-FAILED FILE
+Thong tin task cha
+Branch/commit/log
+FAILED FILES
 FAILED TESTCASES
-Branch
-Commit
-GitHub Actions log
-Nguoi commit
+Likely root cause neu co
+Failure reason
 Fix hint
 ```
 

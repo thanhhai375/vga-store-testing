@@ -668,15 +668,14 @@ jobs:
           }
 
           function jiraDoc(text) {
+            const paragraph = { type: 'paragraph' };
+            if (text) {
+              paragraph.content = [{ type: 'text', text }];
+            }
             return {
               type: 'doc',
               version: 1,
-              content: [
-                {
-                  type: 'paragraph',
-                  content: [{ type: 'text', text }]
-                }
-              ]
+              content: [paragraph]
             };
           }
 
@@ -722,6 +721,21 @@ jobs:
               })
             });
             return (result.issues || [])[0] || null;
+          }
+
+          async function searchFailureIssuesByFile(parentIssueKey, failedFile) {
+            if (!failedFile) return [];
+            const escapedFailedFile = failedFile.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+            const jql = `project = ${projectKey} AND parent = ${parentIssueKey} AND summary ~ "CI Fail" AND text ~ "${escapedFailedFile}" ORDER BY created ASC`;
+            const result = await jira('/rest/api/3/search/jql', {
+              method: 'POST',
+              body: JSON.stringify({
+                jql,
+                maxResults: 20,
+                fields: ['summary', 'status', 'issuetype', 'assignee', 'priority']
+              })
+            });
+            return result.issues || [];
           }
 
           async function updateIssueLabels(issueKey, labelsToAdd, labelsToRemove = []) {
@@ -834,31 +848,101 @@ jobs:
 
           function buildFailureDescription(parentIssue, labels) {
             const parentDescription = extractCommentText(parentIssue.fields && parentIssue.fields.description).trim();
-            if (parentDescription) return parentDescription;
+            return parentDescription;
+          }
 
+          function detectFailureModule(labels, failedFile) {
+            const source = `${failedFile || ''}`.toLowerCase();
+            if (labels.includes('module-auth') || source.includes('authentication') || source.includes('auth')) return 'AUTH';
+            if (labels.includes('module-shopping') || source.includes('shopping')) return 'SHOPPING';
+            if (labels.includes('module-cart-payment') || source.includes('cart') || source.includes('payment')) return 'CART_PAYMENT';
+            if (labels.includes('module-product-category') || source.includes('product') || source.includes('category')) return 'PRODUCT_CATEGORY';
+            if (labels.includes('module-order') || source.includes('order')) return 'ORDER';
+            if (labels.includes('module-dashboard-user') || source.includes('dashboard') || source.includes('user_management')) return 'DASHBOARD_USER';
+            if (labels.includes('module-user-profile') || source.includes('profile')) return 'USER_PROFILE';
+            return 'GENERAL';
+          }
+
+          function buildFailureGroupKey(issueKey, labels, failedFile) {
+            return `${issueKey}:${detectFailureKind(labels)}_${detectFailureModule(labels, failedFile)}`;
+          }
+
+          function uniqueLines(text) {
+            return [...new Set(String(text || '')
+              .split('\n')
+              .map((line) => line.trim())
+              .filter(Boolean))];
+          }
+
+          function prefixBullets(lines) {
+            return lines.length ? lines.map((line) => `- ${line}`).join('\n') : '- None';
+          }
+
+          function compactPath(line) {
+            return String(line || '').replace(/^screenshot:\s*/i, '').replace(/^.*\/automation\//, 'automation/');
+          }
+
+          function buildCompactFailureComment({
+            fingerprint,
+            failureType,
+            labels,
+            records,
+            issueKey,
+            parentIssue,
+            issueType,
+            statusName,
+            parentPriority,
+            failureDueDate,
+            currentAssignee,
+            branchName,
+            eventName,
+            culprit,
+            assigneeText,
+            runUrl
+          }) {
             const kind = detectFailureKind(labels);
-            if (kind === 'API_POSTMAN') {
-              return [
-                `Subtask tu dong duoc tao boi GitHub Actions cho task cha ${parentIssue.key}.`,
-                'Pham vi: API/Postman black-box automation.',
-                'Mo ta: Theo doi loi CI cua Postman/Newman test. Chi tiet loi, request/status context va huong fix nam trong comment cua subtask nay.'
-              ].join('\n');
-            }
-            if (kind === 'FE_UI') {
-              return [
-                `Subtask tu dong duoc tao boi GitHub Actions cho task cha ${parentIssue.key}.`,
-                'Pham vi: FE UI/E2E automation.',
-                'Mo ta: Theo doi loi CI cua UI test. Chi tiet loi, log va huong fix nam trong comment cua subtask nay.'
-              ].join('\n');
-            }
-            if (kind === 'WHITEBOX_BACKEND') {
-              return [
-                `Subtask tu dong duoc tao boi GitHub Actions cho task cha ${parentIssue.key}.`,
-                'Pham vi: Backend white-box/JUnit automation.',
-                'Mo ta: Theo doi loi CI cua white-box test. Chi tiet loi, coverage artifact va huong fix nam trong comment cua subtask nay.'
-              ].join('\n');
-            }
-            return '';
+            const failedFiles = uniqueLines(records.map((record) => record.failedFile || 'unknown').join('\n'));
+            const failedTestcases = uniqueLines(records.flatMap((record) => record.failedTestcases).join('\n'));
+            const likelyRootCauses = uniqueLines(records.map((record) => extractSection(record.errorReason, 'Likely root cause')).join('\n'));
+            const failureReasons = uniqueLines(records.map((record) => extractSection(record.errorReason, 'Failure reason')).join('\n'));
+            const apiSummaries = uniqueLines(records.map((record) => extractSection(record.errorReason, 'Failed API request/assertion summary')).join('\n'));
+            const statusContexts = uniqueLines(records.map((record) => extractSection(record.errorReason, 'Response/status context')).join('\n'));
+            const fixHints = uniqueLines(records.map((record) => extractSection(record.errorReason, 'Fix hint')).join('\n'));
+            const coverageArtifacts = uniqueLines(records.map((record) => extractSection(record.errorReason, 'Coverage artifact')).join('\n'));
+
+            const body = [
+              `CI-FINGERPRINT: ${fingerprint}`,
+              `Trang thai loi: ${failureType}.`,
+              `Loai test: ${kind}`,
+              '',
+              `Task cha: ${issueKey} - ${parentIssue.fields.summary}`,
+              `Loai task cha: ${issueType}`,
+              `Trang thai task cha: ${statusName}`,
+              `Priority: ${parentPriority}`,
+              `Due date: ${failureDueDate}`,
+              `Assignee task cha truoc khi CI tao loi: ${currentAssignee}`,
+              '',
+              `Nhanh bi loi: ${branchName}`,
+              `Su kien GitHub: ${eventName}`,
+              `Nguoi phu trach theo commit: ${culprit}`,
+              `Jira assignee lookup: ${assigneeText}`,
+              `GitHub Actions log: ${runUrl}`,
+              '',
+              'FAILED FILES:',
+              prefixBullets(failedFiles),
+              '',
+              'FAILED TESTCASES:',
+              prefixBullets(failedTestcases)
+            ];
+
+            if (likelyRootCauses.length) body.push('', 'LIKELY ROOT CAUSE:', prefixBullets(likelyRootCauses));
+            if (failureReasons.length) body.push('', 'FAILURE REASON:', prefixBullets(failureReasons));
+            if (apiSummaries.length) body.push('', 'API/POSTMAN SUMMARY:', prefixBullets(apiSummaries));
+            if (statusContexts.length) body.push('', 'HTTP/STATUS CONTEXT:', prefixBullets(statusContexts));
+            if (coverageArtifacts.length) body.push('', 'COVERAGE:', prefixBullets(coverageArtifacts.map(compactPath)));
+            if (fixHints.length) body.push('', 'FIX HINT:', prefixBullets(fixHints));
+
+            return body.join('\n');
           }
 
           async function createFailureIssue(parentIssue, summary, description, priorityName, jiraUser, labels = ['ci-failure']) {
@@ -932,6 +1016,8 @@ jobs:
               errorFiles = ['error_reason_build_environment.txt'];
             }
 
+            const failureGroups = new Map();
+
             for (const file of errorFiles) {
               const errorReason = fs.readFileSync(file, 'utf8').trim();
               const firstLine = errorReason.split('\n')[0] || 'GitHub Actions CI failed';
@@ -942,10 +1028,33 @@ jobs:
                 .map((match) => match[1].trim())
                 .filter(Boolean);
               const primaryFailedTestcase = failedTestcases[0] || '';
-              const fingerprintParts = [issueKey, failedFile || summaryTitle].filter(Boolean);
-              const fingerprint = fingerprintParts.join(':');
               const failureLabels = detectFailureLabels(file, failedFile);
-              const fixSummary = buildFixSummary(errorReason, failureLabels);
+              const fingerprint = buildFailureGroupKey(issueKey, failureLabels, failedFile || summaryTitle);
+              const group = failureGroups.get(fingerprint) || {
+                fingerprint,
+                labels: failureLabels,
+                records: [],
+                summaryTitle,
+                primaryFailedTestcase
+              };
+              group.records.push({
+                file,
+                errorReason,
+                failedFile,
+                failedTestcases,
+                summaryTitle,
+                primaryFailedTestcase
+              });
+              group.labels = [...new Set([...(group.labels || []), ...failureLabels])];
+              failureGroups.set(fingerprint, group);
+            }
+
+            for (const group of failureGroups.values()) {
+              const fingerprint = group.fingerprint;
+              const failureLabels = group.labels;
+              const primaryRecord = group.records[0] || {};
+              const failedFile = primaryRecord.failedFile || '';
+              const summaryTitle = primaryRecord.summaryTitle || 'GitHub Actions CI failed';
               const labelsToRemove = failureLabels.includes('whitebox')
                 ? ['blackbox', 'ui', 'fe', 'codeceptjs', 'api', 'newman', 'postman']
                 : failureLabels.includes('ui')
@@ -979,49 +1088,74 @@ jobs:
               const parentPriority = parentIssue.fields && parentIssue.fields.priority
                 ? parentIssue.fields.priority.name
                 : jiraDefaultPriority;
-              const failureSummary = `[CI Fail] ${issueKey} - ${(failedFile || summaryTitle)}`.slice(0, 250);
-              const existingFailureIssue = await searchExistingFailureIssue(issueKey, fingerprint);
+              const failureSummary = `[CI Fail] ${issueKey} - ${fingerprint.replace(`${issueKey}:`, '')}`.slice(0, 250);
+              let existingFailureIssue = await searchExistingFailureIssue(issueKey, fingerprint);
+              let duplicateFailureIssues = [];
+
+              const legacyIssueMap = new Map();
+              for (const record of group.records) {
+                if (!record.failedFile) continue;
+                const legacyFailureIssues = await searchFailureIssuesByFile(issueKey, record.failedFile);
+                for (const legacyIssue of legacyFailureIssues) {
+                  legacyIssueMap.set(legacyIssue.key, legacyIssue);
+                }
+              }
+
+              const legacyFailureIssues = [...legacyIssueMap.values()];
+              if (existingFailureIssue) {
+                duplicateFailureIssues = legacyFailureIssues.filter((issue) => issue.key !== existingFailureIssue.key);
+              } else if (legacyFailureIssues.length > 0) {
+                existingFailureIssue = legacyFailureIssues[0];
+                duplicateFailureIssues = legacyFailureIssues.slice(1);
+              }
+
               const failureType = existingFailureIssue ? 'LOI CU TAI PHAT' : 'LOI MOI';
-              const failedTestcaseText = failedTestcases.length
-                ? failedTestcases.map((item) => `- ${item}`).join('\n')
-                : '- UI test failed in CodeceptJS';
-              const failureBody = [
-                `CI-FINGERPRINT: ${fingerprint}`,
-                `Trang thai loi: ${failureType}.`,
-                '',
-                fixSummary,
-                '',
-                `FAILED FILE: ${failedFile || 'unknown'}`,
-                'FAILED TESTCASES:',
-                failedTestcaseText,
-                '',
-                `Task cha: ${issueKey} - ${parentIssue.fields.summary}`,
-                `Loai task cha: ${issueType}`,
-                `Trang thai task cha: ${statusName}`,
-                `Priority: ${parentPriority}`,
-                `Due date: ${failureDueDate}`,
-                `Assignee task cha truoc khi CI tao loi: ${currentAssignee}`,
-                '',
-                `Nhanh bi loi: ${branchName}`,
-                `Su kien GitHub: ${eventName}`,
-                `Nguoi phu trach theo commit: ${culprit}`,
-                `Jira assignee lookup: ${assigneeText}`,
-                `GitHub Actions log: ${runUrl}`,
-                '',
-                'Chi tiet loi:',
-                errorReason
-              ].join('\n');
+              const failureBody = buildCompactFailureComment({
+                fingerprint,
+                failureType,
+                labels: failureLabels,
+                records: group.records,
+                issueKey,
+                parentIssue,
+                issueType,
+                statusName,
+                parentPriority,
+                failureDueDate,
+                currentAssignee,
+                branchName,
+                eventName,
+                culprit,
+                assigneeText,
+                runUrl
+              });
+              const failureDescription = buildFailureDescription(parentIssue, failureLabels);
 
               if (existingFailureIssue) {
                 await addComment(existingFailureIssue.key, failureBody);
                 await updateIssueLabels(existingFailureIssue.key, failureLabels, labelsToRemove);
+                await updateIssueFields(existingFailureIssue.key, { description: jiraDoc(failureDescription) });
                 if (failureDueDate !== 'None') {
                   await updateIssueFields(existingFailureIssue.key, { duedate: failureDueDate });
                 }
                 await assignIssue(existingFailureIssue.key, jiraUser);
+                for (const duplicateIssue of duplicateFailureIssues) {
+                  const duplicateStatus = String(duplicateIssue.fields && duplicateIssue.fields.status && duplicateIssue.fields.status.name || '').toLowerCase();
+                  await addComment(duplicateIssue.key, [
+                    `Duplicate CI failure was merged into ${existingFailureIssue.key}.`,
+                    '',
+                    `Reason: workflow now groups failures by test type and module instead of creating one subtask per testcase/file.`,
+                    `CI-FINGERPRINT: ${fingerprint}`,
+                    `Canonical CI failure subtask: ${existingFailureIssue.key}`,
+                    `GitHub Actions log: ${runUrl}`
+                  ].join('\n'));
+                  await updateIssueLabels(duplicateIssue.key, ['ci-duplicate', 'ci-merged'], ['ci-failure']);
+                  if (!duplicateStatus.includes('done') && !duplicateStatus.includes('resolved')) {
+                    await transitionIssue(duplicateIssue.key, ['done', 'complete', 'resolved']);
+                  }
+                  console.log(`Merged duplicate Jira CI failure subtask ${duplicateIssue.key} into ${existingFailureIssue.key}`);
+                }
                 console.log(`Updated existing Jira failure issue ${existingFailureIssue.key} for ${issueKey}`);
               } else {
-                const failureDescription = buildFailureDescription(parentIssue, failureLabels) || failureBody;
                 const created = await createFailureIssue(parentIssue, failureSummary, failureDescription, parentPriority, jiraUser, failureLabels);
                 await addComment(created.key, failureBody);
                 console.log(`Created Jira failure issue ${created.key} under ${issueKey}`);
