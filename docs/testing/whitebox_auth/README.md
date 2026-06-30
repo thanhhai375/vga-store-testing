@@ -58,12 +58,12 @@ CI se chay step:
 
 ```bash
 cd backend/vgashop
-./mvnw -Pwhitebox test
+./mvnw -Pwhitebox -Dtest=AuthIntegrationTest test
 ```
 
 Khi CI hoan tat, co the tai artifact `ci-test-logs` de xem:
 
-- `backend/vgashop/whitebox.log`
+- `backend/vgashop/whitebox-reports/`
 - `backend/vgashop/target/surefire-reports/`
 - `backend/vgashop/target/site/jacoco/`
 
@@ -82,3 +82,4 @@ whitebox_test/cart/integration/CartIntegrationTest.java
 ```
 
 Ghi chu: Jenkins khong duoc dung cho phan white-box nay; white-box CI chay qua GitHub Actions.
+

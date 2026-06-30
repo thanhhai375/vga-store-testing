@@ -9,6 +9,8 @@ on:
       - "fe/**"
       - "fix/**"
       - "fixFe/**"
+      - "whitebox/**"
+      - "fixWhitebox/**"
       - "bugfix/**"
   pull_request:
     branches:
@@ -36,6 +38,14 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
+      - name: Setup Java for white-box tests
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+          cache: maven
+          cache-dependency-path: backend/vgashop/pom.xml
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -100,6 +110,11 @@ jobs:
 
           if [ "$full_regression" != "true" ] && echo "$selector_text" | grep -Eq '(^|[[:space:]])(fe|fixfe)/|kcpm-81|auth-ui|ui-auth|auth ui|fe auth|auth fe|authentication ui'; then
             echo "FE UI branch/commit detected. Skipping API blackbox tests."
+            exit 0
+          fi
+
+          if [ "$full_regression" != "true" ] && echo "$selector_text" | grep -Eq '(^|[[:space:]])(whitebox|fixwhitebox)/|whitebox|white-box|wb'; then
+            echo "White-box branch/commit detected. Skipping API blackbox tests."
             exit 0
           fi
 
@@ -185,6 +200,81 @@ jobs:
 
           exit "$failed"
 
+      - name: Run backend white-box tests with Maven
+        if: always()
+        working-directory: backend/vgashop
+        run: |
+          set +e
+          mkdir -p whitebox-reports
+
+          branch_name="${GITHUB_HEAD_REF:-${GITHUB_REF_NAME:-}}"
+          base_branch="${GITHUB_BASE_REF:-}"
+          commit_message="$(git log -1 --pretty=%B)"
+          selector_text="$(printf '%s\n%s\n%s\n' "$branch_name" "$base_branch" "$commit_message" | tr '[:upper:]' '[:lower:]')"
+
+          full_regression=false
+          if [ "$GITHUB_EVENT_NAME" = "pull_request" ]; then
+            if [ "$base_branch" = "main" ] || [ "$base_branch" = "develop" ]; then
+              full_regression=true
+            fi
+          elif [ "$branch_name" = "main" ] || [ "$branch_name" = "develop" ]; then
+            full_regression=true
+          fi
+
+          selected_test=""
+          if [ "$full_regression" = "true" ]; then
+            selected_test="*Test"
+            echo "Full regression mode: running all white-box tests."
+          else
+            if echo "$selector_text" | grep -Eq '(^|[[:space:]])(whitebox|fixwhitebox)/.*(auth|authentication)|auth.*whitebox|authentication.*whitebox|whitebox.*auth|white-box.*auth|kcpm-128|kcpm-87'; then
+              selected_test="AuthIntegrationTest"
+            fi
+
+            if [ -z "$selected_test" ]; then
+              echo "No white-box selector found. Skipping backend white-box tests."
+              exit 0
+            fi
+          fi
+
+          log_file="whitebox-reports/${selected_test}.log"
+          echo "White-box tests to run: $selected_test"
+          ./mvnw -Pwhitebox -Dtest="$selected_test" test 2>&1 | tee "$log_file"
+          whitebox_status=${PIPESTATUS[0]}
+
+          if [ "$whitebox_status" -ne 0 ]; then
+            failed_cases="$(grep -E "<<< FAILURE!|<<< ERROR!|Tests run:|Failures:|Errors:|AssertionFailedError|java\\.lang\\.|expected:|but was:" "$log_file" | sed 's/^[[:space:]]*//' | tail -n 60 || true)"
+            failure_locations="$(grep -E "at com\\.example\\.vgashop\\.|AuthIntegrationTest" "$log_file" | sed 's/^[[:space:]]*//' | head -n 40 || true)"
+            {
+              echo "FAILED FILE: backend/vgashop/src/test/java/com/example/vgashop/whitebox_test"
+              echo "  - Script: ./mvnw -Pwhitebox -Dtest=$selected_test test"
+              echo "  - Branch: $branch_name"
+              echo "  - Commit: ${GITHUB_SHA:-unknown}"
+              echo "FAILED TESTCASE: $selected_test"
+              echo ""
+              echo "===== Failure reason ====="
+              if [ -n "$failed_cases" ]; then
+                printf '%s\n' "$failed_cases"
+              else
+                echo "Could not extract a concise Maven/JUnit failure. Check the GitHub Actions log artifact."
+              fi
+              echo ""
+              echo "===== Failure location ====="
+              if [ -n "$failure_locations" ]; then
+                printf '%s\n' "$failure_locations"
+              else
+                echo "backend/vgashop/src/test/java/com/example/vgashop/whitebox_test"
+              fi
+              echo ""
+              echo "===== Coverage artifact ====="
+              echo "backend/vgashop/target/site/jacoco/index.html"
+              echo ""
+              echo "===== Fix hint ====="
+              echo "Check the failed branch/condition in the Auth service/controller, expected HTTP status/body, test data setup, and mocked/in-memory authentication state."
+            } > "../../error_reason_WHITEBOX_${selected_test}.txt"
+          fi
+
+          exit "$whitebox_status"
+
       - name: Run UI tests with CodeceptJS
         if: always()
         working-directory: automation
@@ -220,6 +310,11 @@ jobs:
             selected_files="$(find ./E2E/modules -name "*_test.js" | sort)"
           else
             echo "Personal branch mode: selecting UI test files from branch/commit."
+
+            if echo "$selector_text" | grep -Eq '(^|[[:space:]])(whitebox|fixwhitebox)/|whitebox|white-box|wb'; then
+              echo "White-box branch/commit detected. Skipping UI tests."
+              exit 0
+            fi
 
             if echo "$selector_text" | grep -Eq '(^|[[:space:]])(fe|fixfe)/(auth|authentication)|kcpm-81|auth-ui|ui-auth|auth ui|fe auth|auth fe|authentication ui'; then
               selected_files="$(printf '%s\n%s\n' "$selected_files" "$(find ./E2E/modules/1_Authentication -name "*_test.js" | sort)")"
@@ -270,12 +365,22 @@ jobs:
               failure_locations="$(grep -E " at Test\\.<anonymous>| File: file:|File: file:" "$log_file" | sed 's/^[[:space:]]*//' | head -n 20 || true)"
               failure_screenshots="$(grep -E "screenshot: .*\\.png" "$log_file" | sed 's/^[[:space:]]*[- ]*//' | head -n 20 || true)"
               fix_hint="Check the failed UI expectation, frontend feedback state, backend response, and test data for this testcase."
+              likely_reason="UI assertion failed. The actual screen did not match the expected user-facing result in the test."
               if echo "$failure_reasons" | grep -qi "still not visible"; then
+                likely_reason="Expected UI element did not become visible after the action."
                 fix_hint="Expected UI element did not appear in time. Check whether the action succeeds, whether the selector is correct, and whether FE renders the expected success/error feedback."
               elif echo "$failure_reasons" | grep -qi "was not found on page"; then
+                likely_reason="Expected text/message was not found on the page after submit."
                 fix_hint="Expected text was not shown after submit. Check the actual UI message, toast/alert behavior, backend validation response, and whether the test assertion is too strict."
               elif echo "$failure_reasons" | grep -qi "Timeout"; then
+                likely_reason="UI timed out before reaching the expected state."
                 fix_hint="UI timed out waiting for the expected state. Check loading state, route transition, API response time, and selector stability."
+              elif echo "$failure_reasons" | grep -qi "ElementNotFound"; then
+                likely_reason="The selector or target element was not found."
+                fix_hint="Check whether the selector still matches the UI, whether the element is rendered in this flow, and whether the page/role is correct."
+              elif echo "$failure_reasons" | grep -qi "AssertionError"; then
+                likely_reason="The actual UI value/text did not match the expected assertion."
+                fix_hint="Compare expected text/value in the test with the actual UI response, then decide whether to fix frontend behavior or update the assertion."
               fi
               {
                 echo "FAILED FILE: $test_file"
@@ -287,6 +392,9 @@ jobs:
                 else
                   echo "FAILED TESTCASE: UI test failed in CodeceptJS"
                 fi
+                echo ""
+                echo "===== Likely root cause ====="
+                echo "$likely_reason"
                 echo ""
                 echo "===== Failure reason ====="
                 if [ -n "$failure_reasons" ]; then
@@ -329,6 +437,9 @@ jobs:
             automation/*.log
             automation/reports/**
             automation/E2E/output/**
+            backend/vgashop/whitebox-reports/**
+            backend/vgashop/target/surefire-reports/**
+            backend/vgashop/target/site/jacoco/**
           if-no-files-found: ignore
 
       - name: Create or update Jira failure subtask
@@ -536,15 +647,17 @@ jobs:
 
           function detectFailureLabels(errorFileName, failedFile) {
             const source = `${errorFileName}\n${failedFile || ''}`.toLowerCase();
-            const labels = ['automation-test', 'blackbox', 'github-actions', 'ci-failure'];
+            const labels = ['automation-test', 'github-actions', 'ci-failure'];
 
             if (source.includes('error_reason_ui') || source.includes('/e2e/') || source.includes('\\e2e\\')) {
-              labels.push('ui', 'fe', 'codeceptjs');
+              labels.push('blackbox', 'ui', 'fe', 'codeceptjs');
+            } else if (source.includes('error_reason_whitebox') || source.includes('whitebox') || source.includes('white-box') || source.includes('mvnw') || source.includes('surefire')) {
+              labels.push('whitebox', 'backend', 'junit', 'maven', 'jacoco');
             } else if (source.includes('error_reason_api') || source.includes('newman') || source.includes('postman')) {
-              labels.push('api', 'newman', 'postman');
+              labels.push('blackbox', 'api', 'newman', 'postman');
             }
 
-            if (source.includes('1_authentication')) labels.push('module-auth');
+            if (source.includes('1_authentication') || source.includes('authentication') || source.includes('authintegrationtest')) labels.push('module-auth');
             else if (source.includes('2_shopping_experience')) labels.push('module-shopping');
             else if (source.includes('3_cart') || source.includes('payment')) labels.push('module-cart-payment');
             else if (source.includes('4_product') || source.includes('category')) labels.push('module-product-category');
@@ -553,6 +666,64 @@ jobs:
             else if (source.includes('7_user_profile')) labels.push('module-user-profile');
 
             return [...new Set(labels)];
+          }
+
+          function detectFailureKind(labels) {
+            if (labels.includes('whitebox')) return 'WHITEBOX_BACKEND';
+            if (labels.includes('ui')) return 'FE_UI';
+            if (labels.includes('api')) return 'API_POSTMAN';
+            return 'BUILD_OR_ENVIRONMENT';
+          }
+
+          function extractSection(text, title) {
+            const escapedTitle = title.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const regex = new RegExp(`===== ${escapedTitle} =====\\n([\\s\\S]*?)(?=\\n===== |$)`);
+            const match = String(text || '').match(regex);
+            return match ? match[1].trim() : '';
+          }
+
+          function buildFixSummary(errorReason, labels) {
+            const kind = detectFailureKind(labels);
+            const likelyRootCause = extractSection(errorReason, 'Likely root cause');
+            const failureReason = extractSection(errorReason, 'Failure reason');
+            const failedApiSummary = extractSection(errorReason, 'Failed API request/assertion summary');
+            const statusContext = extractSection(errorReason, 'Response/status context');
+            const failureLocation = extractSection(errorReason, 'Failure location');
+            const fixHint = extractSection(errorReason, 'Fix hint');
+            const coverageArtifact = extractSection(errorReason, 'Coverage artifact');
+            const screenshotArtifact = extractSection(errorReason, 'Screenshot artifact');
+
+            const lines = [
+              `Loai test: ${kind}.`,
+              '',
+              'Loi can sua:'
+            ];
+
+            if (likelyRootCause) lines.push(likelyRootCause);
+            else if (failureReason) lines.push(failureReason);
+            else if (failedApiSummary) lines.push(failedApiSummary);
+            else lines.push('CI failed but could not extract a concise root cause. Open GitHub Actions log/artifact for full context.');
+
+            if (failedApiSummary) {
+              lines.push('', 'API/Postman request/assertion:', failedApiSummary);
+            }
+            if (statusContext) {
+              lines.push('', 'HTTP/status context:', statusContext);
+            }
+            if (failureLocation) {
+              lines.push('', 'Vi tri loi:', failureLocation);
+            }
+            if (screenshotArtifact) {
+              lines.push('', 'Screenshot artifact:', screenshotArtifact);
+            }
+            if (coverageArtifact) {
+              lines.push('', 'Coverage artifact:', coverageArtifact);
+            }
+            if (fixHint) {
+              lines.push('', 'Huong fix:', fixHint);
+            }
+
+            return lines.join('\n');
           }
 
           async function createFailureIssue(parentIssue, summary, description, priorityName, jiraUser, labels = ['ci-failure']) {
@@ -639,7 +810,12 @@ jobs:
               const fingerprintParts = [issueKey, failedFile || summaryTitle, primaryFailedTestcase].filter(Boolean);
               const fingerprint = fingerprintParts.join(':');
               const failureLabels = detectFailureLabels(file, failedFile);
-              const labelsToRemove = failureLabels.includes('ui') ? ['newman', 'postman', 'api'] : ['ui', 'fe', 'codeceptjs'];
+              const fixSummary = buildFixSummary(errorReason, failureLabels);
+              const labelsToRemove = failureLabels.includes('whitebox')
+                ? ['blackbox', 'ui', 'fe', 'codeceptjs', 'api', 'newman', 'postman']
+                : failureLabels.includes('ui')
+                  ? ['whitebox', 'backend', 'junit', 'maven', 'jacoco', 'newman', 'postman', 'api']
+                  : ['whitebox', 'backend', 'junit', 'maven', 'jacoco', 'ui', 'fe', 'codeceptjs'];
 
               let culprit = sh("git log -1 --pretty=format:'%an <%ae>'");
               if (failedFile) {
@@ -678,6 +854,8 @@ jobs:
                 `CI-FINGERPRINT: ${fingerprint}`,
                 `Trang thai loi: ${failureType}.`,
                 '',
+                fixSummary,
+                '',
                 `FAILED FILE: ${failedFile || 'unknown'}`,
                 'FAILED TESTCASE:',
                 failedTestcaseText,
@@ -709,6 +887,7 @@ jobs:
                 console.log(`Updated existing Jira failure issue ${existingFailureIssue.key} for ${issueKey}`);
               } else {
                 const created = await createFailureIssue(parentIssue, failureSummary, failureBody, parentPriority, jiraUser, failureLabels);
+                await addComment(created.key, failureBody);
                 console.log(`Created Jira failure issue ${created.key} under ${issueKey}`);
               }
             }

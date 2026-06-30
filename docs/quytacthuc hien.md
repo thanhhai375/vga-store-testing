@@ -60,7 +60,8 @@ fixFe/KCPM-158-auth-fe
 ```
 
 `feature/...` va `fix/...` dung cho API/Postman.  
-`fe/...` va `fixFe/...` dung cho FE UI.
+`fe/...` va `fixFe/...` dung cho FE UI.  
+`whitebox/...` va `fixWhitebox/...` dung cho backend white-box.
 
 ---
 
@@ -163,6 +164,14 @@ git pull origin sprint7
 git switch -c fe/KCPM-83-cart-fe
 ```
 
+Hoac voi white-box:
+
+```bash
+git switch sprint7
+git pull origin sprint7
+git switch -c whitebox/KCPM-128-auth
+```
+
 ---
 
 ## 7. Thanh vien da push branch truoc khi CI chung duoc sua
@@ -216,6 +225,13 @@ Chay FE UI:
 
 ```bash
 npm run test:cart:fe
+```
+
+Chay backend white-box:
+
+```bash
+cd backend/vgashop
+.\mvnw.cmd -Pwhitebox -Dtest=AuthIntegrationTest test
 ```
 
 Neu can chay truc tiep CodeceptJS:
@@ -307,6 +323,17 @@ Response/status context
 Fix hint
 ```
 
+White-box fail:
+
+```text
+FAILED FILE
+FAILED TESTCASE
+Failure reason
+Failure location
+Coverage artifact
+Fix hint
+```
+
 Log day du va screenshot nam trong GitHub Actions artifact, khong dua log dai vao Jira.
 
 ---
@@ -346,6 +373,12 @@ Labels FE UI:
 automation-test, blackbox, github-actions, ci-failure, ui, fe, codeceptjs, module-...
 ```
 
+Labels white-box:
+
+```text
+automation-test, github-actions, ci-failure, whitebox, backend, junit, maven, jacoco, module-...
+```
+
 Khi CI pass, workflow co gang comment pass va chuyen subtask loi sang Done/Resolved.
 
 ---
@@ -366,6 +399,7 @@ Vi du:
 ```text
 fixFe/KCPM-158-auth-fe
 fix/KCPM-157-cart-api
+fixWhitebox/KCPM-160-auth
 ```
 
 ---
@@ -394,6 +428,7 @@ Neu `sprint7` can xanh/pass, khong merge branch con test fail chua duoc chap nha
 - Branch thieu ten module.
 - Commit thieu Jira key khi viet test/fix loi.
 - Dung `feature/...` cho FE UI hoac dung `fe/...` cho API/Postman.
+- Dung sai `whilebox`; ten dung la `whitebox`.
 - Dung `git add .` khi co file khong lien quan.
 - Commit `automation/reports/`.
 - Dua log CodeceptJS/Newman qua dai vao Jira.
