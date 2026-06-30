@@ -211,6 +211,7 @@ jobs:
         run: |
           set +e
           mkdir -p whitebox-reports
+          chmod +x ./mvnw
 
           branch_name="${GITHUB_HEAD_REF:-${GITHUB_REF_NAME:-}}"
           base_branch="${GITHUB_BASE_REF:-}"
