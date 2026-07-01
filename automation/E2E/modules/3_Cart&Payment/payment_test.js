@@ -2,14 +2,14 @@
 // MODULE: 3_Cart&Payment — FE Payment
 // Framework: CodeceptJS + Playwright
 // File: automation/E2E/modules/3_Cart&Payment/payment_test.js
-// baseURL: ' + (process.env.USER_FE_URL || 'http://localhost:5173') + '
+// baseURL: process.env.USER_FE_URL || 'http://localhost:5173'
 // Account: hai123 / hai123
 // ==============================================================
 
 const BASE_URL = process.env.USER_FE_URL || 'http://localhost:5173';
 
-const TEST_USER = 'hai123';
-const TEST_PASSWORD = 'hai123';
+const TEST_USER = process.env.TEST_USER || 'hai123';
+const TEST_PASSWORD = process.env.TEST_PASSWORD || 'hai123';
 
 const DATA = {
 fullName: 'Nguyễn Ngọc Thanh',
