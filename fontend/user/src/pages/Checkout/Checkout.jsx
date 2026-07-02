@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
@@ -38,6 +38,7 @@ const Checkout = () => {
   const [shippingMethod, setShippingMethod] = useState('standard');
   const [paymentMethod, setPaymentMethod] = useState('COD');
   const [loading, setLoading] = useState(false);
+  const isSubmittingRef = useRef(false);
   const [error, setError] = useState('');
 
   // Address
@@ -154,6 +155,10 @@ const Checkout = () => {
 
   const handlePlaceOrder = async (e) => {
     e.preventDefault();
+
+    // Khoa dong bo de ngan hai lan submit lien tiep tao hai don hang.
+    if (isSubmittingRef.current) return;
+
     if (checkoutItems.length === 0) return;
 
     const showError = (msg) => {
@@ -188,6 +193,8 @@ const Checkout = () => {
       return;
     }
 
+    // useRef cap nhat ngay lap tuc, khac voi state phai cho React render lai.
+    isSubmittingRef.current = true;
     setLoading(true);
     setError('');
 
@@ -267,6 +274,7 @@ const Checkout = () => {
       console.error('Lỗi đặt hàng:', err);
       showError(err?.response?.data?.message || err?.response?.data || 'Đã xảy ra lỗi hệ thống khi kết nối Backend!');
     } finally {
+      isSubmittingRef.current = false;
       setLoading(false);
     }
   };

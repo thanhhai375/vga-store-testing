@@ -71,7 +71,7 @@ backend/vgashop/src/test/java/com/example/vgashop/whitebox_test/user_profile/int
 Branch CI:
 
 ```text
-whitebox/KCPM-88-profile
+whitebox/KCPM-134-profile
 ```
 
 Lenh chay:
