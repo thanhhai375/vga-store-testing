@@ -1,956 +1,980 @@
 // ==============================================================
 // MODULE: 3_Cart&Payment — FE Payment
 // Framework: CodeceptJS + Playwright
-// File: automation/E2E/modules/3_Cart&Payment/payment_test.js
-// baseURL: process.env.USER_FE_URL || 'http://localhost:5173'
-// Account: hai123 / hai123
+// Jira: KCPM-83
 // ==============================================================
 
-const BASE_URL = process.env.USER_FE_URL || 'http://localhost:5173';
+const assert = require('assert');
 
+const BASE_URL = process.env.USER_FE_URL || 'http://localhost:5173';
 const TEST_USER = process.env.TEST_USER || 'hai123';
 const TEST_PASSWORD = process.env.TEST_PASSWORD || 'hai123';
 
 const DATA = {
-fullName: 'Nguyễn Ngọc Thanh',
-shortName: 'A',
-validPhone: '0912345678',
-invalidPhoneLength: '123456789',
-invalidPhonePrefix: '0612345678',
-invalidPhoneLetters: '09abc45678',
-street: '123 Nguyễn Huệ',
+  fullName: 'Nguyễn Ngọc Thanh',
+  shortName: 'A',
+  validPhone: '0912345678',
+  invalidPhoneBoundary: '091234567',
+  street: '123 Nguyễn Huệ',
 };
 
 const EL = {
-// Đăng nhập
-authModal: '.auth-modal',
+  authModal: '.auth-modal',
+  authAccount:
+    '(//div[contains(@class,"auth-modal")]//input[not(@type="password")])[1]',
+  authPassword:
+    '(//div[contains(@class,"auth-modal")]//input[@type="password"])[1]',
+  authSubmit: '.auth-submit-btn',
 
-authAccount:
-'(//div[contains(@class,"auth-modal")]//input[not(@type="password")])[1]',
+  firstProductLink: '(//a[starts-with(@href, "/product/")])[1]',
+  addToCart: '.btn-add-cart',
+  addPopup: '.custom-popup-content',
+  goToCartFromPopup: '.popup-btn-close',
 
-authPassword:
-'(//div[contains(@class,"auth-modal")]//input[@type="password"])[1]',
+  cartRow: '.cart-item-row',
+  clearCart: '.btn-clear-all',
+  checkoutButton: '.btn-checkout-now',
 
-authSubmit: '.auth-submit-btn',
+  checkoutForm: '.checkout-form-column',
+  checkoutEmpty: '.checkout-empty',
+  returnShop: '.btn-return-shop',
 
-// Sản phẩm dùng để chuẩn bị dữ liệu thanh toán
-firstProductLink:
-'(//a[starts-with(@href, "/product/")])[1]',
+  fullName: 'input[name="fullName"]',
+  phone: 'input[name="phone"]',
+  province: '(//form[contains(@class,"checkout-form-column")]//select)[1]',
+  district: '(//form[contains(@class,"checkout-form-column")]//select)[2]',
+  ward: '(//form[contains(@class,"checkout-form-column")]//select)[3]',
+  street: 'input[placeholder="Số nhà, tên đường, tòa nhà..."]',
+  newAddressCard: '.add-new-card',
 
-addToCart: '.btn-add-cart',
-addPopup: '.custom-popup-content',
-goToCartFromPopup: '.popup-btn-close',
+  standardShipping: 'input[type="radio"][value="standard"]',
+  expressShipping: 'input[type="radio"][value="express"]',
 
-// Giỏ hàng chỉ dùng để chuẩn bị dữ liệu
-cartRow: '.cart-item-row',
-clearCart: '.btn-clear-all',
-checkoutButton: '.btn-checkout-now',
+  codPayment: 'input[name="payment"][value="COD"]',
+  bankTransferPayment: 'input[name="payment"][value="BANK_TRANSFER"]',
+  vnpayPayment: 'input[name="payment"][value="VNPAY"]',
+  bankTransferBox: '.bank-transfer-box',
 
-// Checkout
-checkoutForm: '.checkout-form-column',
+  placeOrder: '.btn-place-order',
+  checkoutError: '.checkout-error-msg',
+  successPopup: '.checkout-popup-content',
+  orderCode: '.popup-order-code',
 
-fullName:
-'input[name="fullName"]',
+  summarySection: '.checkout-summary-section',
+  summaryItem: '.checkout-summary-item',
+  itemQty: '.checkout-summary-item .item-qty',
+  itemPrice: '.checkout-summary-item .item-price',
 
-phone:
-'input[name="phone"]',
+  subtotalValue:
+    '//div[contains(@class,"checkout-total-line")][span[normalize-space()="Tạm tính"]]/span[last()]',
 
-street:
-'input[placeholder="Số nhà, tên đường, tòa nhà..."]',
+  shippingValue:
+    '//div[contains(@class,"checkout-total-line")][span[normalize-space()="Phí vận chuyển"]]/span[last()]',
 
-standardShipping:
-'input[type="radio"][value="standard"]',
-
-expressShipping:
-'input[type="radio"][value="express"]',
-
-codPayment:
-'input[name="payment"][value="COD"]',
-
-bankTransferPayment:
-'input[name="payment"][value="BANK_TRANSFER"]',
-
-placeOrder: '.btn-place-order',
-checkoutError: '.checkout-error-msg',
-checkoutEmpty: '.checkout-empty',
-returnShop: '.btn-return-shop',
-successPopup: '.checkout-popup-content',
-orderCode: '.popup-order-code',
+  finalPrice: '.final-price',
 };
 
-// ==============================================================
-// HELPER: Chỉ giữ lại một tab trình duyệt
-// ==============================================================
+function currencyToNumber(text) {
+  return Number(String(text).replace(/[^0-9]/g, ''));
+}
 
 async function keepOnlyOneTab(I) {
-const numberOfTabs =
-await I.grabNumberOfOpenTabs();
+  const numberOfTabs = await I.grabNumberOfOpenTabs();
 
-if (numberOfTabs > 1) {
-await I.closeOtherTabs();
+  if (numberOfTabs > 1) {
+    await I.closeOtherTabs();
+  }
+
+  await I.waitForNumberOfTabs(1, 5);
 }
-
-await I.waitForNumberOfTabs(1, 5);
-}
-
-// ==============================================================
-// HELPER: Đăng nhập nếu modal xuất hiện
-// ==============================================================
 
 async function loginIfModalAppears(I) {
-const modalCount =
-await I.grabNumberOfVisibleElements(
-EL.authModal
-);
+  const modalCount = await I.grabNumberOfVisibleElements(EL.authModal);
 
-if (modalCount === 0) {
-return false;
+  if (modalCount === 0) {
+    return false;
+  }
+
+  I.waitForElement(EL.authAccount, 10);
+  I.fillField(EL.authAccount, TEST_USER);
+  I.fillField(EL.authPassword, TEST_PASSWORD);
+  I.click(EL.authSubmit);
+  I.waitForInvisible(EL.authModal, 20);
+
+  return true;
 }
-
-I.waitForElement(
-EL.authAccount,
-10
-);
-
-I.fillField(
-EL.authAccount,
-TEST_USER
-);
-
-I.fillField(
-EL.authPassword,
-TEST_PASSWORD
-);
-
-I.click(
-EL.authSubmit
-);
-
-I.waitForInvisible(
-EL.authModal,
-20
-);
-
-I.wait(1);
-
-return true;
-}
-
-// ==============================================================
-// HELPER: Đăng nhập và đưa giỏ hàng về trạng thái rỗng
-// ==============================================================
 
 async function loginAndClearCart(I) {
-// Bước 1: Mở trang danh sách sản phẩm
-I.amOnPage(
-BASE_URL + '/products'
-);
+  I.amOnPage(`${BASE_URL}/products`);
+  I.waitForElement(EL.firstProductLink, 20);
+  I.click(EL.firstProductLink);
 
-I.waitForElement(
-EL.firstProductLink,
-20
-);
+  I.waitForElement(EL.addToCart, 20);
+  I.scrollTo(EL.addToCart);
+  I.click(EL.addToCart);
 
-I.click(
-EL.firstProductLink
-);
+  await loginIfModalAppears(I);
 
-// Bước 2: Bấm thêm giỏ để kiểm tra đăng nhập
-I.waitForElement(
-EL.addToCart,
-20
-);
+  I.amOnPage(`${BASE_URL}/cart`);
+  I.wait(1);
 
-I.scrollTo(
-EL.addToCart
-);
+  const clearButtonCount =
+    await I.grabNumberOfVisibleElements(EL.clearCart);
 
-I.click(
-EL.addToCart
-);
+  if (clearButtonCount > 0) {
+    I.click(EL.clearCart);
+    I.waitForText('Giỏ hàng đang trống', 20);
+  }
 
-I.wait(1);
-
-// Bước 3: Đăng nhập nếu modal xuất hiện
-await loginIfModalAppears(I);
-
-// Không bấm thêm sản phẩm lần thứ hai ở đây.
-// Chuyển thẳng tới giỏ hàng để xóa dữ liệu cũ.
-I.amOnPage(
-BASE_URL + '/cart'
-);
-
-I.wait(2);
-
-// Bước 4: Xóa toàn bộ dữ liệu giỏ hàng cũ
-const clearButtonCount =
-await I.grabNumberOfVisibleElements(
-EL.clearCart
-);
-
-if (clearButtonCount > 0) {
-I.click(
-EL.clearCart
-);
-
-I.waitForText(
-  'Giỏ hàng đang trống',
-  20
-);
-
+  await keepOnlyOneTab(I);
 }
-
-await keepOnlyOneTab(I);
-}
-
-// ==============================================================
-// HELPER: Thêm đúng một sản phẩm và mở Checkout
-// ==============================================================
 
 async function openCheckoutWithOneProduct(I) {
-// Bước 1: Đăng nhập và xóa dữ liệu giỏ hàng cũ
-await loginAndClearCart(I);
+  await loginAndClearCart(I);
 
-// Bước 2: Mở sản phẩm đầu tiên
-I.amOnPage(
-BASE_URL + '/products'
-);
+  I.amOnPage(`${BASE_URL}/products`);
+  I.waitForElement(EL.firstProductLink, 20);
+  I.click(EL.firstProductLink);
 
-I.waitForElement(
-EL.firstProductLink,
-20
-);
+  I.waitForElement(EL.addToCart, 20);
+  I.scrollTo(EL.addToCart);
+  I.click(EL.addToCart);
 
-I.click(
-EL.firstProductLink
-);
+  const loggedInAgain = await loginIfModalAppears(I);
 
-// Bước 3: Thêm sản phẩm vào giỏ
-I.waitForElement(
-EL.addToCart,
-20
-);
+  if (loggedInAgain) {
+    I.waitForElement(EL.addToCart, 20);
+    I.scrollTo(EL.addToCart);
+    I.click(EL.addToCart);
+  }
 
-I.scrollTo(
-EL.addToCart
-);
+  I.waitForElement(EL.addPopup, 20);
+  I.see('Đã thêm sản phẩm vào giỏ hàng', EL.addPopup);
+  I.click(EL.goToCartFromPopup);
 
-I.click(
-EL.addToCart
-);
+  I.waitInUrl('/cart', 20);
+  I.waitForElement(EL.cartRow, 20);
+  I.waitForElement(EL.checkoutButton, 20);
+  I.click(EL.checkoutButton);
 
-I.wait(1);
+  I.waitInUrl('/checkout', 20);
+  I.waitForElement(EL.checkoutForm, 20);
 
-// Đăng nhập lại nếu phiên đăng nhập không còn
-const loggedInAgain =
-await loginIfModalAppears(I);
-
-if (loggedInAgain) {
-I.waitForElement(
-EL.addToCart,
-20
-);
-
-I.scrollTo(
-  EL.addToCart
-);
-
-I.click(
-  EL.addToCart
-);
-
+  await keepOnlyOneTab(I);
 }
 
-// Bước 4: Kiểm tra popup thêm sản phẩm
-I.waitForElement(
-EL.addPopup,
-20
-);
+async function ensureNewAddressForm(I) {
+  const addNewCount =
+    await I.grabNumberOfVisibleElements(EL.newAddressCard);
 
-I.see(
-'Đã thêm sản phẩm vào giỏ hàng'
-);
+  if (addNewCount > 0) {
+    I.click(EL.newAddressCard);
+  }
 
-I.click(
-EL.goToCartFromPopup
-);
-
-// Dùng URL tuyệt đối để không bị lấy nhầm cổng 5174
-I.waitInUrl(
-BASE_URL + '/cart',
-20
-);
-
-I.waitForElement(
-EL.cartRow,
-20
-);
-
-// Bước 5: Mở trang Checkout
-I.waitForElement(
-EL.checkoutButton,
-20
-);
-
-I.click(
-EL.checkoutButton
-);
-
-I.waitInUrl(
-BASE_URL + '/checkout',
-20
-);
-
-I.waitForElement(
-EL.checkoutForm,
-20
-);
-
-await keepOnlyOneTab(I);
+  I.waitForElement(EL.province, 20);
 }
 
-// ==============================================================
-// HELPER: Chọn option đầu tiên trong dropdown địa chỉ
-//
-// 0 = Tỉnh/Thành phố
-// 1 = Quận/Huyện
-// 2 = Phường/Xã
-// ==============================================================
-
-async function selectFirstAddressOption(
-I,
-selectIndex
+async function selectFirstAvailableOption(
+  I,
+  selectIndex,
+  selectLocator
 ) {
-await I.waitForFunction(
-(index) => {
-const selects =
-document.querySelectorAll(
-'.checkout-form-column select'
-);
+  await I.waitForFunction(
+    (index) => {
+      const select =
+        document.querySelectorAll(
+          '.checkout-form-column select'
+        )[index];
 
-  const select =
-    selects[index];
-
-  return Boolean(
-    select &&
-    !select.disabled &&
-    select.options &&
-    select.options.length > 1
+      return Boolean(
+        select &&
+          !select.disabled &&
+          Array.from(select.options).some(
+            (option) =>
+              !option.disabled && option.value
+          )
+      );
+    },
+    [selectIndex],
+    25
   );
-},
-[selectIndex],
-25
 
+  const optionLocator =
+    `(${selectLocator}/option[` +
+    `not(@disabled) and string-length(@value) > 0` +
+    `])[1]`;
+
+  const optionValue =
+    await I.grabAttributeFrom(optionLocator, 'value');
+
+  I.selectOption(selectLocator, optionValue);
+}
+
+async function fillHcmAddressByUserActions(I) {
+  await ensureNewAddressForm(I);
+
+  await I.waitForFunction(
+    () => {
+      const select =
+        document.querySelectorAll(
+          '.checkout-form-column select'
+        )[0];
+
+      return Boolean(
+        select &&
+          Array.from(select.options).some(
+            (option) =>
+              /Hồ Chí Minh/i.test(
+                option.textContent || ''
+              )
+          )
+      );
+    },
+    [],
+    25
+  );
+
+  I.selectOption(
+    EL.province,
+    'Thành phố Hồ Chí Minh'
+  );
+
+  await selectFirstAvailableOption(
+    I,
+    1,
+    EL.district
+  );
+
+  await selectFirstAvailableOption(
+    I,
+    2,
+    EL.ward
+  );
+
+  I.fillField(EL.street, DATA.street);
+}
+
+async function fillValidCustomer(I) {
+  I.fillField(EL.fullName, DATA.fullName);
+  I.fillField(EL.phone, DATA.validPhone);
+}
+
+async function installOrderErrorMock(
+  I,
+  status,
+  message
+) {
+  await I.usePlaywrightTo(
+    'mock create-order failure',
+    async ({ page }) => {
+      await page.route(
+        '**/api/orders',
+        async (route) => {
+          if (route.request().method() !== 'POST') {
+            await route.continue();
+            return;
+          }
+
+          await route.fulfill({
+            status,
+            contentType: 'application/json',
+            body: JSON.stringify({ message }),
+          });
+        }
+      );
+    }
+  );
+}
+
+Feature('KCPM-83 - Payment FE E2E');
+
+After(async ({ I }) => {
+  await keepOnlyOneTab(I);
+});
+
+Scenario(
+  'FE_PAYMENT_01 | Giỏ hàng trống → Không hiển thị form Checkout',
+  async ({ I }) => {
+    await loginAndClearCart(I);
+
+    I.amOnPage(`${BASE_URL}/checkout`);
+
+    I.waitForElement(EL.checkoutEmpty, 20);
+    I.see('Giỏ hàng của bạn đang trống!');
+    I.dontSeeElement(EL.checkoutForm);
+  }
 );
 
-await I.executeScript(
-(index) => {
-const select =
-document.querySelectorAll(
-'.checkout-form-column select'
-)[index];
+Scenario(
+  'FE_PAYMENT_02 | Có sản phẩm → Hiển thị đầy đủ form và phương thức thanh toán',
+  async ({ I }) => {
+    await openCheckoutWithOneProduct(I);
 
-  select.selectedIndex = 1;
+    I.seeElement(EL.checkoutForm);
+    I.seeElement(EL.fullName);
+    I.seeElement(EL.phone);
+    I.seeElement(EL.standardShipping);
+    I.seeElement(EL.expressShipping);
+    I.seeElement(EL.codPayment);
+    I.seeElement(EL.bankTransferPayment);
+    I.seeElement(EL.vnpayPayment);
+    I.seeElement(EL.placeOrder);
+  }
+);
 
-  select.dispatchEvent(
-    new Event(
-      'change',
-      {
-        bubbles: true,
+Scenario(
+  'FE_PAYMENT_03 | Tóm tắt đơn hàng → Đúng tạm tính và tổng tiền giao tiêu chuẩn',
+  async ({ I }) => {
+    await openCheckoutWithOneProduct(I);
+
+    I.seeElement(EL.summaryItem);
+    I.see('SL: 1', EL.summarySection);
+    I.seeCheckboxIsChecked(EL.standardShipping);
+
+    const itemPrice = currencyToNumber(
+      await I.grabTextFrom(EL.itemPrice)
+    );
+
+    const subtotal = currencyToNumber(
+      await I.grabTextFrom(EL.subtotalValue)
+    );
+
+    const finalTotal = currencyToNumber(
+      await I.grabTextFrom(EL.finalPrice)
+    );
+
+    assert.strictEqual(
+      subtotal,
+      itemPrice,
+      'Tạm tính phải bằng giá sản phẩm với số lượng 1'
+    );
+
+    assert.strictEqual(
+      finalTotal,
+      subtotal,
+      'Giao tiêu chuẩn miễn phí nên tổng phải bằng tạm tính'
+    );
+
+    I.see('Miễn phí', EL.summarySection);
+  }
+);
+
+Scenario(
+  'FE_PAYMENT_04 | Bỏ trống trường bắt buộc → Trình duyệt chặn submit',
+  async ({ I }) => {
+    await openCheckoutWithOneProduct(I);
+    await ensureNewAddressForm(I);
+
+    I.clearField(EL.fullName);
+    I.clearField(EL.phone);
+    I.clearField(EL.street);
+
+    const validation =
+      await I.executeScript(() => {
+        const form =
+          document.querySelector(
+            '.checkout-form-column'
+          );
+
+        const invalidFields = Array.from(
+          form.querySelectorAll('[required]')
+        ).filter(
+          (element) =>
+            !element.checkValidity()
+        ).length;
+
+        return {
+          formValid: form.checkValidity(),
+          invalidFields,
+        };
+      });
+
+    assert.strictEqual(
+      validation.formValid,
+      false
+    );
+
+    assert.ok(
+      validation.invalidFields >= 3,
+      'Phải có các trường bắt buộc chưa hợp lệ'
+    );
+
+    I.click(EL.placeOrder);
+    I.dontSeeElement(EL.successPopup);
+  }
+);
+
+Scenario(
+  'FE_PAYMENT_05 | Số điện thoại 9 chữ số → Hiển thị lỗi',
+  async ({ I }) => {
+    await openCheckoutWithOneProduct(I);
+    await fillHcmAddressByUserActions(I);
+
+    I.fillField(
+      EL.fullName,
+      DATA.fullName
+    );
+
+    I.fillField(
+      EL.phone,
+      DATA.invalidPhoneBoundary
+    );
+
+    I.click(EL.placeOrder);
+
+    I.waitForElement(
+      EL.checkoutError,
+      20
+    );
+
+    I.see(
+      'Invalid phone number',
+      EL.checkoutError
+    );
+
+    I.see(
+      'Must be 10 digits',
+      EL.checkoutError
+    );
+  }
+);
+
+Scenario(
+  'FE_PAYMENT_06 | Họ tên chỉ có một ký tự → Hiển thị lỗi',
+  async ({ I }) => {
+    await openCheckoutWithOneProduct(I);
+    await fillHcmAddressByUserActions(I);
+
+    I.fillField(
+      EL.fullName,
+      DATA.shortName
+    );
+
+    I.fillField(
+      EL.phone,
+      DATA.validPhone
+    );
+
+    I.click(EL.placeOrder);
+
+    I.waitForElement(
+      EL.checkoutError,
+      20
+    );
+
+    I.see(
+      'Please enter your real full name',
+      EL.checkoutError
+    );
+  }
+);
+
+Scenario(
+  'FE_PAYMENT_07 | Địa chỉ TP.HCM → Hỏa tốc cộng đúng 50.000₫',
+  async ({ I }) => {
+    await openCheckoutWithOneProduct(I);
+    await fillHcmAddressByUserActions(I);
+
+    I.dontSeeElement(
+      `${EL.expressShipping}[disabled]`
+    );
+
+    I.checkOption(EL.expressShipping);
+    I.seeCheckboxIsChecked(EL.expressShipping);
+
+    const subtotal = currencyToNumber(
+      await I.grabTextFrom(EL.subtotalValue)
+    );
+
+    const shippingFee = currencyToNumber(
+      await I.grabTextFrom(EL.shippingValue)
+    );
+
+    const finalTotal = currencyToNumber(
+      await I.grabTextFrom(EL.finalPrice)
+    );
+
+    assert.strictEqual(
+      shippingFee,
+      50000,
+      'Phí giao hỏa tốc phải là 50.000₫'
+    );
+
+    assert.strictEqual(
+      finalTotal,
+      subtotal + shippingFee,
+      'Tổng tiền phải bằng tạm tính cộng phí vận chuyển'
+    );
+  }
+);
+
+Scenario(
+  'FE_PAYMENT_08 | Đặt hàng COD → Thành công và làm trống giỏ hàng',
+  async ({ I }) => {
+    await openCheckoutWithOneProduct(I);
+    await fillHcmAddressByUserActions(I);
+    await fillValidCustomer(I);
+
+    I.checkOption(EL.codPayment);
+    I.click(EL.placeOrder);
+
+    I.waitForElement(
+      EL.successPopup,
+      30
+    );
+
+    I.see(
+      'Đặt hàng thành công',
+      EL.successPopup
+    );
+
+    I.seeElement(EL.orderCode);
+
+    I.amOnPage(`${BASE_URL}/cart`);
+
+    I.waitForText(
+      'Giỏ hàng đang trống',
+      20
+    );
+
+    I.dontSeeElement(EL.cartRow);
+  }
+);
+
+Scenario(
+  'FE_PAYMENT_09 | Chuyển khoản ngân hàng → Chuyển sang trang chờ thanh toán',
+  async ({ I }) => {
+    await openCheckoutWithOneProduct(I);
+    await fillHcmAddressByUserActions(I);
+    await fillValidCustomer(I);
+
+    I.checkOption(EL.bankTransferPayment);
+
+    I.waitForElement(
+      EL.bankTransferBox,
+      20
+    );
+
+    I.see(
+      'THÔNG TIN TÀI KHOẢN',
+      EL.bankTransferBox
+    );
+
+    I.see(
+      'Quét mã QR',
+      EL.bankTransferBox
+    );
+
+    I.click(EL.placeOrder);
+
+    I.waitInUrl(
+      '/payment/pending',
+      30
+    );
+
+    I.see('Quét mã QR để thanh toán');
+    I.see('Thời gian còn lại');
+    I.see('Mã đơn hàng:');
+  }
+);
+
+Scenario(
+  'FE_PAYMENT_10 | VNPAY → Gửi đúng phương thức và chuyển đến paymentUrl',
+  async ({ I }) => {
+    await openCheckoutWithOneProduct(I);
+    await fillHcmAddressByUserActions(I);
+    await fillValidCustomer(I);
+
+    await I.usePlaywrightTo(
+      'mock order and VNPAY payment APIs',
+      async ({ page }) => {
+        await page.route(
+          '**/api/orders',
+          async (route) => {
+            if (
+              route.request().method() !==
+              'POST'
+            ) {
+              await route.continue();
+              return;
+            }
+
+            await route.fulfill({
+              status: 200,
+              contentType: 'application/json',
+              body: JSON.stringify({
+                success: true,
+                data: {
+                  orderId: 9901,
+                  orderCode: 'KCPM83-VNPAY',
+                  totalAmount: 100000,
+                },
+              }),
+            });
+          }
+        );
+
+        await page.route(
+          '**/api/payments/orders/*',
+          async (route) => {
+            if (
+              route.request().method() !==
+              'POST'
+            ) {
+              await route.continue();
+              return;
+            }
+
+            const body =
+              route.request().postDataJSON();
+
+            assert.strictEqual(
+              body.paymentMethod,
+              'VNPAY'
+            );
+
+            await route.fulfill({
+              status: 200,
+              contentType: 'application/json',
+              body: JSON.stringify({
+                success: true,
+                data: {
+                  paymentUrl:
+                    `${BASE_URL}/fake-vnpay-gateway` +
+                    `?transaction=KCPM83`,
+                },
+              }),
+            });
+          }
+        );
       }
-    )
-  );
-},
-selectIndex
+    );
 
-);
+    I.checkOption(EL.vnpayPayment);
+    I.seeCheckboxIsChecked(EL.vnpayPayment);
 
-I.wait(1);
-}
+    I.click(EL.placeOrder);
 
-// ==============================================================
-// HELPER: Điền địa chỉ giao hàng hợp lệ
-// ==============================================================
+    I.waitInUrl(
+      '/fake-vnpay-gateway',
+      20
+    );
 
-async function fillValidAddress(I) {
-await selectFirstAddressOption(
-I,
-0
-);
+    const pendingOrderId =
+      await I.executeScript(
+        () =>
+          sessionStorage.getItem(
+            'pendingOrderId'
+          )
+      );
 
-await selectFirstAddressOption(
-I,
-1
-);
-
-await selectFirstAddressOption(
-I,
-2
-);
-
-I.fillField(
-EL.street,
-DATA.street
-);
-}
-
-// ==============================================================
-// HELPER: Tắt validation required mặc định của HTML
-// để kiểm tra thông báo validation của ứng dụng
-// ==============================================================
-
-async function disableNativeRequiredValidation(I) {
-await I.executeScript(() => {
-document
-.querySelectorAll(
-'.checkout-form-column [required]'
-)
-.forEach((element) => {
-element.removeAttribute(
-'required'
-);
-});
-});
-}
-
-// ==============================================================
-// Sau mỗi test đóng các tab phụ nếu có
-// ==============================================================
-
-// ==============================================================
-// A. CHECKOUT STATE
-// ==============================================================
-
-Feature('A. Checkout State');
-
-Scenario(
-'FE_PAYMENT_01 | Giỏ hàng trống → Không hiển thị form Checkout',
-async ({ I }) => {
-// Bước 1: Đăng nhập và làm rỗng giỏ hàng
-await loginAndClearCart(I);
-
-// Bước 2: Truy cập trang Checkout
-I.amOnPage(
-  BASE_URL + '/checkout'
-);
-
-// Bước 3: Kiểm tra trạng thái giỏ hàng trống
-I.waitForElement(
-  EL.checkoutEmpty,
-  20
-);
-
-I.see(
-  'Giỏ hàng của bạn đang trống!'
-);
-
-I.see(
-  'Vui lòng thêm sản phẩm vào giỏ để tiến hành thanh toán.'
-);
-
-I.seeElement(
-  EL.returnShop
-);
-
-I.dontSeeElement(
-  EL.checkoutForm
-);
-
-}
+    assert.strictEqual(
+      pendingOrderId,
+      '9901'
+    );
+  }
 );
 
 Scenario(
-'FE_PAYMENT_02 | Có sản phẩm → Hiển thị đầy đủ form Checkout',
-async ({ I }) => {
-// Bước 1: Chuẩn bị một sản phẩm và mở Checkout
-await openCheckoutWithOneProduct(I);
+  'FE_PAYMENT_11 | Sản phẩm hết hàng → Hiển thị lỗi và không báo thành công',
+  async ({ I }) => {
+    await openCheckoutWithOneProduct(I);
+    await fillHcmAddressByUserActions(I);
+    await fillValidCustomer(I);
 
-// Bước 2: Kiểm tra các thành phần của form
-I.seeElement(
-  EL.checkoutForm
-);
+    await installOrderErrorMock(
+      I,
+      409,
+      'Sản phẩm đã hết hàng hoặc không đủ tồn kho'
+    );
 
-I.seeElement(
-  EL.fullName
-);
+    I.click(EL.placeOrder);
 
-I.seeElement(
-  EL.phone
-);
+    I.waitForElement(
+      EL.checkoutError,
+      20
+    );
 
-I.seeElement(
-  EL.street
-);
+    I.see(
+      'hết hàng',
+      EL.checkoutError
+    );
 
-I.seeElement(
-  EL.standardShipping
-);
-
-I.seeElement(
-  EL.expressShipping
-);
-
-I.seeElement(
-  EL.codPayment
-);
-
-I.seeElement(
-  EL.bankTransferPayment
-);
-
-I.seeElement(
-  EL.placeOrder
-);
-
-}
-);
-
-// ==============================================================
-// B. CHECKOUT FORM VALIDATION
-// ==============================================================
-
-Feature('B. Checkout Form Validation');
-
-Scenario(
-'FE_PAYMENT_03 | Thiếu địa chỉ giao hàng → Hiển thị lỗi',
-async ({ I }) => {
-await openCheckoutWithOneProduct(I);
-await disableNativeRequiredValidation(I);
-
-I.fillField(
-  EL.fullName,
-  DATA.fullName
-);
-
-I.fillField(
-  EL.phone,
-  DATA.validPhone
-);
-
-I.click(
-  EL.placeOrder
-);
-
-I.waitForElement(
-  EL.checkoutError,
-  20
-);
-
-I.see(
-  'Please fill in Province, District, Ward and Street address',
-  EL.checkoutError
-);
-
-}
+    I.dontSeeElement(EL.successPopup);
+  }
 );
 
 Scenario(
-'FE_PAYMENT_04 | Thiếu họ tên và số điện thoại → Hiển thị lỗi',
-async ({ I }) => {
-await openCheckoutWithOneProduct(I);
-await fillValidAddress(I);
-await disableNativeRequiredValidation(I);
+  'FE_PAYMENT_12 | Backend mất kết nối → Hiển thị lỗi hệ thống',
+  async ({ I }) => {
+    await openCheckoutWithOneProduct(I);
+    await fillHcmAddressByUserActions(I);
+    await fillValidCustomer(I);
 
-I.clearField(
-  EL.fullName
-);
+    await I.usePlaywrightTo(
+      'abort create-order request',
+      async ({ page }) => {
+        await page.route(
+          '**/api/orders',
+          async (route) => {
+            if (
+              route.request().method() !==
+              'POST'
+            ) {
+              await route.continue();
+              return;
+            }
 
-I.clearField(
-  EL.phone
-);
+            await route.abort('failed');
+          }
+        );
+      }
+    );
 
-I.click(
-  EL.placeOrder
-);
+    I.click(EL.placeOrder);
 
-I.waitForElement(
-  EL.checkoutError,
-  20
-);
+    I.waitForElement(
+      EL.checkoutError,
+      20
+    );
 
-I.see(
-  'Please enter your full name and phone number',
-  EL.checkoutError
-);
+    I.see(
+      'Đã xảy ra lỗi hệ thống khi kết nối Backend',
+      EL.checkoutError
+    );
 
-}
-);
-
-Scenario(
-'FE_PAYMENT_05 | Số điện thoại không đủ 10 chữ số → Hiển thị lỗi',
-async ({ I }) => {
-await openCheckoutWithOneProduct(I);
-await fillValidAddress(I);
-await disableNativeRequiredValidation(I);
-
-I.fillField(
-  EL.fullName,
-  DATA.fullName
-);
-
-I.fillField(
-  EL.phone,
-  DATA.invalidPhoneLength
-);
-
-I.click(
-  EL.placeOrder
-);
-
-I.waitForElement(
-  EL.checkoutError,
-  20
-);
-
-I.see(
-  'Invalid phone number',
-  EL.checkoutError
-);
-
-I.see(
-  'Must be 10 digits',
-  EL.checkoutError
-);
-
-}
+    I.dontSeeElement(EL.successPopup);
+  }
 );
 
 Scenario(
-'FE_PAYMENT_06 | Đầu số điện thoại không hợp lệ → Hiển thị lỗi',
-async ({ I }) => {
-await openCheckoutWithOneProduct(I);
-await fillValidAddress(I);
-await disableNativeRequiredValidation(I);
+  'FE_PAYMENT_13 | Đổi BANK_TRANSFER về COD → Ẩn thông tin chuyển khoản',
+  async ({ I }) => {
+    await openCheckoutWithOneProduct(I);
 
-I.fillField(
-  EL.fullName,
-  DATA.fullName
-);
+    I.checkOption(EL.bankTransferPayment);
 
-I.fillField(
-  EL.phone,
-  DATA.invalidPhonePrefix
-);
+    I.seeCheckboxIsChecked(
+      EL.bankTransferPayment
+    );
 
-I.click(
-  EL.placeOrder
-);
+    I.waitForElement(
+      EL.bankTransferBox,
+      20
+    );
 
-I.waitForElement(
-  EL.checkoutError,
-  20
-);
+    I.see(
+      'THÔNG TIN TÀI KHOẢN',
+      EL.bankTransferBox
+    );
 
-I.see(
-  'Invalid phone number',
-  EL.checkoutError
-);
+    I.see(
+      'Quét mã QR',
+      EL.bankTransferBox
+    );
 
-}
-);
+    I.checkOption(EL.codPayment);
 
-Scenario(
-'FE_PAYMENT_07 | Họ tên chỉ có một ký tự → Hiển thị lỗi',
-async ({ I }) => {
-await openCheckoutWithOneProduct(I);
-await fillValidAddress(I);
-await disableNativeRequiredValidation(I);
+    I.seeCheckboxIsChecked(EL.codPayment);
 
-I.fillField(
-  EL.fullName,
-  DATA.shortName
-);
+    I.dontSeeCheckboxIsChecked(
+      EL.bankTransferPayment
+    );
 
-I.fillField(
-  EL.phone,
-  DATA.validPhone
-);
-
-I.click(
-  EL.placeOrder
-);
-
-I.waitForElement(
-  EL.checkoutError,
-  20
-);
-
-I.see(
-  'Please enter your real full name',
-  EL.checkoutError
-);
-
-}
+    I.waitForInvisible(
+      EL.bankTransferBox,
+      10
+    );
+  }
 );
 
 Scenario(
-'FE_PAYMENT_08 | Số điện thoại chứa chữ → Hiển thị lỗi',
-async ({ I }) => {
-await openCheckoutWithOneProduct(I);
-await fillValidAddress(I);
-await disableNativeRequiredValidation(I);
+  'FE_PAYMENT_14 | Địa chỉ ngoài TP.HCM → Không cho chọn giao hỏa tốc',
+  async ({ I }) => {
+    await openCheckoutWithOneProduct(I);
+    await ensureNewAddressForm(I);
 
-I.fillField(
-  EL.fullName,
-  DATA.fullName
-);
+    await I.waitForFunction(
+      () => {
+        const province =
+          document.querySelectorAll(
+            '.checkout-form-column select'
+          )[0];
 
-I.fillField(
-  EL.phone,
-  DATA.invalidPhoneLetters
-);
+        return Boolean(
+          province &&
+            Array.from(
+              province.options
+            ).some((option) => {
+              const text =
+                option.textContent || '';
 
-I.click(
-  EL.placeOrder
-);
+              return (
+                option.value &&
+                !option.disabled &&
+                !/Hồ Chí Minh/i.test(text)
+              );
+            })
+        );
+      },
+      [],
+      25
+    );
 
-I.waitForElement(
-  EL.checkoutError,
-  20
-);
+    const nonHcmProvinceValue =
+      await I.executeScript(() => {
+        const province =
+          document.querySelectorAll(
+            '.checkout-form-column select'
+          )[0];
 
-I.see(
-  'Invalid phone number',
-  EL.checkoutError
-);
+        const option = Array.from(
+          province.options
+        ).find((item) => {
+          const text =
+            item.textContent || '';
 
-}
-);
+          return (
+            item.value &&
+            !item.disabled &&
+            !/Hồ Chí Minh/i.test(text)
+          );
+        });
 
-Scenario(
-'FE_PAYMENT_09 | Đã chọn khu vực nhưng bỏ trống số nhà tên đường → Hiển thị lỗi',
-async ({ I }) => {
-await openCheckoutWithOneProduct(I);
-await disableNativeRequiredValidation(I);
+        return option ? option.value : null;
+      });
 
-// Chọn Tỉnh, Quận và Phường
-await selectFirstAddressOption(
-  I,
-  0
-);
+    assert.ok(
+      nonHcmProvinceValue,
+      'Phải tìm thấy ít nhất một tỉnh/thành ngoài TP.HCM'
+    );
 
-await selectFirstAddressOption(
-  I,
-  1
-);
+    I.selectOption(
+      EL.province,
+      nonHcmProvinceValue
+    );
 
-await selectFirstAddressOption(
-  I,
-  2
-);
+    I.wait(1);
 
-// Điền thông tin cá nhân
-I.fillField(
-  EL.fullName,
-  DATA.fullName
-);
+    const expressDisabled =
+      await I.executeScript(() => {
+        const express =
+          document.querySelector(
+            'input[type="radio"][value="express"]'
+          );
 
-I.fillField(
-  EL.phone,
-  DATA.validPhone
-);
+        return Boolean(
+          express && express.disabled
+        );
+      });
 
-// Bỏ trống số nhà, tên đường
-I.clearField(
-  EL.street
-);
+    assert.strictEqual(
+      expressDisabled,
+      true,
+      'Giao hỏa tốc phải bị vô hiệu hóa ngoài TP.HCM'
+    );
 
-I.click(
-  EL.placeOrder
-);
-
-I.waitForElement(
-  EL.checkoutError,
-  20
-);
-
-I.see(
-  'Please fill in Province, District, Ward and Street address',
-  EL.checkoutError
-);
-
-}
-);
-
-// ==============================================================
-// C. SHIPPING METHOD
-// ==============================================================
-
-Feature('C. Shipping Method');
-
-Scenario(
-'FE_PAYMENT_10 | Vận chuyển tiêu chuẩn mặc định là miễn phí',
-async ({ I }) => {
-await openCheckoutWithOneProduct(I);
-
-I.seeCheckboxIsChecked(
-  EL.standardShipping
-);
-
-I.see(
-  'Miễn phí'
-);
-
-}
+    I.seeCheckboxIsChecked(
+      EL.standardShipping
+    );
+  }
 );
 
 Scenario(
-'FE_PAYMENT_11 | Hỏa tốc bị khóa khi chưa chọn khu vực TP.HCM',
-async ({ I }) => {
-await openCheckoutWithOneProduct(I);
+  'FE_PAYMENT_15 | Nhấn đặt hàng liên tiếp → Không tạo trùng đơn hàng',
+  async ({ I }) => {
+    await openCheckoutWithOneProduct(I);
+    await fillHcmAddressByUserActions(I);
+    await fillValidCustomer(I);
 
-I.seeElement(
-  EL.expressShipping +
-  '[disabled]'
-);
+    I.checkOption(EL.codPayment);
 
-I.see(
-  'Tự động kích hoạt cho khu vực TP. HCM'
-);
+    await I.usePlaywrightTo(
+      'mock APIs and count create-order requests',
+      async ({ page }) => {
+        page.__kcpm83OrderRequestCount = 0;
 
-}
-);
+        await page.route(
+          '**/api/orders',
+          async (route) => {
+            if (route.request().method() !== 'POST') {
+              await route.continue();
+              return;
+            }
 
-// ==============================================================
-// D. PAYMENT METHOD
-// ==============================================================
+            page.__kcpm83OrderRequestCount += 1;
 
-Feature('D. Payment Method');
+            await new Promise((resolve) =>
+              setTimeout(resolve, 500)
+            );
 
-Scenario(
-'FE_PAYMENT_12 | Chọn thanh toán COD → Radio COD được đánh dấu',
-async ({ I }) => {
-await openCheckoutWithOneProduct(I);
+            await route.fulfill({
+              status: 200,
+              contentType: 'application/json',
+              body: JSON.stringify({
+                success: true,
+                data: {
+                  orderId: 9915,
+                  orderCode: 'KCPM83-NO-DUPLICATE',
+                  totalAmount: 100000,
+                },
+              }),
+            });
+          }
+        );
 
-I.checkOption(
-  EL.codPayment
-);
+        await page.route(
+          '**/api/payments/orders/*',
+          async (route) => {
+            if (route.request().method() !== 'POST') {
+              await route.continue();
+              return;
+            }
 
-I.seeCheckboxIsChecked(
-  EL.codPayment
-);
+            await route.fulfill({
+              status: 200,
+              contentType: 'application/json',
+              body: JSON.stringify({
+                success: true,
+                data: {
+                  paymentId: 8815,
+                  orderId: 9915,
+                  paymentMethod: 'COD',
+                  paymentStatus: 'PENDING',
+                },
+              }),
+            });
+          }
+        );
+      }
+    );
 
-}
-);
+    await I.usePlaywrightTo(
+      'click place-order button twice rapidly',
+      async ({ page }) => {
+        const button = page.locator('.btn-place-order');
 
-Scenario(
-'FE_PAYMENT_13 | Chọn chuyển khoản ngân hàng → Radio được đánh dấu',
-async ({ I }) => {
-await openCheckoutWithOneProduct(I);
+        await button.evaluate((element) => {
+          element.click();
+          element.click();
+        });
+      }
+    );
 
-I.checkOption(
-  EL.bankTransferPayment
-);
+    I.wait(2);
 
-I.seeCheckboxIsChecked(
-  EL.bankTransferPayment
-);
+    const requestCount =
+      await I.usePlaywrightTo(
+        'read create-order request count',
+        async ({ page }) => {
+          return page.__kcpm83OrderRequestCount;
+        }
+      );
 
-}
-);
-
-// ==============================================================
-// E. CHECKOUT NAVIGATION
-// ==============================================================
-
-Feature('E. Checkout Navigation');
-
-Scenario(
-'FE_PAYMENT_14 | Giỏ hàng trống → Nút quay lại mở trang sản phẩm',
-async ({ I }) => {
-// Bước 1: Đăng nhập và làm rỗng giỏ hàng
-await loginAndClearCart(I);
-
-// Bước 2: Mở trang Checkout
-I.amOnPage(
-  BASE_URL + '/checkout'
-);
-
-I.waitForElement(
-  EL.returnShop,
-  20
-);
-
-// Bước 3: Bấm quay lại mua sắm
-I.click(
-  EL.returnShop
-);
-
-// Bước 4: Kiểm tra chuyển về trang sản phẩm
-I.waitInUrl(
-  BASE_URL + '/products',
-  20
-);
-
-I.seeInCurrentUrl(
-  '/products'
-);
-
-}
-);
-
-// ==============================================================
-// F. PLACE ORDER
-// ==============================================================
-
-Feature('F. Place Order');
-
-Scenario(
-'FE_PAYMENT_15 | Đặt hàng COD thành công → Giỏ hàng được làm trống',
-async ({ I }) => {
-// Bước 1: Chuẩn bị sản phẩm và mở Checkout
-await openCheckoutWithOneProduct(I);
-
-// Bước 2: Điền địa chỉ hợp lệ
-await fillValidAddress(I);
-
-// Bước 3: Điền thông tin khách hàng
-I.fillField(
-  EL.fullName,
-  DATA.fullName
-);
-
-I.fillField(
-  EL.phone,
-  DATA.validPhone
-);
-
-// Bước 4: Chọn COD và đặt hàng
-I.checkOption(
-  EL.codPayment
-);
-
-I.click(
-  EL.placeOrder
-);
-
-// Bước 5: Kiểm tra popup đặt hàng thành công
-I.waitForElement(
-  EL.successPopup,
-  30
-);
-
-I.see(
-  'Đặt hàng thành công'
-);
-
-I.seeElement(
-  EL.orderCode
-);
-
-// Bước 6: Kiểm tra giỏ hàng được làm trống
-I.amOnPage(
-  BASE_URL + '/cart'
-);
-
-I.waitForText(
-  'Giỏ hàng đang trống',
-  20
-);
-
-I.dontSeeElement(
-  EL.cartRow
-);
-
-}
+    assert.strictEqual(
+      requestCount,
+      1,
+      `Mong đợi 1 request tạo Order nhưng nhận được ${requestCount}`
+    );
+  }
 );
