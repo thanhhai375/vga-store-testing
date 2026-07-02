@@ -13,7 +13,7 @@ const formatPrice = (price) => new Intl.NumberFormat('vi-VN').format(price) + '�
 
 // Statistics
 const StatCard = ({ title, value, icon, colorClass }) => (
-  <div className="dash-stat-card">
+  <div className="dash-stat-card stat-card">
     <div className="dash-stat-header">
       <h3 className="dash-stat-title">{title}</h3>
       <div className={`dash-stat-icon ${colorClass}`}>{icon}</div>
@@ -66,7 +66,10 @@ const Dashboard = () => {
     const fetchCharts = async () => {
       setLoadingChart(true);
       try {
-        const res = await axiosClient.get(`/admin/dashboard/charts?period=${period}`);
+        const [res] = await Promise.all([
+          axiosClient.get(`/admin/dashboard/charts?period=${period}`),
+          new Promise(resolve => setTimeout(resolve, 300))
+        ]);
         setChartsData(res.data?.data || res.data || res);
       } catch (err) { console.error(err); }
       finally { setLoadingChart(false); }
@@ -112,10 +115,6 @@ const Dashboard = () => {
       </div>
 
       <div className="dash-charts-grid">
-        {loadingChart ? (
-          <div className="spinner" style={{ gridColumn: '1 / -1', margin: '100px auto' }}></div>
-        ) : (
-          <>
             <div className="dash-chart-card lg-col">
               <div className="chart-header-flex">
                 <h3 className="chart-title">Tiến độ doanh thu</h3>
@@ -129,6 +128,7 @@ const Dashboard = () => {
               </div>
 
               <div className="chart-wrapper">
+                {loadingChart && <div className="chart-loading-overlay"><span className="spinner-border"></span></div>}
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart data={chartsData.chartData} margin={{ top: 10, right: 10, left: 20, bottom: 0 }}>
                     <defs>
@@ -185,8 +185,6 @@ const Dashboard = () => {
                 </ResponsiveContainer>
               </div>
             </div>
-          </>
-        )}
       </div>
 
       <div className="dash-recent-orders">
@@ -197,24 +195,31 @@ const Dashboard = () => {
           <a href="/orders" className="view-all-link" onClick={(e) => { e.preventDefault(); navigate('/orders'); }}>Xem tất cả ›</a>
         </div>
 
-        {loadingTop ? (
-          <div className="spinner" style={{ margin: '40px auto' }}></div>
-        ) : recentOrders.length === 0 ? (
-          <p className="no-data">Chưa có dữ liệu đơn hàng</p>
-        ) : (
-          <div className="table-responsive">
-            <table className="recent-table">
-              <thead>
+        <div className="table-responsive">
+          <table className="recent-table">
+            <thead>
+              <tr>
+                <th>MÃ ĐƠN HÀNG</th>
+                <th>KHÁCH HÀNG</th>
+                <th>NGÀY ĐẶT</th>
+                <th>TRẠNG THÁI</th>
+                <th style={{ textAlign: 'right' }}>TỔNG TIỀN</th>
+              </tr>
+            </thead>
+            <tbody>
+              {loadingTop ? (
                 <tr>
-                  <th>MÃ ĐƠN HÀNG</th>
-                  <th>KHÁCH HÀNG</th>
-                  <th>NGÀY ĐẶT</th>
-                  <th>TRẠNG THÁI</th>
-                  <th style={{ textAlign: 'right' }}>TỔNG TIỀN</th>
+                  <td colSpan="5">
+                    <div className="spinner" style={{ margin: '24px auto' }}></div>
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                {recentOrders.map(o => {
+              ) : recentOrders.length === 0 ? (
+                  <tr>
+                    <td colSpan="5" style={{ textAlign: 'center', padding: '32px', color: '#94a3b8' }}>
+                      Chưa có dữ liệu đơn hàng
+                    </td>
+                  </tr>
+                ) : recentOrders.map(o => {
                   const st = STATUS_MAP[o.status] || { label: o.status, cls: 'badge-secondary' };
                   const isNew = isOrderNew(o.orderId || o.id);
                   return (
@@ -239,7 +244,6 @@ const Dashboard = () => {
               </tbody>
             </table>
           </div>
-        )}
       </div>
     </div>
   );

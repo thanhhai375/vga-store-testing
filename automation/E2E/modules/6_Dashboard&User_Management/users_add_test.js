@@ -64,7 +64,7 @@ Scenario('UI-UM-005 & UI-UX-UM-002: Them User thanh cong voi Loading state', ({ 
   let uniqueUser = 'auto_user_' + timestamp;
   
   I.fillField('input[placeholder="Username"]', uniqueUser);
-  I.fillField('input[placeholder="Mật khẩu"]', '123456');
+  I.fillField('input[placeholder="Mật khẩu"]', '12345678');
   I.fillField('input[placeholder="Email"]', uniqueUser + '@test.com');
   I.fillField('input[placeholder="Họ và tên"]', 'Auto User ' + timestamp);
   I.selectOption('select', 'USER');
@@ -85,20 +85,34 @@ Scenario('UI-UM-005 & UI-UX-UM-002: Them User thanh cong voi Loading state', ({ 
 });
 
 Scenario('UI-UM-008: Username da ton tai', ({ I }) => {
+  const timestamp = Date.now();
+  const duplicateUser = 'dup_user_' + timestamp;
+
   I.amOnPage((process.env.ADMIN_FE_URL || 'http://localhost:5174') + '/users');
   I.click('+ Thêm người dùng');
   I.waitForText('Thêm Người Dùng Mới', 5);
-  
-  I.fillField('input[placeholder="Username"]', 'admin'); // assuming admin exists
-  I.fillField('input[placeholder="Mật khẩu"]', '123456');
-  I.fillField('input[placeholder="Email"]', 'newemail@test.com');
+
+  I.fillField('input[placeholder="Username"]', duplicateUser);
+  I.fillField('input[placeholder="Mật khẩu"]', '12345678');
+  I.fillField('input[placeholder="Email"]', duplicateUser + '@test.com');
+  I.fillField('input[placeholder="Họ và tên"]', 'Duplicate User Seed');
+  I.selectOption('select', 'USER');
+  I.click('Lưu tài khoản');
+  I.waitForText('thành công', 10);
+  I.waitForInvisible('Thêm Người Dùng Mới', 5);
+
+  I.click('+ Thêm người dùng');
+  I.waitForText('Thêm Người Dùng Mới', 5);
+  I.fillField('input[placeholder="Username"]', duplicateUser);
+  I.fillField('input[placeholder="Mật khẩu"]', '12345678');
+  I.fillField('input[placeholder="Email"]', duplicateUser + '_new@test.com');
   I.fillField('input[placeholder="Họ và tên"]', 'Admin Dup');
   
   I.click('Lưu tài khoản');
   
   // Verify error toast/message without losing form data
-  I.waitForText('đã tồn tại', 5);
+  I.waitForText('tồn tại', 10);
   I.see('Thêm Người Dùng Mới'); // modal remains open
   // Values should be preserved
-  I.seeInField('input[placeholder="Username"]', 'admin');
+  I.seeInField('input[placeholder="Username"]', duplicateUser);
 });

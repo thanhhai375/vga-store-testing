@@ -83,6 +83,7 @@ const loginByUi = (I, username, password) => {
   I.fillField(SELECTORS.loginUsername, username);
   I.fillField(SELECTORS.password, password);
   submitAuthForm(I);
+
   I.waitForFunction(() => Boolean(localStorage.getItem('token')), [], 20);
   I.waitForInvisible(SELECTORS.modal, 8);
 };

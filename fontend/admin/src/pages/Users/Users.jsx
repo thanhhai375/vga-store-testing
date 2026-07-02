@@ -135,7 +135,7 @@ const Users = () => {
                 {users.length === 0 ? (
                   <tr>
                     <td colSpan="7" style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>
-                      Không có người dùng
+                      Không tìm thấy
                     </td>
                   </tr>
                 ) : users.map((u, index) => {
@@ -189,15 +189,13 @@ const Users = () => {
           </div>
         )}
 
-        {total > 1 && (
-          <div className="pagination">
-            <button className="page-btn" disabled={page === 0} onClick={() => setPage(p => p - 1)}>‹</button>
-            {Array.from({ length: Math.min(total, 7) }, (_, i) => (
-              <button key={i} className={`page-btn ${i === page ? 'active' : ''}`} onClick={() => setPage(i)}>{i + 1}</button>
-            ))}
-            <button className="page-btn" disabled={page >= total - 1} onClick={() => setPage(p => p + 1)}>›</button>
-          </div>
-        )}
+        <div className="pagination">
+          <button className="page-btn" disabled={page === 0} onClick={() => setPage(p => p - 1)}>‹</button>
+          {Array.from({ length: Math.min(total || 1, 7) }, (_, i) => (
+            <button key={i} className={`page-btn ${i === page ? 'active' : ''}`} onClick={() => setPage(i)}>{i + 1}</button>
+          ))}
+          <button className="page-btn" disabled={page >= (total || 1) - 1} onClick={() => setPage(p => p + 1)}>›</button>
+        </div>
       </div>
 
       {showAddModal && (
@@ -211,12 +209,12 @@ const Users = () => {
             <form onSubmit={handleAddUser} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
               <div className="form-group">
                 <label>Tên đăng nhập *</label>
-                <input className="form-control" required value={newUser.username}
+                <input className="form-control" required minLength={3} value={newUser.username}
                   onChange={e => setNewUser({ ...newUser, username: e.target.value })} placeholder="Username" />
               </div>
               <div className="form-group">
                 <label>Mật khẩu *</label>
-                <input className="form-control" type="password" required value={newUser.password}
+                <input className="form-control" type="password" required minLength={8} value={newUser.password}
                   onChange={e => setNewUser({ ...newUser, password: e.target.value })} placeholder="Mật khẩu" />
               </div>
               <div className="form-group">
@@ -240,7 +238,7 @@ const Users = () => {
               <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end', marginTop: 10 }}>
                 <button type="button" className="btn btn-ghost" onClick={() => setShowAddModal(false)}>Hủy</button>
                 <button type="submit" className="btn btn-primary" disabled={adding}>
-                  {adding ? 'Đang thêm...' : 'Lưu tài khoản'}
+                  {adding ? <><span className="spinner-border"></span> Đang thêm...</> : 'Lưu tài khoản'}
                 </button>
               </div>
             </form>

@@ -57,6 +57,6 @@ Scenario('UI-DB-004: Click xem tat ca don hang', ({ I }) => {
   I.click('Xem tất cả ›');
   
   // Expected after action
-  I.waitInUrl('/orders', 5);
+  I.waitForFunction(() => window.location.pathname.includes('/orders'), 5);
   I.waitForText('Đơn Hàng', 5, 'h1');
 });

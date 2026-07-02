@@ -126,6 +126,17 @@
 .chart-wrapper {
   flex: 1;
   width: 100%;
+  position: relative;
+}
+
+.chart-loading-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.72);
 }
 
 /* --- RECENT ORDERS (BẢNG ĐƠN HÀNG CUỐI) --- */
@@ -361,4 +372,4 @@
 @keyframes badgePulse {
   0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
   50% { box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); }
-}
+}
