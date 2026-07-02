@@ -23,14 +23,14 @@ public class SystemSettingController {
 
     // Configuration
     @GetMapping("/admin/settings")
-    @PreAuthorize("hasAuthority('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Map<String, String>> getAdminSettings() {
         return ResponseEntity.ok(settingService.getAllSettings());
     }
 
     // Configuration
     @PutMapping("/admin/settings")
-    @PreAuthorize("hasAuthority('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> updateSettings(@RequestBody Map<String, String> settings) {
         settingService.updateSettings(settings);
         return ResponseEntity.ok(Map.of("message", "Cập nhật cấu hình thành công"));
