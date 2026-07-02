@@ -329,9 +329,35 @@ public class AdminController {
     @GetMapping("/dashboard/charts")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> getDashboardCharts(
-            @RequestParam(required = false, defaultValue = "6months") String period) {
-        return ResponseEntity.ok(adminService.getDashboardCharts(period));
+            @RequestParam(required = false, defaultValue = "6months")
+            String period,
+
+            @RequestParam(required = false)
+            @org.springframework.format.annotation.DateTimeFormat(
+                    iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE)
+            java.time.LocalDate startDate,
+
+            @RequestParam(required = false)
+            @org.springframework.format.annotation.DateTimeFormat(
+                    iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE)
+            java.time.LocalDate endDate) {
+
+     if (startDate != null
+            && endDate != null
+            && startDate.isAfter(endDate)) {
+
+         return ResponseEntity.badRequest().body(
+                java.util.Map.of(
+                        "message",
+                        "startDate must not be after endDate"
+                )
+        );
     }
+
+     return ResponseEntity.ok(
+            adminService.getDashboardCharts(period)
+    );
+}
 
 
     @PutMapping("/pin-top/{entityType}/{id}")
