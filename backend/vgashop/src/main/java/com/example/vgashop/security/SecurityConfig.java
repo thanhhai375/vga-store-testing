@@ -49,6 +49,7 @@ public class SecurityConfig {
             .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
                 // === PUBLIC endpoints ===
+                .requestMatchers(HttpMethod.POST, "/api/auth/register-admin").hasRole("ADMIN")
                 .requestMatchers("/api/auth/**").permitAll()
                 .requestMatchers("/uploads/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/products/**").permitAll()
@@ -79,15 +80,23 @@ public class SecurityConfig {
                 .anyRequest().authenticated()
             )
             .exceptionHandling(exceptions -> exceptions
-                .authenticationEntryPoint((request, response, authException) -> {
-                    response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                    response.setContentType("application/json");
-                    response.setCharacterEncoding("UTF-8");
-                    response.getWriter().write(
-                        "{\"status\":401,\"message\":\"Unauthorized\"}"
-                    );
-                })
-            )
+              .authenticationEntryPoint((request, response, authException) -> {
+                 response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                 response.setContentType("application/json");
+                 response.setCharacterEncoding("UTF-8");
+                 response.getWriter().write(
+                     "{\"status\":401,\"message\":\"Unauthorized\"}"
+               );
+             })
+            .accessDeniedHandler((request, response, accessDeniedException) -> {
+                  response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                  response.setContentType("application/json");
+                  response.setCharacterEncoding("UTF-8");
+                  response.getWriter().write(
+                    "{\"status\":403,\"message\":\"Forbidden\"}"
+              );
+        })
+    )
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
