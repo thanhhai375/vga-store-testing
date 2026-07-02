@@ -143,6 +143,9 @@ jobs:
             if echo "$selector_text" | grep -Eq 'user|profile|address|change-password|change password|kcpm-88'; then
               selected_scripts="$(printf '%s\n%s\n' "$selected_scripts" "test:user:blackbox")"
             fi
+            if echo "$selector_text" | grep -Eq 'payment|kcpm-92'; then
+              selected_scripts="$(printf '%s\n%s\n' "$selected_scripts" "test:payment:blackbox")"
+            fi
             selected_scripts="$(printf '%s\n' "$selected_scripts" | sed '/^$/d' | sort -u)"
             if [ -z "$selected_scripts" ]; then
               echo "No module selector found. Fallback: running all blackbox scripts."
