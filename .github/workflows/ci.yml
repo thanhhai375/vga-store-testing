@@ -137,6 +137,9 @@ jobs:
             if echo "$selector_text" | grep -Eq 'product-admin|product admin|admin-product|kcpm-90'; then
               selected_scripts="$(printf '%s\n%s\n' "$selected_scripts" "test:product-admin:blackbox")"
             fi
+            if echo "$selector_text" | grep -Eq 'kcpm-93|admin-api|vga-store-admin'; then
+              selected_scripts="$(printf '%s\n%s\n' "$selected_scripts" "test:admin:blackbox")"
+            fi
             if echo "$selector_text" | grep -Eiq 'kcpm-91|cart'; then
               selected_scripts="$(printf '%s\n%s\n' "$selected_scripts" "test:cart:blackbox")"
             fi
@@ -862,6 +865,7 @@ jobs:
             }
 
             if (source.includes('1_authentication') || source.includes('authentication') || source.includes('authintegrationtest')) labels.push('module-auth');
+            else if (source.includes('test:admin:blackbox') || source.includes('vga-store-admin')) labels.push('module-admin');
             else if (source.includes('2_shopping_experience')) labels.push('module-shopping');
             else if (source.includes('3_cart') || source.includes('payment')) labels.push('module-cart-payment');
             else if (source.includes('4_product') || source.includes('category')) labels.push('module-product-category');
@@ -937,6 +941,7 @@ jobs:
 
           function detectFailureModule(labels, failedFile) {
             const source = `${failedFile || ''}`.toLowerCase();
+            if (labels.includes('module-admin') || source.includes('test:admin:blackbox') || source.includes('vga-store-admin')) return 'ADMIN';
             if (labels.includes('module-auth') || source.includes('authentication') || source.includes('auth')) return 'AUTH';
             if (labels.includes('module-shopping') || source.includes('shopping')) return 'SHOPPING';
             if (labels.includes('module-cart-payment') || source.includes('cart') || source.includes('payment')) return 'CART_PAYMENT';
