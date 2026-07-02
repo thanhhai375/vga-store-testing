@@ -41,7 +41,7 @@ fe/KCPM-83-cart
 fe/KCPM-84-product
 fe/KCPM-85-order
 fe/KCPM-86-dashboard
-fe/KCPM-88-profile
+fe/KCPM-134-profile
 ```
 
 CI doc `branch name`, `PR title`, va `commit message` de lay Jira key va module can chay.
