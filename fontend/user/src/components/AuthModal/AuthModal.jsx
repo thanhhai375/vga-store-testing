@@ -33,7 +33,6 @@ const AuthModal = ({ isOpen, onClose }) => {
     }
   }, [isOpen]);
 
-  if (!isOpen) return null;
 
   const hasDirtyForm = () => {
     return Boolean(
@@ -183,6 +182,8 @@ const AuthModal = ({ isOpen, onClose }) => {
   const switchToRegister = () => {
     setIsLogin(false);
   };
+
+  if (!isOpen) return null;
 
   return (
     <div className="auth-overlay" onClick={handleOverlayClick}>
