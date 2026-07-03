@@ -26,9 +26,11 @@ const SELECTORS = {
 };
 
 const uniqueUser = (prefix = 'fe_auth') => {
-  const suffix = `${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+  const safePrefix = String(prefix).replace(/[^a-zA-Z0-9_]/g, '_').slice(0, 20) || 'fe_auth';
+  const suffix = `${Date.now().toString(36)}_${Math.floor(Math.random() * 1000)}`;
+  const username = `${safePrefix}_${suffix}`.slice(0, 50);
   return {
-    username: `${prefix}_${suffix}`,
+    username,
     fullName: 'FE Auth Test User',
     email: `${prefix}_${suffix}@gmail.com`,
     password: 'Pass123456!'

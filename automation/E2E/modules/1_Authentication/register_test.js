@@ -157,7 +157,29 @@ Scenario('R-005: Username qua ngan bi tu choi', ({ I }) => {
   I.seeElement(SELECTORS.modal);
 });
 
-Scenario('R-006: Username chi gom khoang trang bi tu choi', ({ I }) => {
+Scenario('R-006: Username qua dai hon 50 ky tu bi tu choi', ({ I }) => {
+  const usernameOver50 = `user_${'a'.repeat(51)}`;
+
+  fillRegisterForm(I, {
+    ...VALID_REGISTER_USER,
+    username: usernameOver50,
+    email: `long_username_${Date.now()}@gmail.com`
+  });
+  clickSubmit(I);
+
+  I.waitForFunction(() => {
+    const text = document.body.innerText.toLowerCase();
+    return text.includes('50')
+      || text.includes('3-50')
+      || text.includes('3 to 50')
+      || text.includes('username')
+      || text.includes('tÃªn Ä‘Äƒng nháº­p');
+  }, [], 10);
+
+  I.seeElement(SELECTORS.modal);
+});
+
+Scenario('R-007: Username chi gom khoang trang bi tu choi', ({ I }) => {
   I.fillField(SELECTORS.username, '   ');
   I.fillField(SELECTORS.fullName, VALID_REGISTER_USER.fullName);
   I.fillField(SELECTORS.email, `blank_username_${Date.now()}@gmail.com`);
@@ -176,7 +198,7 @@ Scenario('R-006: Username chi gom khoang trang bi tu choi', ({ I }) => {
   I.seeElement(SELECTORS.modal);
 });
 
-Scenario('R-007: Thieu username thi form bi chan submit', ({ I }) => {
+Scenario('R-008: Thieu username thi form bi chan submit', ({ I }) => {
   I.fillField(SELECTORS.fullName, VALID_REGISTER_USER.fullName);
   I.fillField(SELECTORS.email, `missing_username_${Date.now()}@gmail.com`);
   I.fillField(SELECTORS.password, VALID_REGISTER_USER.password);
@@ -185,7 +207,7 @@ Scenario('R-007: Thieu username thi form bi chan submit', ({ I }) => {
   assertFieldInvalid(I, SELECTORS.username);
 });
 
-Scenario('R-008: Thieu full name thi form bi chan submit', ({ I }) => {
+Scenario('R-009: Thieu full name thi form bi chan submit', ({ I }) => {
   I.fillField(SELECTORS.username, `missing_fullname_${Date.now()}`);
   I.fillField(SELECTORS.email, `missing_fullname_${Date.now()}@gmail.com`);
   I.fillField(SELECTORS.password, VALID_REGISTER_USER.password);
@@ -194,7 +216,7 @@ Scenario('R-008: Thieu full name thi form bi chan submit', ({ I }) => {
   assertFieldInvalid(I, SELECTORS.fullName);
 });
 
-Scenario('R-009: Thieu email thi form bi chan submit', ({ I }) => {
+Scenario('R-010: Thieu email thi form bi chan submit', ({ I }) => {
   I.fillField(SELECTORS.username, `missing_email_${Date.now()}`);
   I.fillField(SELECTORS.fullName, VALID_REGISTER_USER.fullName);
   I.fillField(SELECTORS.password, VALID_REGISTER_USER.password);
@@ -203,7 +225,7 @@ Scenario('R-009: Thieu email thi form bi chan submit', ({ I }) => {
   assertFieldInvalid(I, SELECTORS.email);
 });
 
-Scenario('R-010: Thieu password thi form bi chan submit', ({ I }) => {
+Scenario('R-011: Thieu password thi form bi chan submit', ({ I }) => {
   I.fillField(SELECTORS.username, `missing_password_${Date.now()}`);
   I.fillField(SELECTORS.fullName, VALID_REGISTER_USER.fullName);
   I.fillField(SELECTORS.email, `missing_password_${Date.now()}@gmail.com`);
@@ -212,7 +234,7 @@ Scenario('R-010: Thieu password thi form bi chan submit', ({ I }) => {
   assertFieldInvalid(I, SELECTORS.password);
 });
 
-Scenario('R-011: Sau khi dang ky thanh cong form chuyen ve login va reset field', ({ I }) => {
+Scenario('R-012: Sau khi dang ky thanh cong form chuyen ve login va reset field', ({ I }) => {
   const suffix = Date.now();
 
   fillRegisterForm(I, {
@@ -232,4 +254,38 @@ Scenario('R-011: Sau khi dang ky thanh cong form chuyen ve login va reset field'
   }, [SELECTORS.loginUsername, SELECTORS.username], 15);
 
   I.seeElement(SELECTORS.modal);
+});
+
+Scenario('R-013: Register phai co truong xac nhan mat khau', ({ I }) => {
+  I.waitForFunction(() => {
+    const passwordFields = [...document.querySelectorAll('.auth-modal input[type="password"]')];
+    const fieldsWithConfirmHint = [...document.querySelectorAll('.auth-modal input, .auth-modal label')]
+      .some((el) => /confirm|xac nhan|nhap lai|retype/i.test(el.placeholder || el.innerText || ''));
+
+    return passwordFields.length >= 2 && fieldsWithConfirmHint;
+  }, [], 5);
+});
+
+Scenario('R-014: Email dang ky phai dung input type email de browser validate som', ({ I }) => {
+  I.waitForFunction((emailSelector) => {
+    const emailInput = document.querySelector(emailSelector);
+    return Boolean(emailInput && emailInput.type === 'email');
+  }, [SELECTORS.email], 5);
+});
+
+Scenario('R-015: Click ra ngoai modal khong duoc lam mat form dang nhap do dang nhap', ({ I }) => {
+  I.fillField(SELECTORS.username, 'draft_user');
+  I.fillField(SELECTORS.fullName, 'Draft User');
+  I.fillField(SELECTORS.email, 'draft_user@gmail.com');
+  I.fillField(SELECTORS.password, 'Pass123456!');
+
+  I.executeScript(() => {
+    const overlay = document.querySelector('.auth-overlay');
+    overlay.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, view: window }));
+  });
+
+  I.waitForVisible(SELECTORS.modal, 5);
+  I.seeInField(SELECTORS.username, 'draft_user');
+  I.seeInField(SELECTORS.fullName, 'Draft User');
+  I.seeInField(SELECTORS.email, 'draft_user@gmail.com');
 });
