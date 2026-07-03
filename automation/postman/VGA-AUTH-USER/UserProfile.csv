@@ -1,8 +1,0 @@
-TC_ID,fullName,phone,oldPassword,newPassword,expectedStatus
-TC_USER_01,,,,,200
-TC_USER_02,,,,,401
-TC_USER_03,Nguyen Van A,0901234567,,,200
-TC_USER_04,Test User,abcxyz,,,400
-TC_USER_05,,,123456,newpassword123,200
-TC_USER_06,,,wrong_old_password,newpassword123,400
-TC_USER_07,,,newpassword123,newpassword123,400

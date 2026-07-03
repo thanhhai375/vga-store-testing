@@ -1,0 +1,1496 @@
+name: VGA Store CI
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+      - "feature/**"
+      - "fe/**"
+      - "fix/**"
+      - "fixFe/**"
+      - "whitebox/**"
+      - "fixWhitebox/**"
+      - "bugfix/**"
+  pull_request:
+    branches:
+      - main
+      - develop
+
+permissions:
+  contents: read
+
+env:
+  COMPOSE_PROJECT_NAME: vga-store-testing
+  JIRA_BASE_URL: ${{ secrets.JIRA_BASE_URL }}
+  JIRA_EMAIL: ${{ secrets.JIRA_EMAIL }}
+  JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
+  JIRA_PROJECT_KEY: ${{ secrets.JIRA_PROJECT_KEY }}
+  JIRA_DUE_DAYS: ${{ secrets.JIRA_DUE_DAYS || vars.JIRA_DUE_DAYS }}
+
+jobs:
+  ci:
+    name: Build and test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Java for white-box tests
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+          cache: maven
+          cache-dependency-path: backend/vgashop/pom.xml
+
+      - name: Setup Node.js
+        if: ${{ !startsWith(github.ref_name, 'whitebox/') && !startsWith(github.ref_name, 'fixWhitebox/') && !startsWith(github.head_ref, 'whitebox/') && !startsWith(github.head_ref, 'fixWhitebox/') }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: automation/package-lock.json
+
+      - name: Start application with Docker Compose
+        if: ${{ !startsWith(github.ref_name, 'whitebox/') && !startsWith(github.ref_name, 'fixWhitebox/') && !startsWith(github.head_ref, 'whitebox/') && !startsWith(github.head_ref, 'fixWhitebox/') }}
+        run: |
+          rm -f error_reason*.txt
+          docker compose -p "$COMPOSE_PROJECT_NAME" down -v --remove-orphans
+          docker compose -p "$COMPOSE_PROJECT_NAME" up -d --build db backend admin-frontend user-frontend
+
+      - name: Wait for backend
+        if: ${{ !startsWith(github.ref_name, 'whitebox/') && !startsWith(github.ref_name, 'fixWhitebox/') && !startsWith(github.head_ref, 'whitebox/') && !startsWith(github.head_ref, 'fixWhitebox/') }}
+        run: |
+          max_attempts=30
+          attempt=0
+
+          while [ "$attempt" -lt "$max_attempts" ]; do
+            http_code=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8080/api/orders || true)
+
+            if [ "$http_code" = "200" ] || [ "$http_code" = "401" ] || [ "$http_code" = "403" ] || [ "$http_code" = "405" ]; then
+              echo "Backend is ready. HTTP status: $http_code"
+              exit 0
+            fi
+
+            echo "Backend is starting. Attempt $((attempt + 1))/$max_attempts"
+            sleep 2
+            attempt=$((attempt + 1))
+          done
+
+          echo "Backend did not start within 60 seconds."
+          docker compose -p "$COMPOSE_PROJECT_NAME" logs backend
+          exit 1
+
+      - name: Install automation dependencies
+        if: ${{ !startsWith(github.ref_name, 'whitebox/') && !startsWith(github.ref_name, 'fixWhitebox/') && !startsWith(github.head_ref, 'whitebox/') && !startsWith(github.head_ref, 'fixWhitebox/') }}
+        working-directory: automation
+        run: npm ci
+
+      - name: Run API tests with Newman
+        if: ${{ !startsWith(github.ref_name, 'whitebox/') && !startsWith(github.ref_name, 'fixWhitebox/') && !startsWith(github.head_ref, 'whitebox/') && !startsWith(github.head_ref, 'fixWhitebox/') }}
+        working-directory: automation
+        run: |
+          set +e
+          failed=0
+
+          mkdir -p reports
+
+          branch_name="${GITHUB_HEAD_REF:-${GITHUB_REF_NAME:-}}"
+          base_branch="${GITHUB_BASE_REF:-}"
+          commit_message="$(git log -1 --pretty=%B)"
+          selector_text="$(printf '%s\n%s\n%s\n' "$branch_name" "$base_branch" "$commit_message" | tr '[:upper:]' '[:lower:]')"
+
+          full_regression=false
+          if [ "$GITHUB_EVENT_NAME" = "pull_request" ]; then
+            if [ "$base_branch" = "main" ] || [ "$base_branch" = "develop" ]; then
+              full_regression=true
+            fi
+          elif [ "$branch_name" = "main" ] || [ "$branch_name" = "develop" ]; then
+            full_regression=true
+          fi
+
+          if [ "$full_regression" != "true" ] && echo "$selector_text" | grep -Eq '(^|[[:space:]])(fe|fixfe)/|kcpm-81|auth-ui|ui-auth|auth ui|fe auth|auth fe|authentication ui'; then
+            echo "FE UI branch/commit detected. Skipping API blackbox tests."
+            exit 0
+          fi
+
+          if [ "$full_regression" != "true" ] && echo "$selector_text" | grep -Eq '(^|[[:space:]])(whitebox|fixwhitebox)/|whitebox|white-box|wb'; then
+            echo "White-box branch/commit detected. Skipping API blackbox tests."
+            exit 0
+          fi
+
+          scripts="$(node -e "const p=require('./package.json'); console.log(Object.keys(p.scripts||{}).filter(s=>/^test:.*:blackbox$/.test(s)).join('\n'))")"
+          selected_scripts=""
+
+          if [ "$full_regression" = "true" ]; then
+            selected_scripts="$scripts"
+            echo "Full regression mode: running all blackbox scripts."
+          else
+            echo "Personal branch mode: selecting blackbox scripts from branch/commit."
+            if echo "$selector_text" | grep -Eq 'kcpm-87|auth|authentication'; then
+              selected_scripts="$(printf '%s\n%s\n' "$selected_scripts" "test:auth:blackbox")"
+            fi
+            if echo "$selector_text" | grep -Eq 'product-admin|product admin|admin-product|kcpm-90'; then
+              selected_scripts="$(printf '%s\n%s\n' "$selected_scripts" "test:product-admin:blackbox")"
+            fi
+            if echo "$selector_text" | grep -Eiq 'kcpm-91|cart'; then
+              selected_scripts="$(printf '%s\n%s\n' "$selected_scripts" "test:cart:blackbox")"
+            fi
+            if echo "$selector_text" | grep -Eq 'user|profile|address|change-password|change password|kcpm-88'; then
+              selected_scripts="$(printf '%s\n%s\n' "$selected_scripts" "test:user:blackbox")"
+            fi
+            if echo "$selector_text" | grep -Eq 'kcpm-174|admin-postman'; then
+              selected_scripts="$(printf '%s\n%s\n' "$selected_scripts" "test:admin:blackbox")"
+            fi
+            if echo "$selector_text" | grep -Eq 'payment|kcpm-92'; then
+              selected_scripts="$(printf '%s\n%s\n' "$selected_scripts" "test:payment:blackbox")"
+            fi
+            selected_scripts="$(printf '%s\n' "$selected_scripts" | sed '/^$/d' | sort -u)"
+            if [ -z "$selected_scripts" ]; then
+              echo "No module selector found. Fallback: running all blackbox scripts."
+              selected_scripts="$scripts"
+            fi
+          fi
+
+          echo "Blackbox scripts to run:"
+          printf '%s\n' "$selected_scripts" | sed 's/^/- /'
+
+          while read -r script_name; do
+            [ -z "$script_name" ] && continue
+            safe_name="$(echo "$script_name" | sed 's#[^A-Za-z0-9_.-]#_#g')"
+            log_file="reports/${safe_name}.log"
+
+            echo "Running npm script: $script_name"
+            npm run "$script_name" 2>&1 | tee "$log_file"
+            script_status=${PIPESTATUS[0]}
+
+            if [ "$script_status" -ne 0 ]; then
+              failed=1
+              failed_requests="$(grep -E "^[[:space:]]*[0-9]+\\.|→|POST |GET |PUT |DELETE |PATCH " "$log_file" | tail -n 30 || true)"
+              failed_assertions="$(grep -E "AssertionError|expected .* to |expected response|Expected|actual|Actual|FAIL|failed|error" "$log_file" | sed 's/^[[:space:]]*//' | tail -n 40 || true)"
+              failed_statuses="$(grep -E "^[[:space:]]*(GET|POST|PUT|DELETE|PATCH)|[[:space:]][1-5][0-9][0-9][[:space:]]" "$log_file" | tail -n 30 || true)"
+              api_fix_hint="Check the failed Postman assertion, request data, expected status/message, backend validation, and environment variables."
+              failed_testcases="$(printf '%s\n' "$failed_assertions" | grep -E "AssertionError" | grep -v "Response contains expected message" | sed -E 's/^([0-9]+\.[[:space:]]*)?AssertionError[[:space:]]*//' | sed -E 's/[[:space:]]+- Expected .*//' | sed 's/[[:space:]]*$//' | sort -u || true)"
+              failure_summary="$(printf '%s\n' "$failed_assertions" | awk '
+                function emit() {
+                  if (case_id != "") {
+                    idx++;
+                    print idx ". " case_id;
+                    if (method != "") print "   Method: " method;
+                    if (endpoint != "") print "   Endpoint: " endpoint;
+                    if (input != "") print "   Input: " input;
+                    if (expected != "") print "   Expected status: " expected;
+                    if (actual != "") print "   Actual status: " actual;
+                    if (iteration != "") print "   Iteration: " iteration;
+                    if (assertions != "") {
+                      print "   Failed assertion:";
+                      print assertions;
+                    }
+                    print "";
+                  }
+                }
+                /AssertionError/ {
+                  line=$0;
+                  sub(/^([0-9]+\.[[:space:]]*)?AssertionError[[:space:]]*/, "", line);
+                  sub(/[[:space:]]*$/, "", line);
+
+                  if (line ~ /Response contains expected message/) {
+                    sub(/^.* - /, "", line);
+                    if (assertions != "") assertions=assertions "\n";
+                    assertions=assertions "   - " line;
+                    next;
+                  }
+
+                  emit();
+                  sub(/[[:space:]]+- Expected .*/, "", line);
+                  case_id=line;
+                  method="";
+                  endpoint="";
+                  input="";
+                  expected="";
+                  actual="";
+                  iteration="";
+                  assertions="";
+                  if (match(line, /(GET|POST|PUT|PATCH|DELETE)[[:space:]]+[^[:space:]]+/)) {
+                    request=substr(line, RSTART, RLENGTH);
+                    split(request, request_parts, " ");
+                    method=request_parts[1];
+                    endpoint=request_parts[2];
+                  }
+                  if (match(line, /input=[^[:space:]]+/)) {
+                    input=substr(line, RSTART + 6, RLENGTH - 6);
+                  }
+                  if (match($0, /Expected HTTP status[[:space:]][0-9]+/)) {
+                    expected=substr($0, RSTART + 21, RLENGTH - 21);
+                  }
+                  next;
+                }
+                /iteration:/ {
+                  if (match($0, /iteration:[[:space:]]*[0-9]+/)) {
+                    iteration=substr($0, RSTART + 10, RLENGTH - 10);
+                    gsub(/[[:space:]]/, "", iteration);
+                  }
+                  if (match($0, /expected[[:space:]][0-9]+[[:space:]]+to be one of[[:space:]]+\[[[:space:]]*[0-9]+[[:space:]]*\]/)) {
+                    actual_line=substr($0, RSTART, RLENGTH);
+                    split(actual_line, parts, " ");
+                    actual=parts[2];
+                    expected=actual_line;
+                    sub(/^.*\[[[:space:]]*/, "", expected);
+                    sub(/[[:space:]]*\].*$/, "", expected);
+                  }
+                  next;
+                }
+                END {
+                  emit();
+                }
+              ' || true)"
+              if echo "$failed_assertions" | grep -qi "status"; then
+                api_fix_hint="HTTP status mismatch. Backend returned an unexpected status for invalid/edge input. Check backend validation/handler and expectedStatus in CSV."
+              elif echo "$failed_assertions" | grep -qi "message"; then
+                api_fix_hint="Response message mismatch. Check backend response body and expectedMessage in CSV."
+              elif echo "$failed_assertions" | grep -qi "token"; then
+                api_fix_hint="Token/session mismatch. Check login/register response payload and Postman environment variable persistence."
+              fi
+              {
+                echo "FAILED FILE: npm script $script_name"
+                echo "  - Script: $script_name"
+                echo "  - Branch: $branch_name"
+                echo "  - Commit: ${GITHUB_SHA:-unknown}"
+                if [ -n "$failed_testcases" ]; then
+                  printf '%s\n' "$failed_testcases" | sed 's/^/FAILED TESTCASE: /'
+                else
+                  echo "FAILED TESTCASE: Newman API test failed"
+                fi
+                echo ""
+                echo "===== Failed API request/assertion summary ====="
+                if [ -n "$failure_summary" ]; then
+                  printf '%s\n' "$failure_summary"
+                else
+                  echo "Could not extract structured API failure summary. Check the GitHub Actions log artifact."
+                fi
+                echo ""
+                echo "===== Failure reason ====="
+                if [ -n "$failed_assertions" ]; then
+                  printf '%s\n' "$failed_assertions"
+                else
+                  echo "Could not extract concise Newman assertion failure. Check the GitHub Actions log artifact."
+                fi
+                echo ""
+                echo "===== Response/status context ====="
+                if [ -n "$failed_statuses" ]; then
+                  printf '%s\n' "$failed_statuses"
+                else
+                  echo "No status context extracted."
+                fi
+                echo ""
+                echo "===== Fix hint ====="
+                echo "$api_fix_hint"
+              } > "../error_reason_API_${safe_name}.txt"
+            fi
+          done < <(printf '%s\n' "$selected_scripts")
+
+          exit "$failed"
+
+      - name: Run backend white-box tests with Maven
+        if: ${{ always() && (startsWith(github.ref_name, 'whitebox/') || startsWith(github.ref_name, 'fixWhitebox/') || startsWith(github.head_ref, 'whitebox/') || startsWith(github.head_ref, 'fixWhitebox/') || github.ref_name == 'main' || github.ref_name == 'develop') }}
+        working-directory: backend/vgashop
+        run: |
+          set +e
+          mkdir -p whitebox-reports
+          chmod +x ./mvnw
+
+          branch_name="${GITHUB_HEAD_REF:-${GITHUB_REF_NAME:-}}"
+          base_branch="${GITHUB_BASE_REF:-}"
+          commit_message="$(git log -1 --pretty=%B)"
+          selector_text="$(printf '%s\n%s\n%s\n' "$branch_name" "$base_branch" "$commit_message" | tr '[:upper:]' '[:lower:]')"
+
+          full_regression=false
+          if [ "$GITHUB_EVENT_NAME" = "pull_request" ]; then
+            if [ "$base_branch" = "main" ] || [ "$base_branch" = "develop" ]; then
+              full_regression=true
+            fi
+          elif [ "$branch_name" = "main" ] || [ "$branch_name" = "develop" ]; then
+            full_regression=true
+          fi
+
+          test_root="src/test/java/com/example/vgashop/whitebox_test"
+          selected_tests=""
+          selector_found=false
+
+          add_tests_by_path_keyword() {
+            keyword="$1"
+            matches="$(find "$test_root" -type f -name "*Test.java" -path "*${keyword}*" 2>/dev/null | sort || true)"
+            if [ -n "$matches" ]; then
+              selected_tests="$(printf '%s\n%s\n' "$selected_tests" "$matches")"
+            fi
+          }
+
+          if [ "$full_regression" = "true" ]; then
+            selected_tests="$(find "$test_root" -type f -name "*Test.java" 2>/dev/null | sort || true)"
+            echo "Full regression mode: running all white-box tests."
+          else
+            echo "Personal branch mode: selecting white-box tests from branch/commit."
+
+            if echo "$selector_text" | grep -Eq 'auth|authentication|login|register|kcpm-87|kcpm-128'; then
+              selector_found=true
+              add_tests_by_path_keyword "authentication"
+              add_tests_by_path_keyword "auth"
+            fi
+            if echo "$selector_text" | grep -Eq 'user-address|address|kcpm-88'; then
+              selector_found=true
+              add_tests_by_path_keyword "address"
+              add_tests_by_path_keyword "user"
+            fi
+            if echo "$selector_text" | grep -Eq 'user-profile|profile|kcpm-116'; then
+              selector_found=true
+              add_tests_by_path_keyword "profile"
+              add_tests_by_path_keyword "user"
+            fi
+            if echo "$selector_text" | grep -Eq 'product-admin|admin-product|kcpm-90'; then
+              selector_found=true
+              add_tests_by_path_keyword "product"
+              add_tests_by_path_keyword "admin"
+            fi
+            if echo "$selector_text" | grep -Eq 'product-user|user-product|kcpm-89'; then
+              selector_found=true
+              add_tests_by_path_keyword "product"
+              add_tests_by_path_keyword "user"
+            fi
+            if echo "$selector_text" | grep -Eq 'product|category|kcpm-84'; then
+              selector_found=true
+              add_tests_by_path_keyword "product"
+              add_tests_by_path_keyword "category"
+            fi
+            if echo "$selector_text" | grep -Eq 'cart|kcpm-91'; then
+              selector_found=true
+              add_tests_by_path_keyword "cart"
+            fi
+            if echo "$selector_text" | grep -Eq 'payment|kcpm-92'; then
+              selector_found=true
+              add_tests_by_path_keyword "payment"
+            fi
+            if echo "$selector_text" | grep -Eq 'order|kcpm-85'; then
+              selector_found=true
+              add_tests_by_path_keyword "order"
+            fi
+            if echo "$selector_text" | grep -Eq 'dashboard|kcpm-86'; then
+              selector_found=true
+              add_tests_by_path_keyword "dashboard"
+            fi
+            if echo "$selector_text" | grep -Eq 'admin|kcpm-93'; then
+              selector_found=true
+              add_tests_by_path_keyword "admin"
+            fi
+
+            selected_tests="$(printf '%s\n' "$selected_tests" | sed '/^$/d' | sort -u)"
+
+            if [ "$selector_found" != "true" ]; then
+              {
+                echo "FAILED FILE: backend/vgashop/src/test/java/com/example/vgashop/whitebox_test"
+                echo "  - Branch: $branch_name"
+                echo "  - Commit: ${GITHUB_SHA:-unknown}"
+                echo "FAILED TESTCASE: White-box module selector"
+                echo ""
+                echo "===== Failure reason ====="
+                echo "White-box branch/commit does not contain a supported module keyword."
+                echo ""
+                echo "===== Fix hint ====="
+                echo "Use branch format whitebox/<jira-key>-<module>, for example whitebox/KCPM-128-auth, whitebox/KCPM-91-cart, whitebox/KCPM-90-product-admin."
+              } > "../../error_reason_WHITEBOX_selector.txt"
+              exit 1
+            fi
+
+            if [ -z "$selected_tests" ]; then
+              {
+                echo "FAILED FILE: backend/vgashop/src/test/java/com/example/vgashop/whitebox_test"
+                echo "  - Branch: $branch_name"
+                echo "  - Commit: ${GITHUB_SHA:-unknown}"
+                echo "FAILED TESTCASE: White-box test file discovery"
+                echo ""
+                echo "===== Failure reason ====="
+                echo "Module keyword was detected, but no matching *Test.java file was found under whitebox_test."
+                echo ""
+                echo "===== Fix hint ====="
+                echo "Add test files under backend/vgashop/src/test/java/com/example/vgashop/whitebox_test/<module>/... and name classes with *Test.java."
+              } > "../../error_reason_WHITEBOX_missing_test_file.txt"
+              exit 1
+            fi
+          fi
+
+          echo "White-box test files to run:"
+          printf '%s\n' "$selected_tests" | sed 's/^/- /'
+
+          failed=0
+          while read -r test_file; do
+            [ -z "$test_file" ] && continue
+            test_class="$(basename "$test_file" .java)"
+            safe_name="$(echo "$test_class" | sed 's#[^A-Za-z0-9_.-]#_#g')"
+            log_file="whitebox-reports/${safe_name}.log"
+
+            echo "Running white-box test: $test_class"
+            ./mvnw -Pwhitebox -Dtest="$test_class" test 2>&1 | tee "$log_file"
+            whitebox_status=${PIPESTATUS[0]}
+
+            if [ "$whitebox_status" -ne 0 ]; then
+              failed=1
+              failed_cases="$(grep -E "<<< FAILURE!|<<< ERROR!|Tests run:|Failures:|Errors:|AssertionFailedError|java\\.lang\\.|expected:|but was:" "$log_file" | sed 's/^[[:space:]]*//' | tail -n 60 || true)"
+              failure_locations="$(grep -E "at com\\.example\\.vgashop\\.|${test_class}" "$log_file" | sed 's/^[[:space:]]*//' | head -n 40 || true)"
+              {
+                echo "FAILED FILE: backend/vgashop/$test_file"
+                echo "  - Script: ./mvnw -Pwhitebox -Dtest=$test_class test"
+                echo "  - Branch: $branch_name"
+                echo "  - Commit: ${GITHUB_SHA:-unknown}"
+                echo "FAILED TESTCASE: $test_class"
+                echo ""
+                echo "===== Failure reason ====="
+                if [ -n "$failed_cases" ]; then
+                  printf '%s\n' "$failed_cases"
+                else
+                  echo "Could not extract a concise Maven/JUnit failure. Check the GitHub Actions log artifact."
+                fi
+                echo ""
+                echo "===== Failure location ====="
+                if [ -n "$failure_locations" ]; then
+                  printf '%s\n' "$failure_locations"
+                else
+                  echo "backend/vgashop/$test_file"
+                fi
+                echo ""
+                echo "===== Coverage artifact ====="
+                echo "backend/vgashop/target/site/jacoco/index.html"
+                echo ""
+                echo "===== Fix hint ====="
+                echo "Check the failed branch/condition in the backend service/controller, expected HTTP status/body, test data setup, and mocked/in-memory authentication state."
+              } > "../../error_reason_WHITEBOX_${safe_name}.txt"
+            fi
+          done < <(printf '%s\n' "$selected_tests")
+
+          exit "$failed"
+
+      - name: Run UI tests with CodeceptJS
+        if: ${{ always() && !startsWith(github.ref_name, 'whitebox/') && !startsWith(github.ref_name, 'fixWhitebox/') && !startsWith(github.head_ref, 'whitebox/') && !startsWith(github.head_ref, 'fixWhitebox/') }}
+        working-directory: automation
+        env:
+          HEADLESS: "true"
+          FE_URL: http://localhost:5173
+          USER_FE_URL: http://localhost:5173
+          ADMIN_FE_URL: http://localhost:5174
+          BACKEND_URL: http://localhost:8080
+        run: |
+          set +e
+          failed=0
+          npx playwright install chromium
+
+          branch_name="${GITHUB_HEAD_REF:-${GITHUB_REF_NAME:-}}"
+          base_branch="${GITHUB_BASE_REF:-}"
+          commit_message="$(git log -1 --pretty=%B)"
+          selector_text="$(printf '%s\n%s\n%s\n' "$branch_name" "$base_branch" "$commit_message" | tr '[:upper:]' '[:lower:]')"
+
+          full_regression=false
+          if [ "$GITHUB_EVENT_NAME" = "pull_request" ]; then
+            if [ "$base_branch" = "main" ] || [ "$base_branch" = "develop" ]; then
+              full_regression=true
+            fi
+          elif [ "$branch_name" = "main" ] || [ "$branch_name" = "develop" ]; then
+            full_regression=true
+          fi
+
+          selected_files=""
+
+          if [ "$full_regression" = "true" ]; then
+            echo "Full UI regression mode: running all UI test files."
+            selected_files="$(find ./E2E/modules -name "*_test.js" | sort)"
+          else
+            echo "Personal branch mode: selecting UI test files from branch/commit."
+
+            if echo "$selector_text" | grep -Eq '(^|[[:space:]])(whitebox|fixwhitebox)/|whitebox|white-box|wb'; then
+              echo "White-box branch/commit detected. Skipping UI tests."
+              exit 0
+            fi
+
+            if echo "$selector_text" | grep -Eq '(^|[[:space:]])(fe|fixfe)/(auth|authentication)|kcpm-81|auth-ui|ui-auth|auth ui|fe auth|auth fe|authentication ui'; then
+              selected_files="$(printf '%s\n%s\n' "$selected_files" "$(find ./E2E/modules/1_Authentication -name "*_test.js" | sort)")"
+            fi
+            if echo "$selector_text" | grep -Eq '(^|[[:space:]])(fe|fixfe)/(shopping|shopping-experience|shop)|shopping-experience|shop ui|kcpm-82'; then
+              selected_files="$(printf '%s\n%s\n' "$selected_files" "$(find ./E2E/modules/2_Shopping_Experience -name "*_test.js" | sort)")"
+            fi
+            if echo "$selector_text" | grep -Eq '(^|[[:space:]])(fe|fixfe)/(cart-payment|cart_payment|cart|payment)|cart-payment|cart_payment|kcpm-83'; then
+              selected_files="$(printf '%s\n%s\n' "$selected_files" "$(find ./E2E/modules/3_Cart\&Payment -name "*_test.js" | sort)")"
+            fi
+            if echo "$selector_text" | grep -Eq '(^|[[:space:]])(fe|fixfe)/(product-category|product_category|product|category)|product-category|product category|category-management|product-management|kcpm-84'; then
+              selected_files="$(printf '%s\n%s\n' "$selected_files" "$(find ./E2E/modules/4_Product\&Category_Management -name "*_test.js" | sort)")"
+            fi
+            if echo "$selector_text" | grep -Eq '(^|[[:space:]])(fe|fixfe)/(order|order-management)|order-management|kcpm-85'; then
+              selected_files="$(printf '%s\n%s\n' "$selected_files" "$(find ./E2E/modules/5_Order_Management -name "*_test.js" | sort)")"
+            fi
+            if echo "$selector_text" | grep -Eq '(^|[[:space:]])(fe|fixfe)/(dashboard-user|dashboard|user-management)|dashboard|user-management|dashboard-user|kcpm-86'; then
+              selected_files="$(printf '%s\n%s\n' "$selected_files" "$(find ./E2E/modules/6_Dashboard\&User_Management -name "*_test.js" | sort)")"
+            fi
+            if echo "$selector_text" | grep -Eq '(^|[[:space:]])(fe|fixfe)/(profile|user-profile)|user-profile|kcpm-88'; then
+              selected_files="$(printf '%s\n%s\n' "$selected_files" "$(find ./E2E/modules/7_User_Profile -name "*_test.js" | sort)")"
+            fi
+
+            selected_files="$(printf '%s\n' "$selected_files" | sed '/^$/d' | sort -u)"
+
+            if [ -z "$selected_files" ]; then
+              echo "No UI selector found. Skipping UI tests on personal branch."
+              exit 0
+            fi
+          fi
+
+          echo "UI test files to run:"
+          printf '%s\n' "$selected_files" | sed 's/^/- /'
+
+          while read -r test_file; do
+            safe_name=$(echo "$test_file" | sed 's#^./##; s#[/\\ ]#_#g; s#[^A-Za-z0-9_.-]#_#g')
+            log_file="codecept_${safe_name}.log"
+            error_file="../error_reason_UI_${safe_name}.txt"
+
+            echo "Running UI test: $test_file"
+            npx codeceptjs run "$test_file" --steps 2>&1 | tee "$log_file"
+            ui_status=${PIPESTATUS[0]}
+
+            if [ "$ui_status" -ne 0 ]; then
+              failed=1
+              failed_cases="$(grep -E "^[[:space:]]*[0-9]+\\) " "$log_file" | sed 's/^[[:space:]]*//' | tail -n 20 || true)"
+              failure_reasons="$(grep -E "still not visible|was not found on page|Timeout [0-9]+ms exceeded|AssertionError|ElementNotFound|expected web application|expected .* to |Error:" "$log_file" | sed 's/^[[:space:]]*//' | head -n 20 || true)"
+              failure_locations="$(grep -E " at Test\\.<anonymous>| File: file:|File: file:" "$log_file" | sed 's/^[[:space:]]*//' | head -n 20 || true)"
+              failure_screenshots="$(grep -E "screenshot: .*\\.png" "$log_file" | sed 's/^[[:space:]]*[- ]*//' | head -n 20 || true)"
+              fix_hint="Check the failed UI expectation, frontend feedback state, backend response, and test data for this testcase."
+              likely_reason="UI assertion failed. The actual screen did not match the expected user-facing result in the test."
+              if echo "$failure_reasons" | grep -qi "still not visible"; then
+                likely_reason="Expected UI element did not become visible after the action."
+                fix_hint="Expected UI element did not appear in time. Check whether the action succeeds, whether the selector is correct, and whether FE renders the expected success/error feedback."
+              elif echo "$failure_reasons" | grep -qi "was not found on page"; then
+                likely_reason="Expected text/message was not found on the page after submit."
+                fix_hint="Expected text was not shown after submit. Check the actual UI message, toast/alert behavior, backend validation response, and whether the test assertion is too strict."
+              elif echo "$failure_reasons" | grep -qi "Timeout"; then
+                likely_reason="UI timed out before reaching the expected state."
+                fix_hint="UI timed out waiting for the expected state. Check loading state, route transition, API response time, and selector stability."
+              elif echo "$failure_reasons" | grep -qi "ElementNotFound"; then
+                likely_reason="The selector or target element was not found."
+                fix_hint="Check whether the selector still matches the UI, whether the element is rendered in this flow, and whether the page/role is correct."
+              elif echo "$failure_reasons" | grep -qi "AssertionError"; then
+                likely_reason="The actual UI value/text did not match the expected assertion."
+                fix_hint="Compare expected text/value in the test with the actual UI response, then decide whether to fix frontend behavior or update the assertion."
+              fi
+              {
+                echo "FAILED FILE: $test_file"
+                echo "  - Script: npx codeceptjs run $test_file --steps"
+                echo "  - Branch: $branch_name"
+                echo "  - Commit: ${GITHUB_SHA:-unknown}"
+                if [ -n "$failed_cases" ]; then
+                  printf '%s\n' "$failed_cases" | sed 's/^/FAILED TESTCASE: /'
+                else
+                  echo "FAILED TESTCASE: UI test failed in CodeceptJS"
+                fi
+                echo ""
+                echo "===== Likely root cause ====="
+                echo "$likely_reason"
+                echo ""
+                echo "===== Failure reason ====="
+                if [ -n "$failure_reasons" ]; then
+                  printf '%s\n' "$failure_reasons"
+                else
+                  echo "Could not extract a concise failure reason. Check the GitHub Actions log and screenshot artifact."
+                fi
+                echo ""
+                echo "===== Failure location ====="
+                if [ -n "$failure_locations" ]; then
+                  printf '%s\n' "$failure_locations"
+                else
+                  echo "$test_file"
+                fi
+                echo ""
+                echo "===== Screenshot artifact ====="
+                if [ -n "$failure_screenshots" ]; then
+                  printf '%s\n' "$failure_screenshots"
+                else
+                  echo "No screenshot path found in CodeceptJS log."
+                fi
+                echo ""
+                echo "===== Fix hint ====="
+                echo "$fix_hint"
+              } > "$error_file"
+            fi
+          done < <(printf '%s\n' "$selected_files")
+
+          exit "$failed"
+
+      - name: Upload test logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-test-logs
+          path: |
+            error_reason*.txt
+            automation/*.xml
+            automation/*.json
+            automation/*.log
+            automation/reports/**
+            automation/E2E/output/**
+            backend/vgashop/whitebox-reports/**
+            backend/vgashop/target/surefire-reports/**
+            backend/vgashop/target/site/jacoco/**
+          if-no-files-found: ignore
+
+      - name: Create or update Jira failure subtask
+        if: failure()
+        run: |
+          node <<'NODE'
+          const fs = require('fs');
+          const { execSync } = require('child_process');
+
+          const jiraBaseUrl = process.env.JIRA_BASE_URL;
+          const jiraEmail = process.env.JIRA_EMAIL;
+          const jiraToken = process.env.JIRA_API_TOKEN;
+          const projectKey = process.env.JIRA_PROJECT_KEY || 'KCPM';
+          const jiraFailureIssueType = process.env.JIRA_FAILURE_ISSUE_TYPE || 'Sub-task';
+          const jiraDefaultPriority = process.env.JIRA_DEFAULT_PRIORITY || 'High';
+          const runUrl = `${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID}`;
+          const branchName = process.env.GITHUB_HEAD_REF || process.env.GITHUB_REF_NAME || 'unknown';
+          const eventName = process.env.GITHUB_EVENT_NAME || '';
+
+          if (!jiraBaseUrl || !jiraEmail || !jiraToken) {
+            console.error('Missing Jira secrets. Cannot log failure to Jira.');
+            process.exit(0);
+          }
+
+          const auth = Buffer.from(`${jiraEmail}:${jiraToken}`).toString('base64');
+
+          async function jira(path, options = {}) {
+            const response = await fetch(`${jiraBaseUrl}${path}`, {
+              ...options,
+              headers: {
+                Authorization: `Basic ${auth}`,
+                Accept: 'application/json',
+                'Content-Type': 'application/json',
+                ...(options.headers || {})
+              }
+            });
+
+            const text = await response.text();
+            let body = {};
+            try {
+              body = text ? JSON.parse(text) : {};
+            } catch {
+              body = { raw: text };
+            }
+
+            if (!response.ok) {
+              throw new Error(`Jira API failed ${response.status}: ${text}`);
+            }
+
+            return body;
+          }
+
+          function sh(command) {
+            return execSync(command, { encoding: 'utf8' }).trim();
+          }
+
+          function readEventPayload() {
+            try {
+              return JSON.parse(fs.readFileSync(process.env.GITHUB_EVENT_PATH, 'utf8'));
+            } catch {
+              return {};
+            }
+          }
+
+          function collectIssueKeySources(event) {
+            const latestCommitMessage = (() => {
+              try {
+                return sh('git log -1 --pretty=%B');
+              } catch {
+                return '';
+              }
+            })();
+
+            return [
+              latestCommitMessage,
+              branchName,
+              event.pull_request && event.pull_request.title,
+              event.pull_request && event.pull_request.head && event.pull_request.head.ref,
+              event.head_commit && event.head_commit.message
+            ].filter(Boolean).join('\n');
+          }
+
+          function findJiraIssueKey(text) {
+            const regex = new RegExp(`\\b${projectKey}-\\d+\\b`, 'i');
+            const match = String(text || '').match(regex);
+            return match ? match[0].toUpperCase() : '';
+          }
+
+          function extractEmail(authorText) {
+            const match = String(authorText || '').match(/<([^>]+)>/);
+            return match ? match[1].trim() : '';
+          }
+
+          async function findJiraUserByEmail(email) {
+            if (!email) return null;
+            const users = await jira(`/rest/api/3/user/search?query=${encodeURIComponent(email)}`);
+            return users.find((user) => user.emailAddress === email) || users.find((user) => user.accountId) || null;
+          }
+
+          async function getIssue(issueKey) {
+            return jira(`/rest/api/3/issue/${issueKey}?fields=summary,description,status,issuetype,assignee,parent,priority,duedate`);
+          }
+
+          async function assignIssue(issueKey, jiraUser) {
+            if (!issueKey || !jiraUser || !jiraUser.accountId) return;
+            await jira(`/rest/api/3/issue/${issueKey}/assignee`, {
+              method: 'PUT',
+              body: JSON.stringify({ accountId: jiraUser.accountId })
+            });
+          }
+
+          function extractCommentText(node) {
+            if (!node) return '';
+            if (typeof node === 'string') return node;
+            if (node.text) return node.text;
+            if (Array.isArray(node.content)) {
+              return node.content.map(extractCommentText).join('\n');
+            }
+            return '';
+          }
+
+          function jiraDoc(text) {
+            const paragraph = { type: 'paragraph' };
+            if (text) {
+              paragraph.content = [{ type: 'text', text }];
+            }
+            return {
+              type: 'doc',
+              version: 1,
+              content: [paragraph]
+            };
+          }
+
+          async function addComment(issueKey, text) {
+            await jira(`/rest/api/3/issue/${issueKey}/comment`, {
+              method: 'POST',
+              body: JSON.stringify({ body: jiraDoc(text) })
+            });
+          }
+
+          async function transitionIssue(issueKey, preferredNames) {
+            if (!issueKey) return false;
+            const transitions = await jira(`/rest/api/3/issue/${issueKey}/transitions`);
+            const names = preferredNames.map((name) => name.toLowerCase());
+            const transition = (transitions.transitions || []).find((item) => {
+              const transitionName = String(item.name || '').toLowerCase();
+              const targetName = String(item.to && item.to.name || '').toLowerCase();
+              return names.some((name) => transitionName.includes(name) || targetName.includes(name));
+            });
+
+            if (!transition) {
+              console.log(`No matching transition found for ${issueKey}: ${preferredNames.join(', ')}`);
+              return false;
+            }
+
+            await jira(`/rest/api/3/issue/${issueKey}/transitions`, {
+              method: 'POST',
+              body: JSON.stringify({ transition: { id: transition.id } })
+            });
+            console.log(`Transitioned ${issueKey} with ${transition.name}`);
+            return true;
+          }
+
+          async function searchExistingFailureIssue(parentIssueKey, fingerprint) {
+            const escapedFingerprint = fingerprint.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+            const jql = `project = ${projectKey} AND parent = ${parentIssueKey} AND text ~ "${escapedFingerprint}" ORDER BY created DESC`;
+            const result = await jira('/rest/api/3/search/jql', {
+              method: 'POST',
+              body: JSON.stringify({
+                jql,
+                maxResults: 20,
+                fields: ['summary', 'status', 'issuetype', 'assignee', 'priority']
+              })
+            });
+            return (result.issues || [])[0] || null;
+          }
+
+          async function searchFailureIssuesByFile(parentIssueKey, failedFile) {
+            if (!failedFile) return [];
+            const escapedFailedFile = failedFile.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+            const jql = `project = ${projectKey} AND parent = ${parentIssueKey} AND summary ~ "CI Fail" AND text ~ "${escapedFailedFile}" ORDER BY created ASC`;
+            const result = await jira('/rest/api/3/search/jql', {
+              method: 'POST',
+              body: JSON.stringify({
+                jql,
+                maxResults: 20,
+                fields: ['summary', 'status', 'issuetype', 'assignee', 'priority']
+              })
+            });
+            return result.issues || [];
+          }
+
+          async function updateIssueLabels(issueKey, labelsToAdd, labelsToRemove = []) {
+            const update = { labels: [] };
+            for (const label of labelsToRemove) update.labels.push({ remove: label });
+            for (const label of labelsToAdd) update.labels.push({ add: label });
+            if (!update.labels.length) return;
+            await jira(`/rest/api/3/issue/${issueKey}`, {
+              method: 'PUT',
+              body: JSON.stringify({ update })
+            });
+          }
+
+          async function updateIssueFields(issueKey, fields) {
+            if (!issueKey || !fields || Object.keys(fields).length === 0) return;
+            await jira(`/rest/api/3/issue/${issueKey}`, {
+              method: 'PUT',
+              body: JSON.stringify({ fields })
+            });
+          }
+
+          function computeDueDate() {
+            const dueDays = Number.parseInt(process.env.JIRA_DUE_DAYS || '', 10);
+            if (!Number.isFinite(dueDays) || dueDays < 0) return '';
+            const date = new Date();
+            date.setDate(date.getDate() + dueDays);
+            return date.toISOString().slice(0, 10);
+          }
+
+          function detectFailureLabels(errorFileName, failedFile) {
+            const source = `${errorFileName}\n${failedFile || ''}`.toLowerCase();
+            const labels = ['automation-test', 'github-actions', 'ci-failure'];
+
+            if (source.includes('error_reason_ui') || source.includes('/e2e/') || source.includes('\\e2e\\')) {
+              labels.push('blackbox', 'ui', 'fe', 'codeceptjs');
+            } else if (source.includes('error_reason_whitebox') || source.includes('whitebox') || source.includes('white-box') || source.includes('mvnw') || source.includes('surefire')) {
+              labels.push('whitebox', 'backend', 'junit', 'maven', 'jacoco');
+            } else if (source.includes('error_reason_api') || source.includes('newman') || source.includes('postman')) {
+              labels.push('blackbox', 'api', 'newman', 'postman');
+            }
+
+            if (source.includes('1_authentication') || source.includes('authentication') || source.includes('authintegrationtest')) labels.push('module-auth');
+            else if (source.includes('2_shopping_experience')) labels.push('module-shopping');
+            else if (source.includes('3_cart') || source.includes('payment')) labels.push('module-cart-payment');
+            else if (source.includes('4_product') || source.includes('category')) labels.push('module-product-category');
+            else if (source.includes('5_order')) labels.push('module-order');
+            else if (source.includes('6_dashboard') || source.includes('user_management')) labels.push('module-dashboard-user');
+            else if (source.includes('7_user_profile')) labels.push('module-user-profile');
+
+            return [...new Set(labels)];
+          }
+
+          function detectFailureKind(labels) {
+            if (labels.includes('whitebox')) return 'WHITEBOX_BACKEND';
+            if (labels.includes('ui')) return 'FE_UI';
+            if (labels.includes('api')) return 'API_POSTMAN';
+            return 'BUILD_OR_ENVIRONMENT';
+          }
+
+          function extractSection(text, title) {
+            const escapedTitle = title.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const regex = new RegExp(`===== ${escapedTitle} =====\\n([\\s\\S]*?)(?=\\n===== |$)`);
+            const match = String(text || '').match(regex);
+            return match ? match[1].trim() : '';
+          }
+
+          function buildFixSummary(errorReason, labels) {
+            const kind = detectFailureKind(labels);
+            const likelyRootCause = extractSection(errorReason, 'Likely root cause');
+            const failureReason = extractSection(errorReason, 'Failure reason');
+            const failedApiSummary = extractSection(errorReason, 'Failed API request/assertion summary');
+            const statusContext = extractSection(errorReason, 'Response/status context');
+            const failureLocation = extractSection(errorReason, 'Failure location');
+            const fixHint = extractSection(errorReason, 'Fix hint');
+            const coverageArtifact = extractSection(errorReason, 'Coverage artifact');
+            const screenshotArtifact = extractSection(errorReason, 'Screenshot artifact');
+
+            const lines = [
+              `Loai test: ${kind}.`,
+              '',
+              'Loi can sua:'
+            ];
+
+            if (likelyRootCause) lines.push(likelyRootCause);
+            else if (failureReason) lines.push(failureReason);
+            else if (failedApiSummary) lines.push(failedApiSummary);
+            else lines.push('CI failed but could not extract a concise root cause. Open GitHub Actions log/artifact for full context.');
+
+            if (failedApiSummary) {
+              lines.push('', 'API/Postman request/assertion:', failedApiSummary);
+            }
+            if (statusContext) {
+              lines.push('', 'HTTP/status context:', statusContext);
+            }
+            if (failureLocation) {
+              lines.push('', 'Vi tri loi:', failureLocation);
+            }
+            if (screenshotArtifact) {
+              lines.push('', 'Screenshot artifact:', screenshotArtifact);
+            }
+            if (coverageArtifact) {
+              lines.push('', 'Coverage artifact:', coverageArtifact);
+            }
+            if (fixHint) {
+              lines.push('', 'Huong fix:', fixHint);
+            }
+
+            return lines.join('\n');
+          }
+
+          function buildFailureDescription(parentIssue, labels) {
+            const parentDescription = extractCommentText(parentIssue.fields && parentIssue.fields.description).trim();
+            return parentDescription;
+          }
+
+          function detectFailureModule(labels, failedFile) {
+            const source = `${failedFile || ''}`.toLowerCase();
+            if (labels.includes('module-auth') || source.includes('authentication') || source.includes('auth')) return 'AUTH';
+            if (labels.includes('module-shopping') || source.includes('shopping')) return 'SHOPPING';
+            if (labels.includes('module-cart-payment') || source.includes('cart') || source.includes('payment')) return 'CART_PAYMENT';
+            if (labels.includes('module-product-category') || source.includes('product') || source.includes('category')) return 'PRODUCT_CATEGORY';
+            if (labels.includes('module-order') || source.includes('order')) return 'ORDER';
+            if (labels.includes('module-dashboard-user') || source.includes('dashboard') || source.includes('user_management')) return 'DASHBOARD_USER';
+            if (labels.includes('module-user-profile') || source.includes('profile')) return 'USER_PROFILE';
+            return 'GENERAL';
+          }
+
+          function buildFailureGroupKey(issueKey, labels, failedFile) {
+            return `${issueKey}:${detectFailureKind(labels)}_${detectFailureModule(labels, failedFile)}`;
+          }
+
+          function uniqueLines(text) {
+            return [...new Set(String(text || '')
+              .split('\n')
+              .map((line) => line.trim())
+              .filter(Boolean))];
+          }
+
+          function prefixBullets(lines) {
+            return lines.length ? lines.map((line) => `- ${line}`).join('\n') : '- None';
+          }
+
+          function compactPath(line) {
+            return String(line || '').replace(/^screenshot:\s*/i, '').replace(/^.*\/automation\//, 'automation/');
+          }
+
+          function buildCompactFailureComment({
+            fingerprint,
+            failureType,
+            labels,
+            records,
+            issueKey,
+            parentIssue,
+            issueType,
+            statusName,
+            parentPriority,
+            failureDueDate,
+            currentAssignee,
+            branchName,
+            eventName,
+            culprit,
+            assigneeText,
+            runUrl
+          }) {
+            const kind = detectFailureKind(labels);
+            const failedFiles = uniqueLines(records.map((record) => record.failedFile || 'unknown').join('\n'));
+            const failedTestcases = uniqueLines(records.flatMap((record) => record.failedTestcases).join('\n'));
+            const likelyRootCauses = uniqueLines(records.map((record) => extractSection(record.errorReason, 'Likely root cause')).join('\n'));
+            const failureReasons = uniqueLines(records.map((record) => extractSection(record.errorReason, 'Failure reason')).join('\n'));
+            const apiSummaries = uniqueLines(records.map((record) => extractSection(record.errorReason, 'Failed API request/assertion summary')).join('\n'));
+            const statusContexts = uniqueLines(records.map((record) => extractSection(record.errorReason, 'Response/status context')).join('\n'));
+            const fixHints = uniqueLines(records.map((record) => extractSection(record.errorReason, 'Fix hint')).join('\n'));
+            const coverageArtifacts = uniqueLines(records.map((record) => extractSection(record.errorReason, 'Coverage artifact')).join('\n'));
+
+            const body = [
+              `CI-FINGERPRINT: ${fingerprint}`,
+              `Trang thai loi: ${failureType}.`,
+              `Loai test: ${kind}`,
+              '',
+              `Task cha: ${issueKey} - ${parentIssue.fields.summary}`,
+              `Loai task cha: ${issueType}`,
+              `Trang thai task cha: ${statusName}`,
+              `Priority: ${parentPriority}`,
+              `Due date: ${failureDueDate}`,
+              `Assignee task cha truoc khi CI tao loi: ${currentAssignee}`,
+              '',
+              `Nhanh bi loi: ${branchName}`,
+              `Su kien GitHub: ${eventName}`,
+              `Nguoi phu trach theo commit: ${culprit}`,
+              `Jira assignee lookup: ${assigneeText}`,
+              `GitHub Actions log: ${runUrl}`,
+              '',
+              'FAILED FILES:',
+              prefixBullets(failedFiles),
+              '',
+              'FAILED TESTCASES:',
+              prefixBullets(failedTestcases)
+            ];
+
+            if (likelyRootCauses.length) body.push('', 'LIKELY ROOT CAUSE:', prefixBullets(likelyRootCauses));
+            if (failureReasons.length && kind !== 'API_POSTMAN') body.push('', 'FAILURE REASON:', prefixBullets(failureReasons));
+            if (apiSummaries.length) body.push('', 'FAILURE SUMMARY:', apiSummaries.join('\n'));
+            if (coverageArtifacts.length) body.push('', 'COVERAGE:', prefixBullets(coverageArtifacts.map(compactPath)));
+            if (fixHints.length) body.push('', 'FIX HINT:', prefixBullets(fixHints));
+
+            return body.join('\n');
+          }
+
+          async function createFailureIssue(parentIssue, summary, description, priorityName, jiraUser, labels = ['ci-failure']) {
+            const issueTypeCandidates = [
+              jiraFailureIssueType,
+              'Subtask',
+              'Sub-task',
+              'Bug',
+              'Task'
+            ].filter((value, index, array) => value && array.indexOf(value) === index);
+
+            let lastError = null;
+
+            for (const issueTypeName of issueTypeCandidates) {
+              const fields = {
+                project: { key: projectKey },
+                summary,
+                description: jiraDoc(description),
+                issuetype: { name: issueTypeName },
+                labels,
+                priority: { name: priorityName || jiraDefaultPriority }
+              };
+
+              const computedDueDate = computeDueDate();
+              if (computedDueDate) {
+                fields.duedate = computedDueDate;
+              } else if (parentIssue.fields && parentIssue.fields.duedate) {
+                fields.duedate = parentIssue.fields.duedate;
+              }
+
+              if (/sub[- ]?task/i.test(issueTypeName)) {
+                fields.parent = { key: parentIssue.key };
+              }
+
+              if (jiraUser && jiraUser.accountId) {
+                fields.assignee = { accountId: jiraUser.accountId };
+              }
+
+              try {
+                const created = await jira('/rest/api/3/issue', {
+                  method: 'POST',
+                  body: JSON.stringify({ fields })
+                });
+                console.log(`Created Jira failure issue using issue type "${issueTypeName}".`);
+                return created;
+              } catch (error) {
+                lastError = error;
+                console.log(`Could not create Jira failure issue with issue type "${issueTypeName}": ${error.message}`);
+              }
+            }
+
+            throw lastError || new Error('Could not create Jira failure issue with any fallback issue type.');
+          }
+
+          async function main() {
+            const event = readEventPayload();
+            const sourceText = collectIssueKeySources(event);
+            const issueKey = findJiraIssueKey(sourceText);
+
+            if (!issueKey) {
+              console.error(`No Jira task key found. Commit message, branch name, or PR title must contain ${projectKey}-123 format.`);
+              process.exit(1);
+            }
+
+            const parentIssue = await getIssue(issueKey);
+            await transitionIssue(issueKey, ['in progress', 'start progress', 'to do']);
+            let errorFiles = fs.readdirSync('.').filter((file) => /^error_reason.*\.txt$/.test(file));
+
+            if (errorFiles.length === 0) {
+              fs.writeFileSync('error_reason_build_environment.txt', 'FAILED FILE: Build/Deploy environment\n  - Pipeline failed before test error files were created. Check GitHub Actions logs.\n');
+              errorFiles = ['error_reason_build_environment.txt'];
+            }
+
+            const failureGroups = new Map();
+
+            for (const file of errorFiles) {
+              const errorReason = fs.readFileSync(file, 'utf8').trim();
+              const firstLine = errorReason.split('\n')[0] || 'GitHub Actions CI failed';
+              const summaryTitle = firstLine.slice(0, 200).replace(/"/g, "'");
+              const failedFileMatch = errorReason.match(/^FAILED FILE:\s*(.+)$/m);
+              const failedFile = failedFileMatch ? failedFileMatch[1].trim() : '';
+              const failedTestcases = [...errorReason.matchAll(/^FAILED TESTCASE:\s*(.+)$/gm)]
+                .map((match) => match[1].trim())
+                .filter(Boolean);
+              const primaryFailedTestcase = failedTestcases[0] || '';
+              const failureLabels = detectFailureLabels(file, failedFile);
+              const fingerprint = buildFailureGroupKey(issueKey, failureLabels, failedFile || summaryTitle);
+              const group = failureGroups.get(fingerprint) || {
+                fingerprint,
+                labels: failureLabels,
+                records: [],
+                summaryTitle,
+                primaryFailedTestcase
+              };
+              group.records.push({
+                file,
+                errorReason,
+                failedFile,
+                failedTestcases,
+                summaryTitle,
+                primaryFailedTestcase
+              });
+              group.labels = [...new Set([...(group.labels || []), ...failureLabels])];
+              failureGroups.set(fingerprint, group);
+            }
+
+            for (const group of failureGroups.values()) {
+              const fingerprint = group.fingerprint;
+              const failureLabels = group.labels;
+              const primaryRecord = group.records[0] || {};
+              const failedFile = primaryRecord.failedFile || '';
+              const summaryTitle = primaryRecord.summaryTitle || 'GitHub Actions CI failed';
+              const labelsToRemove = failureLabels.includes('whitebox')
+                ? ['blackbox', 'ui', 'fe', 'codeceptjs', 'api', 'newman', 'postman']
+                : failureLabels.includes('ui')
+                  ? ['whitebox', 'backend', 'junit', 'maven', 'jacoco', 'newman', 'postman', 'api']
+                  : ['whitebox', 'backend', 'junit', 'maven', 'jacoco', 'ui', 'fe', 'codeceptjs'];
+
+              let culprit = sh("git log -1 --pretty=format:'%an <%ae>'");
+              if (failedFile) {
+                try {
+                  const fileAuthor = sh(`git log -1 --pretty=format:'%an <%ae>' -- "automation/${failedFile}"`);
+                  if (fileAuthor) culprit = fileAuthor;
+                } catch {}
+              }
+
+              const culpritEmail = extractEmail(culprit);
+              const jiraUser = await findJiraUserByEmail(culpritEmail);
+              const assigneeText = jiraUser && jiraUser.accountId
+                ? `${jiraUser.displayName || culprit} (${culpritEmail})`
+                : `No Jira user found for ${culpritEmail || 'unknown email'}`;
+              const currentAssignee = parentIssue.fields && parentIssue.fields.assignee
+                ? parentIssue.fields.assignee.displayName
+                : 'Unassigned';
+              const computedDueDate = computeDueDate();
+              const failureDueDate = computedDueDate || (parentIssue.fields && parentIssue.fields.duedate) || 'None';
+              const issueType = parentIssue.fields && parentIssue.fields.issuetype
+                ? parentIssue.fields.issuetype.name
+                : 'Unknown';
+              const statusName = parentIssue.fields && parentIssue.fields.status
+                ? parentIssue.fields.status.name
+                : 'Unknown';
+              const parentPriority = parentIssue.fields && parentIssue.fields.priority
+                ? parentIssue.fields.priority.name
+                : jiraDefaultPriority;
+              const failureSummary = `[CI Fail] ${issueKey} - ${fingerprint.replace(`${issueKey}:`, '')}`.slice(0, 250);
+              let existingFailureIssue = await searchExistingFailureIssue(issueKey, fingerprint);
+              let duplicateFailureIssues = [];
+
+              const legacyIssueMap = new Map();
+              for (const record of group.records) {
+                if (!record.failedFile) continue;
+                const legacyFailureIssues = await searchFailureIssuesByFile(issueKey, record.failedFile);
+                for (const legacyIssue of legacyFailureIssues) {
+                  legacyIssueMap.set(legacyIssue.key, legacyIssue);
+                }
+              }
+
+              const legacyFailureIssues = [...legacyIssueMap.values()];
+              if (existingFailureIssue) {
+                duplicateFailureIssues = legacyFailureIssues.filter((issue) => issue.key !== existingFailureIssue.key);
+              } else if (legacyFailureIssues.length > 0) {
+                existingFailureIssue = legacyFailureIssues[0];
+                duplicateFailureIssues = legacyFailureIssues.slice(1);
+              }
+
+              const failureType = existingFailureIssue ? 'LOI CU TAI PHAT' : 'LOI MOI';
+              const failureBody = buildCompactFailureComment({
+                fingerprint,
+                failureType,
+                labels: failureLabels,
+                records: group.records,
+                issueKey,
+                parentIssue,
+                issueType,
+                statusName,
+                parentPriority,
+                failureDueDate,
+                currentAssignee,
+                branchName,
+                eventName,
+                culprit,
+                assigneeText,
+                runUrl
+              });
+              const failureDescription = buildFailureDescription(parentIssue, failureLabels);
+
+              if (existingFailureIssue) {
+                await addComment(existingFailureIssue.key, failureBody);
+                await updateIssueLabels(existingFailureIssue.key, failureLabels, labelsToRemove);
+                await updateIssueFields(existingFailureIssue.key, { description: jiraDoc(failureDescription) });
+                if (failureDueDate !== 'None') {
+                  await updateIssueFields(existingFailureIssue.key, { duedate: failureDueDate });
+                }
+                await assignIssue(existingFailureIssue.key, jiraUser);
+                for (const duplicateIssue of duplicateFailureIssues) {
+                  const duplicateStatus = String(duplicateIssue.fields && duplicateIssue.fields.status && duplicateIssue.fields.status.name || '').toLowerCase();
+                  await addComment(duplicateIssue.key, [
+                    `Duplicate CI failure was merged into ${existingFailureIssue.key}.`,
+                    '',
+                    `Reason: workflow now groups failures by test type and module instead of creating one subtask per testcase/file.`,
+                    `CI-FINGERPRINT: ${fingerprint}`,
+                    `Canonical CI failure subtask: ${existingFailureIssue.key}`,
+                    `GitHub Actions log: ${runUrl}`
+                  ].join('\n'));
+                  await updateIssueLabels(duplicateIssue.key, ['ci-duplicate', 'ci-merged'], ['ci-failure']);
+                  if (!duplicateStatus.includes('done') && !duplicateStatus.includes('resolved')) {
+                    await transitionIssue(duplicateIssue.key, ['done', 'complete', 'resolved']);
+                  }
+                  console.log(`Merged duplicate Jira CI failure subtask ${duplicateIssue.key} into ${existingFailureIssue.key}`);
+                }
+                console.log(`Updated existing Jira failure issue ${existingFailureIssue.key} for ${issueKey}`);
+              } else {
+                const created = await createFailureIssue(parentIssue, failureSummary, failureDescription, parentPriority, jiraUser, failureLabels);
+                await addComment(created.key, failureBody);
+                console.log(`Created Jira failure issue ${created.key} under ${issueKey}`);
+              }
+            }
+          }
+
+          main().catch((error) => {
+            console.error(error);
+            process.exit(0);
+          });
+          NODE
+
+      - name: Resolve Jira failure subtask on success
+        if: success()
+        run: |
+          node <<'NODE'
+          const fs = require('fs');
+          const { execSync } = require('child_process');
+
+          const jiraBaseUrl = process.env.JIRA_BASE_URL;
+          const jiraEmail = process.env.JIRA_EMAIL;
+          const jiraToken = process.env.JIRA_API_TOKEN;
+          const projectKey = process.env.JIRA_PROJECT_KEY || 'KCPM';
+          const runUrl = `${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID}`;
+          const branchName = process.env.GITHUB_HEAD_REF || process.env.GITHUB_REF_NAME || 'unknown';
+          const eventName = process.env.GITHUB_EVENT_NAME || '';
+
+          if (!jiraBaseUrl || !jiraEmail || !jiraToken) {
+            console.log('Missing Jira secrets. Skip Jira success update.');
+            process.exit(0);
+          }
+
+          const auth = Buffer.from(`${jiraEmail}:${jiraToken}`).toString('base64');
+
+          async function jira(path, options = {}) {
+            const response = await fetch(`${jiraBaseUrl}${path}`, {
+              ...options,
+              headers: {
+                Authorization: `Basic ${auth}`,
+                Accept: 'application/json',
+                'Content-Type': 'application/json',
+                ...(options.headers || {})
+              }
+            });
+
+            const text = await response.text();
+            let body = {};
+            try {
+              body = text ? JSON.parse(text) : {};
+            } catch {
+              body = { raw: text };
+            }
+
+            if (!response.ok) {
+              throw new Error(`Jira API failed ${response.status}: ${text}`);
+            }
+
+            return body;
+          }
+
+          function sh(command) {
+            return execSync(command, { encoding: 'utf8' }).trim();
+          }
+
+          function readEventPayload() {
+            try {
+              return JSON.parse(fs.readFileSync(process.env.GITHUB_EVENT_PATH, 'utf8'));
+            } catch {
+              return {};
+            }
+          }
+
+          function collectIssueKeySources(event) {
+            let latestCommitMessage = '';
+            try {
+              latestCommitMessage = sh('git log -1 --pretty=%B');
+            } catch {}
+
+            return [
+              latestCommitMessage,
+              branchName,
+              event.pull_request && event.pull_request.title,
+              event.pull_request && event.pull_request.head && event.pull_request.head.ref,
+              event.head_commit && event.head_commit.message
+            ].filter(Boolean).join('\n');
+          }
+
+          function findJiraIssueKey(text) {
+            const regex = new RegExp(`\\b${projectKey}-\\d+\\b`, 'i');
+            const match = String(text || '').match(regex);
+            return match ? match[0].toUpperCase() : '';
+          }
+
+          function jiraDoc(text) {
+            return {
+              type: 'doc',
+              version: 1,
+              content: [
+                {
+                  type: 'paragraph',
+                  content: [{ type: 'text', text }]
+                }
+              ]
+            };
+          }
+
+          async function addComment(issueKey, text) {
+            await jira(`/rest/api/3/issue/${issueKey}/comment`, {
+              method: 'POST',
+              body: JSON.stringify({ body: jiraDoc(text) })
+            });
+          }
+
+          async function transitionIssue(issueKey, preferredNames) {
+            if (!issueKey) return false;
+            const transitions = await jira(`/rest/api/3/issue/${issueKey}/transitions`);
+            const names = preferredNames.map((name) => name.toLowerCase());
+            const transition = (transitions.transitions || []).find((item) => {
+              const transitionName = String(item.name || '').toLowerCase();
+              const targetName = String(item.to && item.to.name || '').toLowerCase();
+              return names.some((name) => transitionName.includes(name) || targetName.includes(name));
+            });
+
+            if (!transition) {
+              console.log(`No matching transition found for ${issueKey}: ${preferredNames.join(', ')}`);
+              return false;
+            }
+
+            await jira(`/rest/api/3/issue/${issueKey}/transitions`, {
+              method: 'POST',
+              body: JSON.stringify({ transition: { id: transition.id } })
+            });
+            console.log(`Transitioned ${issueKey} with ${transition.name}`);
+            return true;
+          }
+
+          async function updateLabels(issueKey, labelsToAdd, labelsToRemove) {
+            const update = { labels: [] };
+            for (const label of labelsToRemove) update.labels.push({ remove: label });
+            for (const label of labelsToAdd) update.labels.push({ add: label });
+            if (!update.labels.length) return;
+            await jira(`/rest/api/3/issue/${issueKey}`, {
+              method: 'PUT',
+              body: JSON.stringify({ update })
+            });
+          }
+
+          async function getIssue(issueKey) {
+            return jira(`/rest/api/3/issue/${issueKey}?fields=summary,status,issuetype,parent`);
+          }
+
+          async function findFailureSubtasks(parentIssueKey) {
+            const conditions = [
+              `project = ${projectKey}`,
+              `parent = ${parentIssueKey}`,
+              `summary ~ "CI Fail"`
+            ].join(' AND ');
+            const jql = `${conditions} ORDER BY created DESC`;
+            const result = await jira('/rest/api/3/search/jql', {
+              method: 'POST',
+              body: JSON.stringify({
+                jql,
+                maxResults: 20,
+                fields: ['summary', 'status', 'labels']
+              })
+            });
+            return result.issues || [];
+          }
+
+          async function main() {
+            const event = readEventPayload();
+            const sourceIssueKey = findJiraIssueKey(collectIssueKeySources(event));
+
+            if (!sourceIssueKey) {
+              console.log(`No Jira task key found. Skip Jira success update.`);
+              return;
+            }
+
+            const sourceIssue = await getIssue(sourceIssueKey);
+            const sourceIssueType = String(sourceIssue.fields && sourceIssue.fields.issuetype && sourceIssue.fields.issuetype.name || '').toLowerCase();
+            const parentIssueKey = sourceIssue.fields && sourceIssue.fields.parent && sourceIssue.fields.parent.key
+              ? sourceIssue.fields.parent.key
+              : sourceIssueKey;
+            const isSubtask = sourceIssueType.includes('sub-task') || sourceIssueType.includes('subtask') || parentIssueKey !== sourceIssueKey;
+
+            const successBody = [
+              `CI PASSED for ${sourceIssueKey}.`,
+              isSubtask ? `Parent task: ${parentIssueKey}.` : '',
+              '',
+              `Run: ${runUrl}`,
+              `Branch: ${branchName}`,
+              `Commit: ${process.env.GITHUB_SHA || 'unknown'}`,
+              `GitHub event: ${eventName}`,
+              '',
+              'Automation handling:',
+              '- Related blackbox/module tests passed.',
+              '- This CI failure sub-task is being resolved automatically.',
+              '- Parent task is also being moved toward Done when Jira workflow permits it.'
+            ].filter((line) => line !== '').join('\n');
+
+            const failureSubtasks = await findFailureSubtasks(parentIssueKey);
+            if (!failureSubtasks.length) {
+              console.log(`No CI failure subtask found under ${parentIssueKey}. Updating parent only.`);
+            }
+
+            for (const subtask of failureSubtasks) {
+              const statusName = String(subtask.fields && subtask.fields.status && subtask.fields.status.name || '').toLowerCase();
+              await addComment(subtask.key, successBody);
+              await updateLabels(subtask.key, ['ci-passed', 'ci-resolved'], ['ci-fail', 'ci-failure']);
+              if (statusName.includes('done')) {
+                console.log(`${subtask.key} is already Done. Updated success labels only.`);
+                continue;
+              }
+              await transitionIssue(subtask.key, ['done', 'complete', 'resolved']);
+              console.log(`Resolved Jira CI failure subtask ${subtask.key}`);
+            }
+
+            if (isSubtask) {
+              await addComment(sourceIssueKey, [
+                `CI PASSED for ${sourceIssueKey}.`,
+                `Parent task: ${parentIssueKey}`,
+                `Run: ${runUrl}`,
+                `Branch: ${branchName}`,
+                `Commit: ${process.env.GITHUB_SHA || 'unknown'}`
+              ].join('\n'));
+              await updateLabels(sourceIssueKey, ['ci-passed', 'ci-resolved'], ['ci-fail', 'ci-failure']);
+              await transitionIssue(sourceIssueKey, ['done', 'complete', 'resolved']);
+            }
+
+            await addComment(parentIssueKey, [
+              `CI PASSED for ${parentIssueKey}.`,
+              isSubtask ? `Fixed by subtask: ${sourceIssueKey}` : '',
+              `Run: ${runUrl}`,
+              `Branch: ${branchName}`,
+              `Commit: ${process.env.GITHUB_SHA || 'unknown'}`
+            ].filter((line) => line !== '').join('\n'));
+            await transitionIssue(parentIssueKey, ['done', 'complete', 'resolved']);
+          }
+
+          main().catch((error) => {
+            console.error(error);
+            process.exit(0);
+          });
+          NODE
+
+      - name: Stop application
+        if: always()
+        run: docker compose -p "$COMPOSE_PROJECT_NAME" down -v --remove-orphans

@@ -1,0 +1,399 @@
+{
+  "info": {
+    "_postman_id": "b8d9b4d7-6d55-4f2a-9f20-user-blackbox",
+    "name": "VGA Store User Blackbox",
+    "description": "Data-driven black-box API tests for user profile, user address and change password.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Profile - Get",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              ""
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "function parseJsonSafely() { try { return pm.response.json(); } catch (e) { return {}; } }",
+              "function testLabel() { return '[' + (pm.iterationData.get('testId') || 'Unknown') + '] ' + (pm.iterationData.get('testType') || pm.info.requestName); }",
+              "if (pm.response.code >= 200 && pm.response.code < 300) {",
+              "  var jsonData = parseJsonSafely();",
+              "  var profile = jsonData.data || jsonData;",
+              "  pm.test(testLabel() + ': profile contains identity fields', function () {",
+              "    pm.expect(profile.id).to.exist;",
+              "    pm.expect(profile.username).to.exist;",
+              "    pm.expect(profile.email).to.exist;",
+              "  });",
+              "}"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{userToken}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/users/profile",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "users",
+            "profile"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Address - Add",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "var isDefaultRaw = String(pm.iterationData.get('isDefault') || '').toLowerCase().trim();",
+              "var body = {",
+              "  recipientName: pm.iterationData.get('recipientName') || '',",
+              "  phone: pm.iterationData.get('phone') || '',",
+              "  detailedAddress: pm.iterationData.get('detailedAddress') || '',",
+              "  isDefault: isDefaultRaw === 'true' || isDefaultRaw === '1'",
+              "};",
+              "pm.request.body.raw = JSON.stringify(body);"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "function parseJsonSafely() { try { return pm.response.json(); } catch (e) { return {}; } }",
+              "function testLabel() { return '[' + (pm.iterationData.get('testId') || 'Unknown') + '] ' + (pm.iterationData.get('testType') || pm.info.requestName); }",
+              "if (pm.response.code >= 200 && pm.response.code < 300) {",
+              "  var jsonData = parseJsonSafely();",
+              "  var profile = jsonData.data || jsonData;",
+              "  var addresses = profile.addresses || [];",
+              "  pm.test(testLabel() + ': response contains at least one address', function () {",
+              "    pm.expect(addresses.length).to.be.above(0);",
+              "  });",
+              "  pm.test(testLabel() + ': latest address matches submitted recipient/phone', function () {",
+              "    var expectedRecipient = pm.iterationData.get('recipientName');",
+              "    var expectedPhone = pm.iterationData.get('phone');",
+              "    var found = addresses.some(function (item) {",
+              "      return item.recipientName === expectedRecipient && item.phone === expectedPhone;",
+              "    });",
+              "    pm.expect(found).to.eql(true);",
+              "  });",
+              "}"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{userToken}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/users/addresses",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "users",
+            "addresses"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Change Password",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "var body = {",
+              "  oldPassword: pm.iterationData.get('oldPassword') || '',",
+              "  newPassword: pm.iterationData.get('newPassword') || '',",
+              "  confirmPassword: pm.iterationData.get('confirmPassword') || ''",
+              "};",
+              "pm.request.body.raw = JSON.stringify(body);"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "function parseJsonSafely() { try { return pm.response.json(); } catch (e) { return {}; } }",
+              "function testLabel() { return '[' + (pm.iterationData.get('testId') || 'Unknown') + '] ' + (pm.iterationData.get('testType') || pm.info.requestName); }",
+              "function collectResponseText(jsonData) {",
+              "  var parts = [];",
+              "  if (jsonData.message) parts.push(jsonData.message);",
+              "  if (jsonData.error) parts.push(jsonData.error);",
+              "  if (typeof jsonData.data === 'string') parts.push(jsonData.data);",
+              "  if (jsonData.data && typeof jsonData.data === 'object') parts.push(Object.values(jsonData.data).join(' '));",
+              "  parts.push(pm.response.text());",
+              "  return parts.join(' ').toLowerCase();",
+              "}",
+              "var expectedStatus = parseInt(String(pm.iterationData.get('expectedStatus') || '').trim(), 10);",
+              "if (expectedStatus === 200 && pm.response.code >= 200 && pm.response.code < 300) {",
+              "  pm.test(testLabel() + ': success response is true or contains success message', function () {",
+              "    var jsonData = parseJsonSafely();",
+              "    pm.expect(jsonData.success === true || collectResponseText(jsonData).includes('thanh cong')).to.eql(true);",
+              "  });",
+              "}"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{userToken}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/users/change-password",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "users",
+            "change-password"
+          ]
+        }
+      },
+      "response": []
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "function currentTestType() {",
+          "  return String(pm.iterationData.get('testType') || '').trim();",
+          "}",
+          "",
+          "function currentAuthMode() {",
+          "  return String(pm.iterationData.get('authMode') || 'valid').toLowerCase().trim();",
+          "}",
+          "",
+          "function extractToken(jsonData) {",
+          "  return jsonData.token || (jsonData.data && jsonData.data.token);",
+          "}",
+          "",
+          "function applyAuthHeader(mode) {",
+          "  if (mode === 'none') {",
+          "    pm.request.headers.remove('Authorization');",
+          "    return;",
+          "  }",
+          "  if (mode === 'invalid') {",
+          "    pm.request.headers.upsert({ key: 'Authorization', value: 'Bearer invalid.user.blackbox.token' });",
+          "    return;",
+          "  }",
+          "  var token = pm.environment.get('userToken');",
+          "  if (token) {",
+          "    pm.request.headers.upsert({ key: 'Authorization', value: 'Bearer ' + token });",
+          "  }",
+          "}",
+          "",
+          "function setupAuthenticatedUser(done) {",
+          "  var mode = currentAuthMode();",
+          "  if (mode !== 'valid') {",
+          "    applyAuthHeader(mode);",
+          "    done();",
+          "    return;",
+          "  }",
+          "",
+          "  var baseUrl = pm.environment.get('baseUrl') || pm.variables.get('baseUrl');",
+          "  var suffix = Date.now().toString(36) + '_' + pm.info.iteration + '_' + Math.floor(Math.random() * 10000);",
+          "  var username = 'ub_' + suffix;",
+          "  var password = 'Oldpass@1';",
+          "  var email = username + '@gmail.com';",
+          "",
+          "  pm.environment.set('userBlackboxUsername', username);",
+          "  pm.environment.set('userBlackboxPassword', password);",
+          "  pm.environment.set('userBlackboxEmail', email);",
+          "",
+          "  pm.sendRequest({",
+          "    url: baseUrl + '/api/auth/register',",
+          "    method: 'POST',",
+          "    header: { 'Content-Type': 'application/json' },",
+          "    body: {",
+          "      mode: 'raw',",
+          "      raw: JSON.stringify({",
+          "        username: username,",
+          "        email: email,",
+          "        password: password,",
+          "        fullName: 'User Blackbox Test'",
+          "      })",
+          "    }",
+          "  }, function (registerErr) {",
+          "    if (registerErr) {",
+          "      console.log('User setup register error:', registerErr);",
+          "      done();",
+          "      return;",
+          "    }",
+          "    pm.sendRequest({",
+          "      url: baseUrl + '/api/auth/login',",
+          "      method: 'POST',",
+          "      header: { 'Content-Type': 'application/json' },",
+          "      body: {",
+          "        mode: 'raw',",
+          "        raw: JSON.stringify({ username: username, password: password })",
+          "      }",
+          "    }, function (loginErr, loginRes) {",
+          "      if (loginErr) {",
+          "        console.log('User setup login error:', loginErr);",
+          "        done();",
+          "        return;",
+          "      }",
+          "      var jsonData = {};",
+          "      try { jsonData = loginRes.json(); } catch (e) {}",
+          "      var token = extractToken(jsonData);",
+          "      if (token) {",
+          "        pm.environment.set('userToken', token);",
+          "      }",
+          "      applyAuthHeader(mode);",
+          "      done();",
+          "    });",
+          "  });",
+          "}",
+          "",
+          "function requestExpectedType() {",
+          "  var name = pm.info.requestName || '';",
+          "  if (name.indexOf('Profile') >= 0) return 'PROFILE_GET';",
+          "  if (name.indexOf('Address') >= 0) return 'ADDRESS_ADD';",
+          "  if (name.indexOf('Change Password') >= 0) return 'CHANGE_PWD';",
+          "  return '';",
+          "}",
+          "",
+          "var expectedType = requestExpectedType();",
+          "if (expectedType && currentTestType() !== expectedType) {",
+          "    pm.execution.skipRequest();",
+          "} else {",
+          "    setupAuthenticatedUser(function () {});",
+          "}"
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "function parseJsonSafely() {",
+          "  try { return pm.response.json(); } catch (e) { return {}; }",
+          "}",
+          "",
+          "function collectResponseText(jsonData) {",
+          "  var parts = [];",
+          "  if (jsonData.message) parts.push(jsonData.message);",
+          "  if (jsonData.error) parts.push(jsonData.error);",
+          "  if (typeof jsonData.data === 'string') parts.push(jsonData.data);",
+          "  if (jsonData.data && typeof jsonData.data === 'object') parts.push(Object.values(jsonData.data).join(' '));",
+          "  if (jsonData.data && typeof jsonData.data === 'object') parts.push(Object.keys(jsonData.data).join(' '));",
+          "  parts.push(pm.response.text());",
+          "  return parts.join(' ').toLowerCase();",
+          "}",
+          "",
+          "function testLabel() {",
+          "  var testId = pm.iterationData.get('testId') || 'Unknown';",
+          "  var testType = pm.iterationData.get('testType') || pm.info.requestName;",
+          "  return '[' + testId + '] ' + testType;",
+          "}",
+          "",
+          "function expectedStatus() {",
+          "  var parsed = parseInt(String(pm.iterationData.get('expectedStatus') || '').trim(), 10);",
+          "  return Number.isNaN(parsed) ? null : parsed;",
+          "}",
+          "",
+          "function expectedMessage() {",
+          "  return String(pm.iterationData.get('expectedMessage') || '').trim();",
+          "}",
+          "",
+          "function assertCommonResponse(expectedType) {",
+          "  if (String(pm.iterationData.get('testType') || '').trim() !== expectedType) return;",
+          "  var status = expectedStatus();",
+          "  if (status !== null) {",
+          "    pm.test(testLabel() + ': expected HTTP status ' + status, function () {",
+          "      pm.expect(pm.response.code).to.eql(status);",
+          "    });",
+          "  }",
+          "",
+          "  var msg = expectedMessage();",
+          "  if (!msg || msg.toLowerCase() === 'any') return;",
+          "",
+          "  var responseText = collectResponseText(parseJsonSafely());",
+          "  pm.test(testLabel() + ': response contains expected message ' + msg, function () {",
+          "    pm.expect(responseText).to.include(msg.toLowerCase());",
+          "  });",
+          "}",
+          "",
+          "function requestExpectedType() {",
+          "  var name = pm.info.requestName || '';",
+          "  if (name.indexOf('Profile') >= 0) return 'PROFILE_GET';",
+          "  if (name.indexOf('Address') >= 0) return 'ADDRESS_ADD';",
+          "  if (name.indexOf('Change Password') >= 0) return 'CHANGE_PWD';",
+          "  return '';",
+          "}",
+          "",
+          "assertCommonResponse(requestExpectedType());"
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080"
+    }
+  ]
+}

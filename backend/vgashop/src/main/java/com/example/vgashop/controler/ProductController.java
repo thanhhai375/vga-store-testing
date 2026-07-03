@@ -87,6 +87,30 @@ public class ProductController {
             @RequestParam(defaultValue = "id") String sortBy,
             @RequestParam(defaultValue = "asc") String direction
     ) {
+        // Validation for pagination
+        if (page < 0) {
+            throw new IllegalArgumentException("Số trang phải lớn hơn hoặc bằng 1");
+        }
+        if (size < 1) {
+            throw new IllegalArgumentException("Số lượng hiển thị phải lớn hơn hoặc bằng 1");
+        }
+
+        // Validation for price parameters
+        if (minPrice != null && minPrice < 0) {
+            throw new IllegalArgumentException("Giá không được nhỏ hơn 0");
+        }
+        if (maxPrice != null && maxPrice < 0) {
+            throw new IllegalArgumentException("Giá không được nhỏ hơn 0");
+        }
+
+        // Check for overflow (Infinity values)
+        if (minPrice != null && Double.isInfinite(minPrice)) {
+            throw new IllegalArgumentException("Giá trị vượt quá giới hạn cho phép (Overflow)");
+        }
+        if (maxPrice != null && Double.isInfinite(maxPrice)) {
+            throw new IllegalArgumentException("Giá trị vượt quá giới hạn cho phép (Overflow)");
+        }
+
         Page<Product> data = productService.filterProducts(keyWord, brandIds, minPrice, maxPrice,
                 page, size, sortBy, direction);
 

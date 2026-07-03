@@ -2,6 +2,7 @@ package com.example.vgashop.dto;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
 public class UserDTO {
@@ -15,7 +16,8 @@ public class UserDTO {
     private String email;
 
     @NotBlank(message= "Password là bắt buộc")
-    @Size(min = 6, message = "Password phải có ít nhất 6 ký tự")
+    @Size(min = 8, max = 64, message = "Password phải từ 8 đến 64 ký tự")
+
     private String password;
 
     private String fullName;
@@ -74,5 +76,5 @@ public class UserDTO {
     public void setRole(String role) {
         this.role = role;
     }
-    
+
 }

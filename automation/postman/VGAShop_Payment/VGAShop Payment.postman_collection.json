@@ -1,2258 +1,1315 @@
 {
   "info": {
-    "_postman_id": "c641238d-6cce-42d7-a16c-f77446af6154",
-    "name": "VGAShop Payment",
-    "description": "Postman collection for payment flow testing only, matching the current backend endpoints.",
-    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-    "_exporter_id": "54939211",
-    "_collection_link": "https://go.postman.co/collection/51701293-c641238d-6cce-42d7-a16c-f77446af6154?source=collection_link"
+    "_postman_id": "a8617a43-54f4-449f-a6c4-250cc71aacde",
+    "name": "VGAShop Payment - KCPM-92 Blackbox v2",
+    "description": "KCPM-92 - Functional Black-box API automation cho module Payment.\n\nKỹ thuật áp dụng: Equivalence Partitioning, Negative Testing, Authentication Testing và Boundary Value Analysis.\n\nCó 17 test case Payment chính (PAY-001 đến PAY-017). Folder 00_Setup gồm 7 request hỗ trợ tạo tài khoản, đăng nhập và chuẩn bị orderId; không tính vào số test case Payment.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080",
+      "type": "string"
+    },
+    {
+      "key": "generateNewUser",
+      "value": "true",
+      "type": "string"
+    },
+    {
+      "key": "loginUsername",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "loginEmail",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "loginPassword",
+      "value": "Kcpm@12345",
+      "type": "string"
+    },
+    {
+      "key": "loginFullName",
+      "value": "KCPM 92 Test User",
+      "type": "string"
+    },
+    {
+      "key": "shippingFullName",
+      "value": "KCPM 92 Test User",
+      "type": "string"
+    },
+    {
+      "key": "shippingPhone",
+      "value": "0901234567",
+      "type": "string"
+    },
+    {
+      "key": "shippingAddress",
+      "value": "123 ABC, TP.HCM",
+      "type": "string"
+    },
+    {
+      "key": "productId",
+      "value": "4",
+      "type": "string"
+    },
+    {
+      "key": "quantity",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "validOrderId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "validBankOrderId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "validVnpayOrderId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "validMomoOrderId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "validationOrderId",
+      "value": "",
+      "type": "string"
+    }
+  ],
   "item": [
     {
-      "name": "Auth",
+      "name": "00_Setup",
+      "description": "Request hỗ trợ tạo tài khoản, đăng nhập và tạo dữ liệu đơn hàng. Không tính vào 17 test case Payment chính.",
       "item": [
         {
-          "name": "Đăng ký",
-          "event": [
-            {
-              "listen": "prerequest",
-              "script": {
-                "exec": [
-                  "const randomNum = Date.now();",
-                  "const randomUsername = \"user\" + randomNum;",
-                  "const randomEmail = \"test\" + randomNum + \"@gmail.com\";",
-                  "",
-                  "pm.environment.set(\"loginUsername\", randomUsername);",
-                  "pm.environment.set(\"randomEmail\", randomEmail);"
-                ],
-                "type": "text/javascript",
-                "packages": {},
-                "requests": {}
+          "name": "Register User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/register",
+            "description": "Tạo tài khoản mới duy nhất cho mỗi lần chạy Newman.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{loginUsername}}\",\n  \"email\": \"{{loginEmail}}\",\n  \"password\": \"{{loginPassword}}\",\n  \"fullName\": \"{{loginFullName}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
               }
             },
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "const jsonData = pm.response.json();\r",
-                  "\r",
-                  "pm.test(\"Status code is 200\", function () {\r",
-                  "    pm.response.to.have.status(200);\r",
-                  "});\r",
-                  "\r",
-                  "pm.test(\"Response has token\", function () {\r",
-                  "    pm.expect(jsonData.token).to.not.be.undefined;\r",
-                  "});\r",
-                  "\r",
-                  "pm.test(\"Registration successful\", function () {\r",
-                  "    pm.expect(jsonData.message).to.eql(\"Registration successful\");\r",
-                  "});\r",
-                  "\r",
-                  "pm.test(\"Response has username and userId\", function () {\r",
-                  "    pm.expect(jsonData.username).to.not.be.undefined;\r",
-                  "    pm.expect(jsonData.userId).to.not.be.undefined;\r",
-                  "});\r",
-                  "\r",
-                  "// Lưu vào Environment để Login dùng\r",
-                  "pm.environment.set(\"loginUsername\", jsonData.username);\r",
-                  "pm.environment.set(\"token\", jsonData.token);\r",
-                  "pm.environment.set(\"userId\", jsonData.userId);\r",
-                  "\r",
-                  "console.log(\"Saved loginUsername = \" + jsonData.username);"
-                ],
-                "type": "text/javascript",
-                "packages": {},
-                "requests": {}
-              }
-            }
-          ],
-          "request": {
             "auth": {
               "type": "noauth"
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const now = Date.now();",
+                  "const shouldGenerate = String(pm.variables.get(\"generateNewUser\") ?? \"true\").toLowerCase() === \"true\";",
+                  "",
+                  "if (shouldGenerate) {",
+                  "    const username = `kcpm92_${now}`;",
+                  "    const email = `kcpm92_${now}@test.local`;",
+                  "    const password = pm.variables.get(\"loginPassword\") || \"Kcpm@12345\";",
+                  "    pm.collectionVariables.set(\"loginUsername\", username);",
+                  "    pm.collectionVariables.set(\"loginEmail\", email);",
+                  "    pm.collectionVariables.set(\"loginPassword\", password);",
+                  "    pm.collectionVariables.set(\"loginFullName\", \"KCPM 92 Test User\");",
+                  "}"
+                ]
+              }
             },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const setupId = \"SETUP-REGISTER\";",
+                  "let json = {};",
+                  "try { json = pm.response.json(); } catch (e) {}",
+                  "",
+                  "pm.test(`${setupId}: Status code is 200`, function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(`${setupId}: Registration returns a user response`, function () {",
+                  "    pm.expect(json).to.be.an('object');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login User",
+          "request": {
             "method": "POST",
             "header": [
               {
                 "key": "Content-Type",
                 "value": "application/json",
-                "type": "default"
+                "type": "text"
               }
             ],
+            "url": "{{baseUrl}}/api/auth/login",
+            "description": "Đăng nhập và lưu Bearer token cho các request Payment.",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"{{randomEmail}}\",\n  \"username\": \"{{loginUsername}}\",\n  \"password\": \"123456\",\n  \"fullName\": \"Nguoi Dung Test\"\n}",
+              "raw": "{\n  \"username\": \"{{loginUsername}}\",\n  \"password\": \"{{loginPassword}}\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
                 }
               }
             },
-            "url": {
-              "raw": "{{baseUrl}}/api/auth/register",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "auth",
-                "register"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Login",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "const jsonData = pm.response.json();",
-                  "",
-                  "pm.test(\"Status code is 200\", function () {",
-                  "    pm.response.to.have.status(200);",
-                  "});",
-                  "",
-                  "pm.test(\"Login successful\", function () {",
-                  "    pm.expect(jsonData.message).to.eql(\"Login successful\");",
-                  "});",
-                  "",
-                  "pm.test(\"Response has token\", function () {",
-                  "    pm.expect(jsonData.token).to.not.be.undefined;",
-                  "});",
-                  "",
-                  "pm.environment.set(\"token\", jsonData.token);",
-                  "pm.environment.set(\"userId\", jsonData.userId);",
-                  "",
-                  "console.log(\"Login token saved\");"
-                ],
-                "type": "text/javascript",
-                "packages": {},
-                "requests": {}
-              }
-            },
-            {
-              "listen": "prerequest",
-              "script": {
-                "exec": [
-                  ""
-                ],
-                "type": "text/javascript",
-                "packages": {},
-                "requests": {}
-              }
-            }
-          ],
-          "request": {
             "auth": {
               "type": "noauth"
-            },
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json",
-                "type": "default"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n    \"username\": \"{{loginUsername}}\",\n    \"password\": \"123456\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/auth/login",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "auth",
-                "login"
-              ]
             }
           },
-          "response": []
-        }
-      ]
-    },
-    {
-      "name": "Payment_COD",
-      "item": [
-        {
-          "name": "Đặt hàng",
+          "response": [],
           "event": [
             {
               "listen": "test",
               "script": {
+                "type": "text/javascript",
                 "exec": [
-                  "const jsonData = pm.response.json();",
+                  "const setupId = \"SETUP-LOGIN-USER\";",
+                  "let json = {};",
+                  "try { json = pm.response.json(); } catch (e) {}",
                   "",
-                  "pm.test(\"Status code is 200\", function () {",
+                  "pm.test(`${setupId}: Status code is 200`, function () {",
                   "    pm.response.to.have.status(200);",
                   "});",
                   "",
-                  "pm.test(\"Order created successfully\", function () {",
-                  "    pm.expect(jsonData.orderId).to.not.be.undefined;",
+                  "const token = json?.token || json?.accessToken || json?.data?.token || json?.data?.accessToken;",
+                  "",
+                  "pm.test(`${setupId}: Response contains token`, function () {",
+                  "    pm.expect(token).to.be.a('string').and.not.empty;",
                   "});",
                   "",
-                  "pm.test(\"Order has status\", function () {",
-                  "    pm.expect(jsonData.status).to.not.be.undefined;",
-                  "});",
-                  "",
-                  "pm.environment.set(\"orderId\", jsonData.orderId);",
-                  "pm.collectionVariables.set(\"orderId\", jsonData.orderId);",
-                  "",
-                  "console.log(\"Saved orderId:\", jsonData.orderId);"
-                ],
-                "type": "text/javascript",
-                "packages": {},
-                "requests": {}
-              }
-            },
-            {
-              "listen": "prerequest",
-              "script": {
-                "exec": [
-                  ""
-                ],
-                "type": "text/javascript",
-                "packages": {},
-                "requests": {}
-              }
-            }
-          ],
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{token}}",
-                  "type": "string"
-                },
-                {
-                  "key": "undefined",
-                  "type": "any"
-                }
-              ]
-            },
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json",
-                "type": "default"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"fullName\": \"Nguyễn Văn C\",\n  \"phone\": \"0901234567\",\n  \"shippingAddress\": \"123 Đường ABC, TP.HCM\",\n  \"note\": \"test COD\",\n  \"address\": \"hcm\",\n  \"items\": [\n    {\n      \"productId\": 10,\n      \"quantity\": 1\n    }\n  ]\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/orders",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "orders"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Create Payment - COD",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "const jsonData = pm.response.json();",
-                  "",
-                  "pm.test(\"TC_PAYMENT_01 - Status code is 200\", function () {",
-                  "    pm.response.to.have.status(200);",
-                  "});",
-                  "",
-                  "pm.test(\"TC_PAYMENT_01 - Payment request created successfully\", function () {",
-                  "    pm.expect(jsonData.success).to.eql(true);",
-                  "    pm.expect(jsonData.message).to.include(\"Payment request created\");",
-                  "});",
-                  "",
-                  "pm.test(\"TC_PAYMENT_01 - Payment method is COD\", function () {",
-                  "    pm.expect(jsonData.data.paymentMethod).to.eql(\"COD\");",
-                  "});",
-                  "",
-                  "pm.test(\"TC_PAYMENT_01 - Payment status is PENDING\", function () {",
-                  "    pm.expect(jsonData.data.paymentStatus).to.eql(\"PENDING\");",
-                  "});",
-                  "",
-                  "pm.test(\"TC_PAYMENT_01 - Response has paymentId and orderId\", function () {",
-                  "    pm.expect(jsonData.data.paymentId).to.not.be.undefined;",
-                  "    pm.expect(jsonData.data.orderId).to.not.be.undefined;",
-                  "});",
-                  "",
-                  "pm.environment.set(\"paymentId\", jsonData.data.paymentId);",
-                  "pm.environment.set(\"orderId\", jsonData.data.orderId);",
-                  "pm.environment.set(\"paymentMethod\", jsonData.data.paymentMethod);",
-                  "pm.environment.set(\"paymentStatus\", jsonData.data.paymentStatus);",
-                    "pm.environment.set(\"vnpayTransactionCode\", jsonData.data.transactionCode);",
-                  "",
-                  "pm.collectionVariables.set(\"paymentId\", jsonData.data.paymentId);",
-                  "pm.collectionVariables.set(\"orderId\", jsonData.data.orderId);",
-                  "",
-                  "console.log(\"TC_PAYMENT_01 COD passed\");"
-                ],
-                "type": "text/javascript",
-                "packages": {},
-                "requests": {}
-              }
-            }
-          ],
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{token}}",
-                  "type": "string"
-                },
-                {
-                  "key": "undefined",
-                  "type": "any"
-                }
-              ]
-            },
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json",
-                "type": "default"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{token}}",
-                "type": "default"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"paymentMethod\": \"COD\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/payments/orders/{{orderId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "payments",
-                "orders",
-                "{{orderId}}"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "TC_PAYMENT_20 - Giỏ hàng được xóa đúng cho COD",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "let jsonData = {};\r",
-                  "\r",
-                  "try {\r",
-                  "    jsonData = pm.response.json();\r",
-                  "} catch (e) {\r",
-                  "    jsonData = {};\r",
-                  "}\r",
-                  "\r",
-                  "pm.test(\"TC_PAYMENT_20 - API lấy giỏ hàng sau COD phải trả về 200\", function () {\r",
-                  "    pm.response.to.have.status(200);\r",
-                  "});\r",
-                  "\r",
-                  "pm.test(\"TC_PAYMENT_20 - Giỏ hàng phải rỗng sau khi thanh toán COD\", function () {\r",
-                  "    pm.expect(pm.response.code, \"API lấy giỏ hàng phải thành công trước khi kiểm tra cart\").to.eql(200);\r",
-                  "\r",
-                  "    const items =\r",
-                  "        jsonData.items ||\r",
-                  "        jsonData.data?.items ||\r",
-                  "        jsonData.cartItems ||\r",
-                  "        jsonData.data?.cartItems ||\r",
-                  "        jsonData.data ||\r",
-                  "        [];\r",
-                  "\r",
-                  "    pm.expect(items, \"Response phải có danh sách sản phẩm trong giỏ hàng\").to.be.an(\"array\");\r",
-                  "    pm.expect(items.length, \"Giỏ hàng phải rỗng sau khi thanh toán COD\").to.eql(0);\r",
-                  "});\r",
-                  "\r",
-                  "console.warn(\"BUG TC_PAYMENT_20: Expected sau COD thì API lấy giỏ hàng trả 200 và cart rỗng. Actual hiện tại GET /api/cart trả 500 hoặc cart chưa rỗng. Dev cần kiểm tra endpoint cart và luồng COD có gọi clearCart().\");"
-                ],
-                "type": "text/javascript",
-                "packages": {},
-                "requests": {}
-              }
-            }
-          ],
-          "protocolProfileBehavior": {
-            "disableBodyPruning": true
-          },
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{token}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "method": "GET",
-            "header": [],
-            "body": {
-              "mode": "raw",
-              "raw": "",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/cart",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "cart"
-              ]
-            }
-          },
-          "response": []
-        }
-      ]
-    },
-    {
-      "name": "Payment_Bank_Transfer",
-      "item": [
-        {
-          "name": "Đặt hàng",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "// Phân tích dữ liệu JSON trả về từ Server",
-                  "var jsonData = pm.response.json();",
-                  "",
-                  "// Kiểm tra xem trong response có trường \"id\" không",
-                  "if (jsonData && jsonData.orderId) {",
-                  "    // Tự động lưu giá trị \"id\" vào biến Environment có tên là \"orderId\"",
-                  "    pm.environment.set(\"orderId\", jsonData.orderId);",
-                  "    console.log(\"Đã tự động cập nhật orderId: \" + jsonData.orderId);",
+                  "if (token) {",
+                  "    pm.collectionVariables.set(\"token\", token);",
+                  "    pm.environment.set(\"token\", token);",
                   "}"
-                ],
-                "type": "text/javascript",
-                "packages": {},
-                "requests": {}
+                ]
               }
             }
-          ],
+          ]
+        },
+        {
+          "name": "Create Order - COD",
           "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{token}}",
-                  "type": "string"
-                },
-                {
-                  "key": "undefined",
-                  "type": "any"
-                }
-              ]
-            },
             "method": "POST",
             "header": [
               {
                 "key": "Content-Type",
                 "value": "application/json",
-                "type": "default"
+                "type": "text"
               }
             ],
+            "url": "{{baseUrl}}/api/orders",
+            "description": "",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"fullName\": \"Nguyễn Văn C\",\n  \"phone\": \"0901234567\",\n  \"shippingAddress\": \"123 ABC\",\n  \"note\": \"sad\",\n  \"address\": \"hcm\",\n  \"items\": [{ \"productId\": 10, \"quantity\": 1 }]\n}",
+              "raw": "{\n  \"fullName\": \"{{shippingFullName}}\",\n  \"phone\": \"{{shippingPhone}}\",\n  \"address\": \"{{shippingAddress}}\",\n  \"note\": \"KCPM-92 blackbox setup\",\n  \"items\": [\n    {\n      \"productId\": {{productId}},\n      \"quantity\": {{quantity}}\n    }\n  ]\n}",
               "options": {
                 "raw": {
                   "language": "json"
                 }
               }
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/orders",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "orders"
-              ]
             }
           },
-          "response": []
-        },
-        {
-          "name": "Create Payment - BANK_TRANSFER",
+          "response": [],
           "event": [
             {
               "listen": "test",
               "script": {
+                "type": "text/javascript",
                 "exec": [
-                  "if (pm.response.code === 200 || pm.response.code === 201) {",
-                  "    const responseData = pm.response.json();",
-                  "    ",
-                  "    // Khai báo 2 biến tạm để hứng dữ liệu",
-                  "    let pId = null;",
-                  "    let tCode = null;",
+                  "const setupId = \"SETUP-ORDER-COD\";",
+                  "let json = {};",
+                  "try { json = pm.response.json(); } catch (e) {}",
                   "",
-                  "    if (responseData) {",
-                  "        // Trường hợp 1: Dữ liệu bọc trong object 'data'",
-                  "        if (responseData.data) {",
-                  "            pId = responseData.data.paymentId || responseData.data.id;",
-                  "            tCode = responseData.data.transactionCode || responseData.data.vnp_TxnRef || responseData.data.orderId;",
-                  "        } ",
-                  "        // Trường hợp 2: Dữ liệu nằm tuột ra lớp ngoài cùng",
-                  "        else {",
-                  "            pId = responseData.paymentId || responseData.id;",
-                  "            tCode = responseData.transactionCode || responseData.orderId;",
-                  "        }",
-                  "    }",
+                  "pm.test(`${setupId}: Order created successfully`, function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});",
                   "",
-                  "    // Tiến hành lưu vào biến môi trường nếu tìm thấy dữ liệu hợp lệ",
-                  "    if (pId) {",
-                  "        pm.environment.set(\"bankPaymentId\", pId);",
-                  "        console.log(\"🎯 [SUCCESS] Đã lưu bankPaymentId:\", pId);",
-                  "    } else {",
-                  "        console.error(\"❌ [ERROR] Không trích xuất được ID thanh toán (id/paymentId) từ Response.\");",
-                  "    }",
+                  "const orderId =",
+                  "    json?.data?.orderId ||",
+                  "    json?.data?.id ||",
+                  "    json?.orderId ||",
+                  "    json?.id;",
                   "",
-                  "    if (tCode) {",
-                  "        pm.environment.set(\"bankTransactionCode\", tCode);",
-                  "        console.log(\"🎯 [SUCCESS] Đã lưu bankTransactionCode:\", tCode);",
-                  "    } else {",
-                  "        console.warn(\"⚠️ [WARN] Không tìm thấy mã giao dịch (transactionCode) trong Response.\");",
-                  "    }",
+                  "pm.test(`${setupId}: Response contains orderId`, function () {",
+                  "    pm.expect(orderId).to.exist;",
+                  "});",
                   "",
-                  "    // In toàn bộ cục JSON ra Console để bạn dễ theo dõi cấu trúc thực tế",
-                  "    console.log(\"Dữ liệu Response thực tế nhận được:\", JSON.stringify(responseData));",
-                  "",
-                  "} else {",
-                  "    console.error(\"❌ [ERROR] API trả về lỗi! Status code hiện tại là:\", pm.response.code);",
+                  "if (orderId) {",
+                  "    pm.collectionVariables.set(\"validOrderId\", String(orderId));",
+                  "    pm.environment.set(\"validOrderId\", String(orderId));",
                   "}"
-                ],
-                "type": "text/javascript",
-                "packages": {},
-                "requests": {}
+                ]
               }
             }
-          ],
+          ]
+        },
+        {
+          "name": "Create Order - BANK_TRANSFER",
           "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "undefined",
-                  "type": "any"
-                }
-              ]
-            },
             "method": "POST",
             "header": [
               {
                 "key": "Content-Type",
                 "value": "application/json",
-                "type": "default"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{token}}",
-                "type": "default"
+                "type": "text"
               }
             ],
+            "url": "{{baseUrl}}/api/orders",
+            "description": "",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"paymentMethod\": \"BANK_TRANSFER\"\n}",
+              "raw": "{\n  \"fullName\": \"{{shippingFullName}}\",\n  \"phone\": \"{{shippingPhone}}\",\n  \"address\": \"{{shippingAddress}}\",\n  \"note\": \"KCPM-92 blackbox setup\",\n  \"items\": [\n    {\n      \"productId\": {{productId}},\n      \"quantity\": {{quantity}}\n    }\n  ]\n}",
               "options": {
                 "raw": {
                   "language": "json"
                 }
               }
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/payments/orders/{{orderId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "payments",
-                "orders",
-                "{{orderId}}"
-              ]
             }
           },
-          "response": []
-        },
-        {
-          "name": "TC_PAYMENT_17 - Hiển thị QR Bank Transfer",
+          "response": [],
           "event": [
             {
               "listen": "test",
               "script": {
-                "exec": [
-                  "const jsonData = pm.response.json();\r",
-                  "\r",
-                  "pm.test(\"TC_PAYMENT_17 - Trả về 200 khi tạo thanh toán Bank Transfer\", function () {\r",
-                  "    pm.response.to.have.status(200);\r",
-                  "});\r",
-                  "\r",
-                  "pm.test(\"TC_PAYMENT_17 - Payment method phải là BANK_TRANSFER\", function () {\r",
-                  "    pm.expect(jsonData.data.paymentMethod).to.eql(\"BANK_TRANSFER\");\r",
-                  "});\r",
-                  "\r",
-                  "pm.test(\"TC_PAYMENT_17 - Payment status phải là PENDING\", function () {\r",
-                  "    pm.expect(jsonData.data.paymentStatus).to.eql(\"PENDING\");\r",
-                  "});\r",
-                  "\r",
-                  "pm.test(\"TC_PAYMENT_17 - Response phải có paymentId và orderId\", function () {\r",
-                  "    pm.expect(jsonData.data.paymentId).to.not.be.undefined;\r",
-                  "    pm.expect(jsonData.data.orderId).to.not.be.undefined;\r",
-                  "});\r",
-                  "\r",
-                  "pm.test(\"TC_PAYMENT_17 - Response phải có dữ liệu QR hoặc thông tin chuyển khoản\", function () {\r",
-                  "    const responseText = pm.response.text().toLowerCase();\r",
-                  "\r",
-                  "    pm.expect(responseText).to.satisfy(function (text) {\r",
-                  "        return (\r",
-                  "            text.includes(\"qr\") ||\r",
-                  "            text.includes(\"bank\") ||\r",
-                  "            text.includes(\"account\") ||\r",
-                  "            text.includes(\"transfer\") ||\r",
-                  "            text.includes(\"ordercode\") ||\r",
-                  "            text.includes(\"amount\")\r",
-                  "        );\r",
-                  "    });\r",
-                  "});\r",
-                  "\r",
-                  "console.warn(\"BUG TC_PAYMENT_17: Nếu test fail do response không có QR/bank/account/amount/orderCode thì dev cần bổ sung dữ liệu để frontend hiển thị mã QR và thông tin chuyển khoản.\");"
-                ],
                 "type": "text/javascript",
-                "packages": {},
-                "requests": {}
-              }
-            }
-          ],
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "undefined",
-                  "type": "any"
-                }
-              ]
-            },
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json",
-                "type": "default"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{token}}",
-                "type": "default"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"paymentMethod\": \"BANK_TRANSFER\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/payments/orders/{{orderId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "payments",
-                "orders",
-                "{{orderId}}"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "TC_PAYMENT_22 - Giỏ hàng được xóa đúng cho Bank Transfer",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
                 "exec": [
-                  "let jsonData = {};\r",
-                  "\r",
-                  "try {\r",
-                  "    jsonData = pm.response.json();\r",
-                  "} catch (e) {\r",
-                  "    jsonData = {};\r",
-                  "}\r",
-                  "\r",
-                  "pm.test(\"TC_PAYMENT_22 - API lấy giỏ hàng sau Bank Transfer phải trả về 200\", function () {\r",
-                  "    pm.response.to.have.status(200);\r",
-                  "});\r",
-                  "\r",
-                  "pm.test(\"TC_PAYMENT_22 - Giỏ hàng phải rỗng sau Bank Transfer\", function () {\r",
-                  "    pm.expect(pm.response.code, \"API lấy giỏ hàng phải thành công trước khi kiểm tra cart\").to.eql(200);\r",
-                  "\r",
-                  "    const items =\r",
-                  "        jsonData.items ||\r",
-                  "        jsonData.data?.items ||\r",
-                  "        jsonData.cartItems ||\r",
-                  "        jsonData.data?.cartItems ||\r",
-                  "        jsonData.data ||\r",
-                  "        [];\r",
-                  "\r",
-                  "    pm.expect(items, \"Response phải có danh sách sản phẩm trong giỏ hàng\").to.be.an(\"array\");\r",
-                  "    pm.expect(items.length, \"Giỏ hàng phải rỗng sau khi Bank Transfer thành công\").to.eql(0);\r",
-                  "});\r",
-                  "\r",
-                  "pm.test(\"TC_PAYMENT_22 - Có orderId/paymentId sau khi tạo Bank Transfer\", function () {\r",
-                  "    const orderId =\r",
-                  "        pm.environment.get(\"orderId\") ||\r",
-                  "        pm.collectionVariables.get(\"orderId\");\r",
-                  "\r",
-                  "    const paymentId =\r",
-                  "        pm.environment.get(\"paymentId\") ||\r",
-                  "        pm.collectionVariables.get(\"paymentId\");\r",
-                  "\r",
-                  "    pm.expect(orderId, \"Cần có orderId sau khi đặt hàng\").to.not.be.undefined;\r",
-                  "    pm.expect(paymentId, \"Cần có paymentId sau khi tạo Bank Transfer\").to.not.be.undefined;\r",
-                  "});\r",
-                  "\r",
-                  "console.warn(\"NOTE TC_PAYMENT_22: Postman kiểm tra backend cart rỗng sau Bank Transfer. Phần Redux cart items=[] và redirect /payment/pending cần xác nhận thêm bằng UI.\");"
-                ],
-                "type": "text/javascript",
-                "packages": {},
-                "requests": {}
-              }
-            }
-          ],
-          "protocolProfileBehavior": {
-            "disableBodyPruning": true
-          },
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{token}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "method": "GET",
-            "header": [],
-            "body": {
-              "mode": "raw",
-              "raw": ""
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/cart",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "cart"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "TC_PAYMENT_28 - Payment Pending - Polling kiểm tra thanh toán",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "let jsonData = {};\r",
-                  "\r",
-                  "try {\r",
-                  "    jsonData = pm.response.json();\r",
-                  "} catch (e) {\r",
-                  "    jsonData = {};\r",
-                  "}\r",
-                  "\r",
-                  "pm.test(\"TC_PAYMENT_28 - Payment Pending - Polling kiểm tra thanh toán - API trả về 200\", function () {\r",
-                  "    pm.response.to.have.status(200);\r",
-                  "});\r",
-                  "\r",
-                  "pm.test(\"TC_PAYMENT_28 - Payment Pending - Có orderId để polling\", function () {\r",
-                  "    const orderId =\r",
-                  "        jsonData.orderId ||\r",
-                  "        jsonData.data?.orderId ||\r",
-                  "        pm.environment.get(\"orderId\") ||\r",
-                  "        pm.collectionVariables.get(\"orderId\");\r",
-                  "\r",
-                  "    pm.expect(orderId, \"Cần có orderId để polling trạng thái thanh toán\").to.not.be.undefined;\r",
-                  "});\r",
-                  "\r",
-                  "pm.test(\"TC_PAYMENT_28 - Payment Pending - Response có trạng thái đơn hàng hoặc thanh toán\", function () {\r",
-                  "    const status =\r",
-                  "        jsonData.status ||\r",
-                  "        jsonData.paymentStatus ||\r",
-                  "        jsonData.data?.status ||\r",
-                  "        jsonData.data?.paymentStatus;\r",
-                  "\r",
-                  "    pm.expect(status, \"API cần trả status hoặc paymentStatus để frontend polling\").to.not.be.undefined;\r",
-                  "});\r",
-                  "\r",
-                  "pm.test(\"TC_PAYMENT_28 - Payment Pending - Trạng thái hợp lệ cho polling\", function () {\r",
-                  "    const status = String(\r",
-                  "        jsonData.status ||\r",
-                  "        jsonData.paymentStatus ||\r",
-                  "        jsonData.data?.status ||\r",
-                  "        jsonData.data?.paymentStatus ||\r",
-                  "        \"\"\r",
-                  "    ).toUpperCase();\r",
-                  "\r",
-                  "    pm.expect(\r",
-                  "        [\"PENDING\", \"PAID\", \"CONFIRMED\", \"CANCELLED\", \"FAILED\", \"UNPAID\"],\r",
-                  "        \"Status phải thuộc nhóm trạng thái thanh toán/đơn hàng hợp lệ\"\r",
-                  "    ).to.include(status);\r",
-                  "});\r",
-                  "\r",
-                  "console.warn(\"NOTE TC_PAYMENT_28: Postman chỉ kiểm tra API có trạng thái để polling. Việc polling mỗi 5 giây, hiển thị thành công khi PAID/CONFIRMED và dừng timer cần xác nhận thêm bằng UI/frontend.\");"
-                ],
-                "type": "text/javascript",
-                "packages": {},
-                "requests": {}
-              }
-            }
-          ],
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{token}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/orders/{{orderId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "orders",
-                "{{orderId}}"
-              ]
-            }
-          },
-          "response": []
-        }
-      ]
-    },
-    {
-      "name": "Payment_VNPAY",
-      "item": [
-        {
-          "name": "Đặt hàng",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "// Phân tích dữ liệu JSON trả về từ Server",
-                  "var jsonData = pm.response.json();",
+                  "const setupId = \"SETUP-ORDER-BANK\";",
+                  "let json = {};",
+                  "try { json = pm.response.json(); } catch (e) {}",
                   "",
-                  "// Kiểm tra xem trong response có trường \"id\" không",
-                  "if (jsonData && jsonData.orderId) {",
-                  "    // Tự động lưu giá trị \"id\" vào biến Environment có tên là \"orderId\"",
-                  "    pm.environment.set(\"orderId\", jsonData.orderId);",
-                  "    console.log(\"Đã tự động cập nhật orderId: \" + jsonData.orderId);",
+                  "pm.test(`${setupId}: Order created successfully`, function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});",
+                  "",
+                  "const orderId =",
+                  "    json?.data?.orderId ||",
+                  "    json?.data?.id ||",
+                  "    json?.orderId ||",
+                  "    json?.id;",
+                  "",
+                  "pm.test(`${setupId}: Response contains orderId`, function () {",
+                  "    pm.expect(orderId).to.exist;",
+                  "});",
+                  "",
+                  "if (orderId) {",
+                  "    pm.collectionVariables.set(\"validBankOrderId\", String(orderId));",
+                  "    pm.environment.set(\"validBankOrderId\", String(orderId));",
                   "}"
-                ],
-                "type": "text/javascript",
-                "packages": {},
-                "requests": {}
+                ]
               }
             }
-          ],
+          ]
+        },
+        {
+          "name": "Create Order - VNPAY",
           "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{token}}",
-                  "type": "string"
-                },
-                {
-                  "key": "undefined",
-                  "type": "any"
-                }
-              ]
-            },
             "method": "POST",
             "header": [
               {
                 "key": "Content-Type",
                 "value": "application/json",
-                "type": "default"
+                "type": "text"
               }
             ],
+            "url": "{{baseUrl}}/api/orders",
+            "description": "",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"fullName\": \"Nguyễn Văn C\",\n  \"phone\": \"0901234567\",\n  \"shippingAddress\": \"123 ABC\",\n  \"note\": \"sad\",\n  \"address\": \"hcm\",\n  \"items\": [{ \"productId\": 10, \"quantity\": 1 }]\n}",
+              "raw": "{\n  \"fullName\": \"{{shippingFullName}}\",\n  \"phone\": \"{{shippingPhone}}\",\n  \"address\": \"{{shippingAddress}}\",\n  \"note\": \"KCPM-92 blackbox setup\",\n  \"items\": [\n    {\n      \"productId\": {{productId}},\n      \"quantity\": {{quantity}}\n    }\n  ]\n}",
               "options": {
                 "raw": {
                   "language": "json"
                 }
               }
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/orders",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "orders"
-              ]
             }
           },
-          "response": []
-        },
-        {
-          "name": "Create Payment - VNPAY",
+          "response": [],
           "event": [
             {
               "listen": "test",
               "script": {
-                "exec": [
-                  "const jsonData = pm.response.json();",
-                  "",
-                  "pm.test(\"TC_PAYMENT_03 - Status code is 200\", function () {",
-                  "    pm.response.to.have.status(200);",
-                  "});",
-                  "",
-                  "pm.test(\"TC_PAYMENT_03 - Payment request created successfully\", function () {",
-                  "    pm.expect(jsonData.success).to.eql(true);",
-                  "    pm.expect(jsonData.message).to.include(\"Payment request created\");",
-                  "});",
-                  "",
-                  "pm.test(\"TC_PAYMENT_03 - Payment method is VNPAY\", function () {",
-                  "    pm.expect(jsonData.data.paymentMethod).to.eql(\"VNPAY\");",
-                  "});",
-                  "",
-                  "pm.test(\"TC_PAYMENT_03 - Payment status is PENDING\", function () {",
-                  "    pm.expect(jsonData.data.paymentStatus).to.eql(\"PENDING\");",
-                  "});",
-                  "",
-                  "pm.test(\"TC_PAYMENT_03 - Response has paymentId and orderId\", function () {",
-                  "    pm.expect(jsonData.data.paymentId).to.not.be.undefined;",
-                  "    pm.expect(jsonData.data.orderId).to.not.be.undefined;",
-                  "});",
-                  "",
-                  "pm.environment.set(\"paymentId\", jsonData.data.paymentId);",
-                  "pm.environment.set(\"orderId\", jsonData.data.orderId);",
-                  "pm.environment.set(\"paymentMethod\", jsonData.data.paymentMethod);",
-                  "pm.environment.set(\"paymentStatus\", jsonData.data.paymentStatus);",
-                  "",
-                  "pm.collectionVariables.set(\"paymentId\", jsonData.data.paymentId);",
-                  "pm.collectionVariables.set(\"orderId\", jsonData.data.orderId);",
-                  "",
-                  "console.log(\"TC_PAYMENT_03 VNPAY passed\");",
-                  "console.log(\"paymentId:\", jsonData.data.paymentId);",
-                  "console.log(\"orderId:\", jsonData.data.orderId);"
-                ],
                 "type": "text/javascript",
-                "packages": {},
-                "requests": {}
+                "exec": [
+                  "const setupId = \"SETUP-ORDER-VNPAY\";",
+                  "let json = {};",
+                  "try { json = pm.response.json(); } catch (e) {}",
+                  "",
+                  "pm.test(`${setupId}: Order created successfully`, function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});",
+                  "",
+                  "const orderId =",
+                  "    json?.data?.orderId ||",
+                  "    json?.data?.id ||",
+                  "    json?.orderId ||",
+                  "    json?.id;",
+                  "",
+                  "pm.test(`${setupId}: Response contains orderId`, function () {",
+                  "    pm.expect(orderId).to.exist;",
+                  "});",
+                  "",
+                  "if (orderId) {",
+                  "    pm.collectionVariables.set(\"validVnpayOrderId\", String(orderId));",
+                  "    pm.environment.set(\"validVnpayOrderId\", String(orderId));",
+                  "}"
+                ]
               }
             }
-          ],
+          ]
+        },
+        {
+          "name": "Create Order - MOMO",
           "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{token}}",
-                  "type": "string"
-                },
-                {
-                  "key": "undefined",
-                  "type": "any"
-                }
-              ]
-            },
             "method": "POST",
             "header": [
               {
                 "key": "Content-Type",
                 "value": "application/json",
-                "type": "default"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{token}}",
-                "type": "default"
+                "type": "text"
               }
             ],
+            "url": "{{baseUrl}}/api/orders",
+            "description": "",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"paymentMethod\": \"VNPAY\"\n}",
+              "raw": "{\n  \"fullName\": \"{{shippingFullName}}\",\n  \"phone\": \"{{shippingPhone}}\",\n  \"address\": \"{{shippingAddress}}\",\n  \"note\": \"KCPM-92 blackbox setup\",\n  \"items\": [\n    {\n      \"productId\": {{productId}},\n      \"quantity\": {{quantity}}\n    }\n  ]\n}",
               "options": {
                 "raw": {
                   "language": "json"
                 }
               }
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/payments/orders/{{orderId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "payments",
-                "orders",
-                "{{orderId}}"
-              ]
             }
           },
-          "response": []
-        },
-        {
-          "name": "VNPay Callback - Invalid Signature",
+          "response": [],
           "event": [
             {
               "listen": "test",
               "script": {
-                "exec": [
-                  "pm.test('Status is 200', function () { pm.expect(pm.response.code).to.equal(200); });",
-                  "const json = pm.response.json();",
-                  "pm.test('Invalid VNPay signature', function () { pm.expect(json.success).to.be.false; pm.expect(json.message).to.include('Invalid VNPay signature'); });"
-                ],
                 "type": "text/javascript",
-                "packages": {},
-                "requests": {}
-              }
-            }
-          ],
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{token}}",
-                  "type": "string"
-                },
-                {
-                  "key": "undefined",
-                  "type": "any"
-                }
-              ]
-            },
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/payments/vnpay/callback?vnp_ResponseCode=00&vnp_TxnRef=INVALID&vnp_SecureHash=BADHASH",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "payments",
-                "vnpay",
-                "callback"
-              ],
-              "query": [
-                {
-                  "key": "vnp_ResponseCode",
-                  "value": "00"
-                },
-                {
-                  "key": "vnp_TxnRef",
-                  "value": "INVALID"
-                },
-                {
-                  "key": "vnp_SecureHash",
-                  "value": "BADHASH?vnp_ResponseCode=00"
-                },
-                {
-                  "key": "vnp_TxnRef",
-                  "value": "INVALID"
-                },
-                {
-                  "key": "vnp_SecureHash",
-                  "value": "BADHASH"
-                }
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "VNPay Callback - Success",
-          "event": [
-            {
-              "listen": "prerequest",
-              "script": {
                 "exec": [
-                  "CryptoJS = require(\"crypto-js\");",
-                  "const params = {",
-                  "  vnp_Version: '2.1.0',",
-                  "  vnp_Command: 'pay',",
-                  "  vnp_TmnCode: pm.environment.get('vnp_TmnCode') || 'TMNCODE',",
-                  "  vnp_Amount: '100000',",
-                  "  vnp_CurrCode: 'VND',",
-                  "  vnp_TxnRef: pm.environment.get('vnpayTransactionCode') || 'TXN123',",
-                  "  vnp_OrderInfo: 'Payment for order',",
-                  "  vnp_OrderType: 'other',",
-                  "  vnp_Locale: 'vn',",
-                  "  vnp_ReturnUrl: pm.environment.get('vnpReturnUrl') || 'http://localhost:8080',",
-                  "  vnp_IpAddr: '127.0.0.1',",
-                  "  vnp_ResponseCode: '00'",
-                  "};",
-                  "const keys = Object.keys(params).sort();",
-                  "const hashData = keys.map(k => k + '=' + params[k]).join('&');",
-                  "const secret = pm.environment.get('vnpayHashSecret') || 'SECRET';",
-                  "const hash = CryptoJS.HmacSHA512(hashData, secret).toString();",
-                  "pm.request.url.query.clear();",
-                  "keys.forEach(k => {",
-                  "  pm.request.url.query.add({ key: k, value: params[k] });",
+                  "const setupId = \"SETUP-ORDER-MOMO\";",
+                  "let json = {};",
+                  "try { json = pm.response.json(); } catch (e) {}",
+                  "",
+                  "pm.test(`${setupId}: Order created successfully`, function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
                   "});",
-                  "pm.request.url.query.add({ key: 'vnp_SecureHash', value: hash });"
-
-                ],
-                "type": "text/javascript",
-                "packages": {},
-                "requests": {}
-              }
-            },
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('Status is 200', function () { pm.expect(pm.response.code).to.equal(200); });",
-                  "const json = pm.response.json();",
-                  "pm.test('Payment successful response', function () { pm.expect(json.success).to.be.true; })",
-                  ""
-                ],
-                "type": "text/javascript",
-                "packages": {},
-                "requests": {}
+                  "",
+                  "const orderId =",
+                  "    json?.data?.orderId ||",
+                  "    json?.data?.id ||",
+                  "    json?.orderId ||",
+                  "    json?.id;",
+                  "",
+                  "pm.test(`${setupId}: Response contains orderId`, function () {",
+                  "    pm.expect(orderId).to.exist;",
+                  "});",
+                  "",
+                  "if (orderId) {",
+                  "    pm.collectionVariables.set(\"validMomoOrderId\", String(orderId));",
+                  "    pm.environment.set(\"validMomoOrderId\", String(orderId));",
+                  "}"
+                ]
               }
             }
-          ],
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{token}}",
-                  "type": "string"
-                },
-                {
-                  "key": "undefined",
-                  "type": "any"
-                }
-              ]
-            },
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/payments/vnpay/callback",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "payments",
-                "vnpay",
-                "callback"
-              ]
-            }
-          },
-          "response": []
+          ]
         },
         {
-          "name": "TC_PAYMENT_21 - Giỏ hàng KHÔNG được xóa cho VNPAY",
-          "event": [
-            {
-              "listen": "prerequest",
-              "script": {
-                "exec": [
-                  "pm.sendRequest({\n  url: pm.environment.get('baseUrl') + '/api/cart/add',\n  method: 'POST',\n  header: {\n    'Content-Type': 'application/json',\n    'Authorization': 'Bearer ' + pm.environment.get('token')\n  },\n  body: {\n    mode: 'raw',\n    raw: JSON.stringify({ productId: 10, quantity: 1 })\n  }\n}, function (err, res) {\n  console.log('Added item to cart:', res ? res.code : err);\n});"
-                ],
-                "type": "text/javascript"
+          "name": "Create Order - Validation",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
               }
-            },
+            ],
+            "url": "{{baseUrl}}/api/orders",
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"{{shippingFullName}}\",\n  \"phone\": \"{{shippingPhone}}\",\n  \"address\": \"{{shippingAddress}}\",\n  \"note\": \"KCPM-92 blackbox setup\",\n  \"items\": [\n    {\n      \"productId\": {{productId}},\n      \"quantity\": {{quantity}}\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
             {
               "listen": "test",
               "script": {
-                "exec": [
-                  "let jsonData = {};\r",
-                  "\r",
-                  "try {\r",
-                  "    jsonData = pm.response.json();\r",
-                  "} catch (e) {\r",
-                  "    jsonData = {};\r",
-                  "}\r",
-                  "\r",
-                  "pm.test(\"TC_PAYMENT_21 - API lấy giỏ hàng sau VNPAY phải trả về 200\", function () {\r",
-                  "    pm.response.to.have.status(200);\r",
-                  "});\r",
-                  "\r",
-                  "pm.test(\"TC_PAYMENT_21 - Giỏ hàng KHÔNG được xóa sau VNPAY\", function () {\r",
-                  "    pm.expect(pm.response.code, \"API lấy giỏ hàng phải thành công trước khi kiểm tra cart\").to.eql(200);\r",
-                  "\r",
-                  "    const items =\r",
-                  "        jsonData.items ||\r",
-                  "        jsonData.data?.items ||\r",
-                  "        jsonData.cartItems ||\r",
-                  "        jsonData.data?.cartItems ||\r",
-                  "        jsonData.data ||\r",
-                  "        [];\r",
-                  "\r",
-                  "    pm.expect(items, \"Response phải có danh sách sản phẩm trong giỏ hàng\").to.be.an(\"array\");\r",
-                  "    pm.expect(items.length, \"Giỏ hàng phải còn sản phẩm vì VNPAY đang chờ xác nhận\").to.be.above(0);\r",
-                  "});\r",
-                  "\r",
-                  "pm.test(\"TC_PAYMENT_21 - Có orderId/pendingOrderId để theo dõi VNPAY\", function () {\r",
-                  "    const pendingOrderId =\r",
-                  "        pm.environment.get(\"pendingOrderId\") ||\r",
-                  "        pm.collectionVariables.get(\"pendingOrderId\") ||\r",
-                  "        pm.environment.get(\"orderId\") ||\r",
-                  "        pm.collectionVariables.get(\"orderId\");\r",
-                  "\r",
-                  "    pm.expect(pendingOrderId, \"Cần có pendingOrderId/orderId sau khi tạo VNPAY\").to.not.be.undefined;\r",
-                  "});\r",
-                  "\r",
-                  "console.warn(\"NOTE TC_PAYMENT_21: Test này có thể bấm Send trong Postman để kiểm tra backend cart. Phần Redux cart/sessionStorage vẫn cần xác nhận thêm bằng UI.\");"
-                ],
                 "type": "text/javascript",
-                "packages": {},
-                "requests": {}
+                "exec": [
+                  "const setupId = \"SETUP-ORDER-VALIDATION\";",
+                  "let json = {};",
+                  "try { json = pm.response.json(); } catch (e) {}",
+                  "",
+                  "pm.test(`${setupId}: Order created successfully`, function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});",
+                  "",
+                  "const orderId =",
+                  "    json?.data?.orderId ||",
+                  "    json?.data?.id ||",
+                  "    json?.orderId ||",
+                  "    json?.id;",
+                  "",
+                  "pm.test(`${setupId}: Response contains orderId`, function () {",
+                  "    pm.expect(orderId).to.exist;",
+                  "});",
+                  "",
+                  "if (orderId) {",
+                  "    pm.collectionVariables.set(\"validationOrderId\", String(orderId));",
+                  "    pm.environment.set(\"validationOrderId\", String(orderId));",
+                  "}"
+                ]
               }
             }
-          ],
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{token}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/cart",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "cart"
-              ]
-            }
-          },
-          "response": []
+          ]
         }
       ]
     },
     {
       "name": "Payment",
+      "description": "17 request Black-box chính thức của KCPM-92.",
       "item": [
         {
-          "name": "Get My Payments",
-          "event": [
+          "name": "01_Create Payment Success",
+          "item": [
             {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('Status is 200', function () { pm.expect(pm.response.code).to.equal(200); });",
-                  "const json = pm.response.json();",
-                  "pm.test('Success true', function () { pm.expect(json.success).to.be.true; });",
-                  "pm.test('Returned page structure', function () { pm.expect(json.data.content).to.be.an('array'); });"
+              "name": "PAY-001 - Create Payment COD",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  }
                 ],
-                "type": "text/javascript",
-                "packages": {},
-                "requests": {}
-              }
-            }
-          ],
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
+                "url": "{{baseUrl}}/api/payments/orders/{{validOrderId}}",
+                "description": "",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"paymentMethod\": \"COD\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [],
+              "event": [
                 {
-                  "key": "token",
-                  "value": "{{token}}",
-                  "type": "string"
-                },
-                {
-                  "key": "undefined",
-                  "type": "any"
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "const testId = \"PAY-001\";",
+                      "let json = {};",
+                      "try { json = pm.response.json(); } catch (e) {}",
+                      "",
+                      "pm.test(`${testId}: Expected HTTP status 200`, function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "",
+                      "pm.test(`${testId}: Payment request created`, function () {",
+                      "    pm.expect(json.success).to.eql(true);",
+                      "    pm.expect(String(json.message || \"\")).to.include(\"Payment request created\");",
+                      "});",
+                      "",
+                      "pm.test(`${testId}: Payment method is COD`, function () {",
+                      "    pm.expect(json?.data?.paymentMethod).to.eql(\"COD\");",
+                      "});",
+                      "",
+                      "pm.test(`${testId}: Payment status is PENDING`, function () {",
+                      "    pm.expect(json?.data?.paymentStatus).to.eql(\"PENDING\");",
+                      "});",
+                      "",
+                      "pm.test(`${testId}: Response contains paymentId and orderId`, function () {",
+                      "    pm.expect(json?.data?.paymentId).to.exist;",
+                      "    pm.expect(json?.data?.orderId).to.exist;",
+                      "});"
+                    ]
+                  }
                 }
               ]
             },
-            "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{token}}",
-                "type": "default"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/api/payments?page=0&size=10&sortBy=createdAt&direction=desc",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "payments"
-              ],
-              "query": [
+            {
+              "name": "PAY-002 - Create Payment BANK_TRANSFER",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "url": "{{baseUrl}}/api/payments/orders/{{validBankOrderId}}",
+                "description": "",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"paymentMethod\": \"BANK_TRANSFER\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [],
+              "event": [
                 {
-                  "key": "page",
-                  "value": "0"
-                },
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "const testId = \"PAY-002\";",
+                      "let json = {};",
+                      "try { json = pm.response.json(); } catch (e) {}",
+                      "",
+                      "pm.test(`${testId}: Expected HTTP status 200`, function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "",
+                      "pm.test(`${testId}: Payment request created`, function () {",
+                      "    pm.expect(json.success).to.eql(true);",
+                      "    pm.expect(String(json.message || \"\")).to.include(\"Payment request created\");",
+                      "});",
+                      "",
+                      "pm.test(`${testId}: Payment method is BANK_TRANSFER`, function () {",
+                      "    pm.expect(json?.data?.paymentMethod).to.eql(\"BANK_TRANSFER\");",
+                      "});",
+                      "",
+                      "pm.test(`${testId}: Payment status is PENDING`, function () {",
+                      "    pm.expect(json?.data?.paymentStatus).to.eql(\"PENDING\");",
+                      "});",
+                      "",
+                      "pm.test(`${testId}: Response contains paymentId and orderId`, function () {",
+                      "    pm.expect(json?.data?.paymentId).to.exist;",
+                      "    pm.expect(json?.data?.orderId).to.exist;",
+                      "});"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "PAY-003 - Create Payment VNPAY",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "url": "{{baseUrl}}/api/payments/orders/{{validVnpayOrderId}}",
+                "description": "",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"paymentMethod\": \"VNPAY\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [],
+              "event": [
                 {
-                  "key": "size",
-                  "value": "10"
-                },
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "const testId = \"PAY-003\";",
+                      "let json = {};",
+                      "try { json = pm.response.json(); } catch (e) {}",
+                      "",
+                      "pm.test(`${testId}: Expected HTTP status 200`, function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "",
+                      "pm.test(`${testId}: Payment request created`, function () {",
+                      "    pm.expect(json.success).to.eql(true);",
+                      "    pm.expect(String(json.message || \"\")).to.include(\"Payment request created\");",
+                      "});",
+                      "",
+                      "pm.test(`${testId}: Payment method is VNPAY`, function () {",
+                      "    pm.expect(json?.data?.paymentMethod).to.eql(\"VNPAY\");",
+                      "});",
+                      "",
+                      "pm.test(`${testId}: Payment status is PENDING`, function () {",
+                      "    pm.expect(json?.data?.paymentStatus).to.eql(\"PENDING\");",
+                      "});",
+                      "",
+                      "pm.test(`${testId}: Response contains paymentId and orderId`, function () {",
+                      "    pm.expect(json?.data?.paymentId).to.exist;",
+                      "    pm.expect(json?.data?.orderId).to.exist;",
+                      "});",
+                      "",
+                      "pm.test(`${testId}: Response contains paymentUrl`, function () {",
+                      "    pm.expect(json?.data?.paymentUrl).to.be.a('string').and.not.empty;",
+                      "});"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "PAY-004 - Create Payment MOMO",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "url": "{{baseUrl}}/api/payments/orders/{{validMomoOrderId}}",
+                "description": "",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"paymentMethod\": \"MOMO\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [],
+              "event": [
                 {
-                  "key": "sortBy",
-                  "value": "createdAt"
-                },
-                {
-                  "key": "direction",
-                  "value": "desc"
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "const testId = \"PAY-004\";",
+                      "let json = {};",
+                      "try { json = pm.response.json(); } catch (e) {}",
+                      "",
+                      "pm.test(`${testId}: Expected HTTP status 200`, function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "",
+                      "pm.test(`${testId}: Payment request created`, function () {",
+                      "    pm.expect(json.success).to.eql(true);",
+                      "    pm.expect(String(json.message || \"\")).to.include(\"Payment request created\");",
+                      "});",
+                      "",
+                      "pm.test(`${testId}: Payment method is MOMO`, function () {",
+                      "    pm.expect(json?.data?.paymentMethod).to.eql(\"MOMO\");",
+                      "});",
+                      "",
+                      "pm.test(`${testId}: Payment status is PENDING`, function () {",
+                      "    pm.expect(json?.data?.paymentStatus).to.eql(\"PENDING\");",
+                      "});",
+                      "",
+                      "pm.test(`${testId}: Response contains paymentId and orderId`, function () {",
+                      "    pm.expect(json?.data?.paymentId).to.exist;",
+                      "    pm.expect(json?.data?.orderId).to.exist;",
+                      "});",
+                      "",
+                      "pm.test(`${testId}: Response contains paymentUrl`, function () {",
+                      "    pm.expect(json?.data?.paymentUrl).to.be.a('string').and.not.empty;",
+                      "});"
+                    ]
+                  }
                 }
               ]
             }
-          },
-          "response": []
+          ]
         },
         {
-          "name": "TC_PAYMENT_23 - Sử dụng địa chỉ đã lưu",
-          "event": [
+          "name": "02_Validation",
+          "item": [
             {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "const jsonData = pm.response.json();\r",
-                  "\r",
-                  "pm.test(\"TC_PAYMENT_23 - Sử dụng địa chỉ đã lưu (Saved Address) - Trả về 200\", function () {\r",
-                  "    pm.response.to.have.status(200);\r",
-                  "});\r",
-                  "\r",
-                  "pm.test(\"TC_PAYMENT_23 - Sử dụng địa chỉ đã lưu (Saved Address) - Đơn hàng được tạo thành công\", function () {\r",
-                  "    pm.expect(jsonData.orderId).to.not.be.undefined;\r",
-                  "    pm.expect(jsonData.status).to.eql(\"PENDING\");\r",
-                  "});\r",
-                  "\r",
-                  "pm.test(\"TC_PAYMENT_23 - Sử dụng địa chỉ đã lưu (Saved Address) - Tên và SĐT đúng với địa chỉ đã lưu\", function () {\r",
-                  "    pm.expect(jsonData.fullName).to.eql(\"Nguyễn Văn A\");\r",
-                  "    pm.expect(jsonData.phone).to.eql(\"0912345678\");\r",
-                  "});\r",
-                  "\r",
-                  "pm.test(\"TC_PAYMENT_23 - Sử dụng địa chỉ đã lưu (Saved Address) - Địa chỉ được gửi đúng\", function () {\r",
-                  "    pm.expect(jsonData.address).to.include(\"Nguyễn Huệ\");\r",
-                  "    pm.expect(jsonData.address).to.include(\"TP.HCM\");\r",
-                  "});\r",
-                  "\r",
-                  "console.warn(\"NOTE TC_PAYMENT_23: Postman kiểm tra API tạo đơn bằng dữ liệu địa chỉ đã lưu. Phần UI auto-fill tên/SĐT từ Sổ địa chỉ cần xác nhận thêm trên giao diện.\");"
+              "name": "PAY-005 - Missing Payment Method",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  }
                 ],
-                "type": "text/javascript",
-                "packages": {},
-                "requests": {}
-              }
-            }
-          ],
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
+                "url": "{{baseUrl}}/api/payments/orders/{{validationOrderId}}",
+                "description": "",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [],
+              "event": [
                 {
-                  "key": "token",
-                  "value": "{{token}}",
-                  "type": "string"
-                },
-                {
-                  "key": "undefined",
-                  "type": "any"
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "const testId = \"PAY-005\";",
+                      "",
+                      "pm.test(`${testId}: Expected HTTP status 400`, function () {",
+                      "    pm.response.to.have.status(400);",
+                      "});",
+                      "",
+                      "pm.test(`${testId}: Response contains \"paymentmethod\"`, function () {",
+                      "    const responseText = pm.response.text().toLowerCase();",
+                      "    pm.expect(responseText).to.include(\"paymentmethod\");",
+                      "});"
+                    ]
+                  }
                 }
               ]
             },
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json",
-                "type": "default"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"fullName\": \"Nguyễn Văn A\",\n  \"phone\": \"0912345678\",\n  \"shippingAddress\": \"123 Nguyễn Huệ, Phường Bến Nghé, Quận 1, TP.HCM\",\n  \"note\": \"saved address test\",\n  \"address\": \"123 Nguyễn Huệ, Phường Bến Nghé, Quận 1, TP.HCM\",\n  \"items\": [\n    {\n      \"productId\": 4,\n      \"quantity\": 1\n    }\n  ]\n}"
+            {
+              "name": "PAY-006 - Null Payment Method",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "url": "{{baseUrl}}/api/payments/orders/{{validationOrderId}}",
+                "description": "",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"paymentMethod\": null\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "const testId = \"PAY-006\";",
+                      "",
+                      "pm.test(`${testId}: Expected HTTP status 400`, function () {",
+                      "    pm.response.to.have.status(400);",
+                      "});",
+                      "",
+                      "pm.test(`${testId}: Response contains \"paymentmethod\"`, function () {",
+                      "    const responseText = pm.response.text().toLowerCase();",
+                      "    pm.expect(responseText).to.include(\"paymentmethod\");",
+                      "});"
+                    ]
+                  }
+                }
+              ]
             },
-            "url": {
-              "raw": "{{baseUrl}}/api/orders",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "orders"
+            {
+              "name": "PAY-007 - Empty Payment Method",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "url": "{{baseUrl}}/api/payments/orders/{{validationOrderId}}",
+                "description": "",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"paymentMethod\": \"\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "const testId = \"PAY-007\";",
+                      "",
+                      "pm.test(`${testId}: Expected HTTP status 400`, function () {",
+                      "    pm.response.to.have.status(400);",
+                      "});"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "PAY-008 - Unsupported Payment Method",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "url": "{{baseUrl}}/api/payments/orders/{{validationOrderId}}",
+                "description": "",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"paymentMethod\": \"CREDIT_CARD\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "const testId = \"PAY-008\";",
+                      "",
+                      "pm.test(`${testId}: Expected HTTP status 400`, function () {",
+                      "    pm.response.to.have.status(400);",
+                      "});"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "PAY-009 - Missing Request Body",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "url": "{{baseUrl}}/api/payments/orders/{{validationOrderId}}",
+                "description": ""
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "const testId = \"PAY-009\";",
+                      "",
+                      "pm.test(`${testId}: Expected HTTP status 400`, function () {",
+                      "    pm.response.to.have.status(400);",
+                      "});"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "PAY-010 - Malformed JSON Body",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "url": "{{baseUrl}}/api/payments/orders/{{validationOrderId}}",
+                "description": "",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"paymentMethod\": \"COD\"\n",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "const testId = \"PAY-010\";",
+                      "",
+                      "pm.test(`${testId}: Expected HTTP status 400`, function () {",
+                      "    pm.response.to.have.status(400);",
+                      "});"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "PAY-011 - Unknown Order",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "url": "{{baseUrl}}/api/payments/orders/999999999",
+                "description": "",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"paymentMethod\": \"COD\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "const testId = \"PAY-011\";",
+                      "",
+                      "pm.test(`${testId}: Expected HTTP status 404`, function () {",
+                      "    pm.response.to.have.status(404);",
+                      "});",
+                      "",
+                      "pm.test(`${testId}: Response contains \"order not found\"`, function () {",
+                      "    const responseText = pm.response.text().toLowerCase();",
+                      "    pm.expect(responseText).to.include(\"order not found\");",
+                      "});"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "PAY-012 - Invalid Order ID Type",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "url": "{{baseUrl}}/api/payments/orders/abc",
+                "description": "",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"paymentMethod\": \"COD\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "const testId = \"PAY-012\";",
+                      "",
+                      "pm.test(`${testId}: Expected HTTP status 400`, function () {",
+                      "    pm.response.to.have.status(400);",
+                      "});",
+                      "",
+                      "pm.test(`${testId}: Response contains \"orderid\"`, function () {",
+                      "    const responseText = pm.response.text().toLowerCase();",
+                      "    pm.expect(responseText).to.include(\"orderid\");",
+                      "});"
+                    ]
+                  }
+                }
               ]
             }
-          },
-          "response": []
+          ]
         },
         {
-          "name": "TC_PAYMENT_25 - Buy Now Item (Mua ngay) thanh toán thành công",
-          "event": [
+          "name": "03_Authentication",
+          "item": [
             {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "const jsonData = pm.response.json();\r",
-                  "\r",
-                  "pm.test(\"TC_PAYMENT_25 - Buy Now Item (Mua ngay) thanh toán thành công - Trả về 200\", function () {\r",
-                  "    pm.response.to.have.status(200);\r",
-                  "});\r",
-                  "\r",
-                  "pm.test(\"TC_PAYMENT_25 - Buy Now Item (Mua ngay) thanh toán thành công - Đơn hàng được tạo thành công\", function () {\r",
-                  "    pm.expect(jsonData.orderId).to.not.be.undefined;\r",
-                  "    pm.expect(jsonData.status).to.eql(\"PENDING\");\r",
-                  "});\r",
-                  "\r",
-                  "pm.test(\"TC_PAYMENT_25 - Buy Now Item (Mua ngay) thanh toán thành công - Checkout chỉ có 1 sản phẩm\", function () {\r",
-                  "    pm.expect(jsonData.productIds || jsonData.items || jsonData.orderItems || []).to.not.be.undefined;\r",
-                  "});\r",
-                  "\r",
-                  "pm.test(\"TC_PAYMENT_25 - Buy Now Item (Mua ngay) thanh toán thành công - Tổng tiền phải lớn hơn 0\", function () {\r",
-                  "    pm.expect(jsonData.totalPrice).to.be.above(0);\r",
-                  "});\r",
-                  "\r",
-                  "console.warn(\"NOTE TC_PAYMENT_25: Postman kiểm tra API tạo đơn với 1 sản phẩm mua ngay. Phần ProductDetail nút 'Mua ngay' và việc giỏ hàng không bị xóa cần xác nhận thêm bằng UI.\");"
+              "name": "PAY-013 - Missing Bearer Token",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  }
                 ],
-                "type": "text/javascript",
-                "packages": {},
-                "requests": {}
-              }
-            }
-          ],
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{token}}",
-                  "type": "string"
+                "url": "{{baseUrl}}/api/payments/orders/{{validationOrderId}}",
+                "description": "",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"paymentMethod\": \"COD\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
                 },
+                "auth": {
+                  "type": "noauth"
+                }
+              },
+              "response": [],
+              "event": [
                 {
-                  "key": "undefined",
-                  "type": "any"
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "const testId = \"PAY-013\";",
+                      "",
+                      "pm.test(`${testId}: Expected HTTP status 401`, function () {",
+                      "    pm.response.to.have.status(401);",
+                      "});"
+                    ]
+                  }
                 }
               ]
             },
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json",
-                "type": "default"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"fullName\": \"Nguyễn Văn C\",\n  \"phone\": \"0901234567\",\n  \"shippingAddress\": \"123 Nguyễn Huệ, Quận 1, TP.HCM\",\n  \"note\": \"buy now item test\",\n  \"address\": \"TP.HCM\",\n  \"buyNowItem\": true,\n  \"items\": [\n    {\n      \"productId\": 4,\n      \"quantity\": 1\n    }\n  ]\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/orders",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "orders"
+            {
+              "name": "PAY-014 - Invalid Bearer Token",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "url": "{{baseUrl}}/api/payments/orders/{{validationOrderId}}",
+                "description": "",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"paymentMethod\": \"COD\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "invalid-token",
+                      "type": "string"
+                    }
+                  ]
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "const testId = \"PAY-014\";",
+                      "",
+                      "pm.test(`${testId}: Expected HTTP status 401`, function () {",
+                      "    pm.response.to.have.status(401);",
+                      "});"
+                    ]
+                  }
+                }
               ]
             }
-          },
-          "response": []
+          ]
         },
         {
-          "name": "TC_PAYMENT_26 - Payload gửi Backend KHÔNG chứa price (Bảo mật giá)",
-          "event": [
+          "name": "04_Get My Payments",
+          "item": [
             {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "const jsonData = pm.response.json();\r",
-                  "\r",
-                  "pm.test(\"TC_PAYMENT_26 - Payload gửi Backend KHÔNG chứa price (Bảo mật giá) - Trả về 200\", function () {\r",
-                  "    pm.response.to.have.status(200);\r",
-                  "});\r",
-                  "\r",
-                  "pm.test(\"TC_PAYMENT_26 - Payload gửi Backend KHÔNG chứa price (Bảo mật giá) - Đơn hàng được tạo thành công\", function () {\r",
-                  "    pm.expect(jsonData.orderId).to.not.be.undefined;\r",
-                  "    pm.expect(jsonData.status).to.eql(\"PENDING\");\r",
-                  "});\r",
-                  "\r",
-                  "pm.test(\"TC_PAYMENT_26 - Payload request không chứa price\", function () {\r",
-                  "    const requestBody = JSON.parse(pm.request.body.raw);\r",
-                  "\r",
-                  "    pm.expect(requestBody).to.not.have.property(\"price\");\r",
-                  "    pm.expect(requestBody).to.not.have.property(\"totalPrice\");\r",
-                  "\r",
-                  "    requestBody.items.forEach(function (item) {\r",
-                  "        pm.expect(item).to.not.have.property(\"price\");\r",
-                  "        pm.expect(item).to.not.have.property(\"subtotal\");\r",
-                  "        pm.expect(item).to.have.property(\"productId\");\r",
-                  "        pm.expect(item).to.have.property(\"quantity\");\r",
-                  "    });\r",
-                  "});\r",
-                  "\r",
-                  "pm.test(\"TC_PAYMENT_26 - Backend vẫn tự tính totalPrice\", function () {\r",
-                  "    pm.expect(jsonData.totalPrice).to.be.above(0);\r",
-                  "});\r",
-                  "\r",
-                  "console.log(\"TC_PAYMENT_26 passed - Payload không gửi price, backend tự tính totalPrice từ database.\");"
-                ],
-                "type": "text/javascript",
-                "packages": {},
-                "requests": {}
-              }
-            }
-          ],
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
+              "name": "PAY-015 - Get My Payments",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": "{{baseUrl}}/api/payments?page=0&size=10&sortBy=createdAt&direction=desc",
+                "description": ""
+              },
+              "response": [],
+              "event": [
                 {
-                  "key": "token",
-                  "value": "{{token}}",
-                  "type": "string"
-                },
-                {
-                  "key": "undefined",
-                  "type": "any"
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "const testId = \"PAY-015\";",
+                      "let json = {};",
+                      "try { json = pm.response.json(); } catch (e) {}",
+                      "",
+                      "pm.test(`${testId}: Expected HTTP status 200`, function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "",
+                      "pm.test(`${testId}: Payments retrieved`, function () {",
+                      "    pm.expect(json.success).to.eql(true);",
+                      "    pm.expect(String(json.message || \"\")).to.include(\"Payments retrieved\");",
+                      "});",
+                      "",
+                      "pm.test(`${testId}: Response contains page content`, function () {",
+                      "    pm.expect(json?.data?.content).to.be.an('array');",
+                      "});"
+                    ]
+                  }
                 }
               ]
             },
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json",
-                "type": "default"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"fullName\": \"Nguyễn Văn C\",\n  \"phone\": \"0901234567\",\n  \"shippingAddress\": \"123 Nguyễn Huệ, Quận 1, TP.HCM\",\n  \"note\": \"buy now item test\",\n  \"address\": \"TP.HCM\",\n  \"buyNowItem\": true,\n  \"items\": [\n    {\n      \"productId\": 4,\n      \"quantity\": 1\n    }\n  ]\n}"
+            {
+              "name": "PAY-016 - Get Payments Without Token",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": "{{baseUrl}}/api/payments?page=0&size=10",
+                "description": "",
+                "auth": {
+                  "type": "noauth"
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "const testId = \"PAY-016\";",
+                      "",
+                      "pm.test(`${testId}: Expected HTTP status 401`, function () {",
+                      "    pm.response.to.have.status(401);",
+                      "});"
+                    ]
+                  }
+                }
+              ]
             },
-            "url": {
-              "raw": "{{baseUrl}}/api/orders",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "orders"
+            {
+              "name": "PAY-017 - Get Payments With Negative Page",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": "{{baseUrl}}/api/payments?page=-1&size=10",
+                "description": ""
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "const testId = \"PAY-017\";",
+                      "",
+                      "pm.test(`${testId}: Expected HTTP status 400`, function () {",
+                      "    pm.response.to.have.status(400);",
+                      "});",
+                      "",
+                      "pm.test(`${testId}: Response contains \"page\"`, function () {",
+                      "    const responseText = pm.response.text().toLowerCase();",
+                      "    pm.expect(responseText).to.include(\"page\");",
+                      "});"
+                    ]
+                  }
+                }
               ]
             }
-          },
-          "response": []
+          ]
         }
       ]
-    },
-    {
-      "name": "Admin",
-      "item": [
-        {
-          "name": "Login (Admin)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "if (pm.response.code === 200) {",
-                  "    const loginData = pm.response.json();",
-                  "    ",
-                  "    // Kiểm tra nếu loginData tồn tại và có trường token",
-                  "    if (loginData && loginData.token) {",
-                  "        // Lưu adminToken vào biến môi trường của Postman",
-                  "        pm.environment.set(\"adminToken\", loginData.token);",
-                  "        console.log(\"Đã lưu adminToken thành công vào Postman Environment!\");",
-                  "    }",
-                  "}"
-                ],
-                "type": "text/javascript",
-                "packages": {},
-                "requests": {}
-              }
-            }
-          ],
-          "request": {
-            "auth": {
-              "type": "noauth"
-            },
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json",
-                "type": "default"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"username\": \"hai123\",\n  \"password\": \"hai123\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/auth/login",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "auth",
-                "login"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "update product_stock",
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{adminToken}}",
-                  "type": "string"
-                },
-                {
-                  "key": "undefined",
-                  "type": "any"
-                }
-              ]
-            },
-            "method": "PUT",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/admin/products/10/stock?stock=1000",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "admin",
-                "products",
-                "10",
-                "stock"
-              ],
-              "query": [
-                {
-                  "key": "stock",
-                  "value": "1000"
-                }
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Mark COD Payment as Success",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "let jsonData = {};",
-                  "",
-                  "try {",
-                  "    jsonData = pm.response.json();",
-                  "} catch (e) {",
-                  "    jsonData = {};",
-                  "}",
-                  "",
-                  "pm.test(\"Mark COD Payment as Success - API không bị lỗi script\", function () {",
-                  "    pm.expect(pm.response.code).to.be.oneOf([200, 403]);",
-                  "});",
-                  "",
-                  "if (pm.response.code === 403) {",
-                  "    console.warn(\"Request này cần quyền admin. Token hiện tại không có quyền admin nên API trả 403.\");",
-                  "}",
-                  "",
-                  "if (pm.response.code === 200) {",
-                  "    pm.test(\"Mark COD Payment as Success - Cập nhật payment thành công\", function () {",
-                  "        pm.expect(jsonData.success === true || jsonData.status === \"SUCCESS\").to.be.true;",
-                  "    });",
-                  "}"
-                ],
-                "type": "text/javascript",
-                "packages": {},
-                "requests": {}
-              }
-            }
-          ],
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{adminToken}}",
-                  "type": "string"
-                },
-                {
-                  "key": "undefined",
-                  "type": "any"
-                }
-              ]
-            },
-            "method": "POST",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{adminToken}}",
-                "type": "default"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/api/payments/admin/{{codPaymentId}}/status?status=SUCCESS",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "payments",
-                "admin",
-                "{{codPaymentId}}",
-                "status"
-              ],
-              "query": [
-                {
-                  "key": "status",
-                  "value": "SUCCESS"
-                }
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Mark Bank Transfer as Success",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('Status is 200', function () { pm.expect(pm.response.code).to.equal(200); });",
-                  "const json = pm.response.json();",
-                  "pm.test('Payment marked as SUCCESS', function () { pm.expect(json.success).to.be.true; pm.expect(json.data.paymentStatus).to.eql('SUCCESS'); });",
-                  "pm.test('Paid at timestamp set', function () { pm.expect(json.data.paidAt).to.exist; });"
-                ],
-                "type": "text/javascript",
-                "packages": {},
-                "requests": {}
-              }
-            }
-          ],
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{adminToken}}",
-                  "type": "string"
-                },
-                {
-                  "key": "undefined",
-                  "type": "any"
-                }
-              ]
-            },
-            "method": "POST",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{adminToken}}",
-                "type": "default"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/api/payments/admin/{{bankPaymentId}}/status?status=SUCCESS&transactionCode={{bankTransactionCode}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "payments",
-                "admin",
-                "{{bankPaymentId}}",
-                "status"
-              ],
-              "query": [
-                {
-                  "key": "status",
-                  "value": "SUCCESS"
-                },
-                {
-                  "key": "transactionCode",
-                  "value": "{{bankTransactionCode}}"
-                }
-              ]
-            }
-          },
-          "response": []
-        }
-      ]
-    },
-    {
-      "name": "Payment_Trường hợp lỗi",
-      "item": [
-        {
-          "name": "TC_PAYMENT_04 - SDT không hợp lệ",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test(\"TC_PAYMENT_07 - Trả về 400 khi thiếu số điện thoại\", function () {\r",
-                  "    pm.response.to.have.status(400);\r",
-                  "});\r",
-                  "\r",
-                  "pm.test(\"TC_PAYMENT_07 - Response có thông báo lỗi thiếu số điện thoại\", function () {\r",
-                  "    const responseText = pm.response.text().toLowerCase();\r",
-                  "    pm.expect(responseText).to.include(\"phone\");\r",
-                  "});"
-                ],
-                "type": "text/javascript",
-                "packages": {},
-                "requests": {}
-              }
-            }
-          ],
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{token}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "method": "POST",
-            "header": [],
-            "body": {
-              "mode": "raw",
-              "raw": "{\r\n  \"fullName\": \"Nguyễn Văn C\",\r\n  \"phone\": \"123456789\",\r\n  \"shippingAddress\": \"123 ABC\",\r\n  \"note\": \"invalid phone test\",\r\n  \"address\": \"hcm\",\r\n  \"items\": [\r\n    {\r\n      \"productId\": 4,\r\n      \"quantity\": 1\r\n    }\r\n  ]\r\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/orders",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "orders"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "TC_PAYMENT_06 - Thiếu tên khách hàng",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "const jsonData = pm.response.json();\r",
-                  "\r",
-                  "if (pm.response.code === 400) {\r",
-                  "    pm.test(\"TC_PAYMENT_06 - Trả về 400 khi thiếu tên khách hàng\", function () {\r",
-                  "        pm.response.to.have.status(400);\r",
-                  "    });\r",
-                  "\r",
-                  "    pm.test(\"TC_PAYMENT_06 - Response có thông báo lỗi thiếu tên\", function () {\r",
-                  "        const responseText = pm.response.text().toLowerCase();\r",
-                  "        pm.expect(responseText).to.include(\"fullname\");\r",
-                  "    });\r",
-                  "} else {\r",
-                  "    pm.test(\"TC_PAYMENT_06 - Backend hiện tại vẫn cho tạo đơn khi thiếu tên\", function () {\r",
-                  "        pm.response.to.have.status(200);\r",
-                  "    });\r",
-                  "\r",
-                  "    pm.test(\"TC_PAYMENT_06 - Đơn hàng vẫn được tạo dù thiếu tên\", function () {\r",
-                  "        pm.expect(jsonData.orderId).to.not.be.undefined;\r",
-                  "    });\r",
-                  "\r",
-                  "    console.warn(\"TC_PAYMENT_06 mong đợi 400 theo test case, nhưng backend hiện tại trả 200. Có thể validate tên đang xử lý ở frontend hoặc backend còn thiếu.\");\r",
-                  "}"
-                ],
-                "type": "text/javascript",
-                "packages": {},
-                "requests": {}
-              }
-            }
-          ],
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{token}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "method": "POST",
-            "header": [],
-            "body": {
-              "mode": "raw",
-              "raw": "{\r\n  \"fullName\": \"\",\r\n  \"phone\": \"0901234567\",\r\n  \"shippingAddress\": \"123 ABC\",\r\n  \"note\": \"missing fullName test\",\r\n  \"address\": \"hcm\",\r\n  \"items\": [\r\n    {\r\n      \"productId\": 4,\r\n      \"quantity\": 1\r\n    }\r\n  ]\r\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/orders",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "orders"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "TC_PAYMENT_07 - Thiếu số điện thoại",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test(\"TC_PAYMENT_07 - Trả về 400 khi thiếu số điện thoại\", function () {\r",
-                  "    pm.response.to.have.status(400);\r",
-                  "});\r",
-                  "\r",
-                  "pm.test(\"TC_PAYMENT_07 - Response có thông báo lỗi thiếu số điện thoại\", function () {\r",
-                  "    const responseText = pm.response.text().toLowerCase();\r",
-                  "    pm.expect(responseText).to.include(\"phone\");\r",
-                  "});"
-                ],
-                "type": "text/javascript",
-                "packages": {},
-                "requests": {}
-              }
-            }
-          ],
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{token}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "method": "POST",
-            "header": [],
-            "body": {
-              "mode": "raw",
-              "raw": "{\r\n  \"fullName\": \"Nguyễn Văn C\",\r\n  \"phone\": \"\",\r\n  \"shippingAddress\": \"123 ABC\",\r\n  \"note\": \"missing phone test\",\r\n  \"address\": \"hcm\",\r\n  \"items\": [\r\n    {\r\n      \"productId\": 4,\r\n      \"quantity\": 1\r\n    }\r\n  ]\r\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/orders",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "orders"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "TC_PAYMENT_08 - Thiếu địa chỉ giao hàng",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test(\"TC_PAYMENT_08 - Trả về 400 khi thiếu địa chỉ giao hàng\", function () {\r",
-                  "    pm.response.to.have.status(400);\r",
-                  "});\r",
-                  "\r",
-                  "pm.test(\"TC_PAYMENT_08 - Response có thông báo lỗi thiếu địa chỉ\", function () {\r",
-                  "    const responseText = pm.response.text().toLowerCase();\r",
-                  "    pm.expect(responseText).to.include(\"address\");\r",
-                  "});"
-                ],
-                "type": "text/javascript",
-                "packages": {},
-                "requests": {}
-              }
-            }
-          ],
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{token}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "method": "POST",
-            "header": [],
-            "body": {
-              "mode": "raw",
-              "raw": "{\r\n  \"fullName\": \"Nguyễn Văn C\",\r\n  \"phone\": \"0901234567\",\r\n  \"shippingAddress\": \"\",\r\n  \"note\": \"missing address test\",\r\n  \"address\": \"\",\r\n  \"items\": [\r\n    {\r\n      \"productId\": 4,\r\n      \"quantity\": 1\r\n    }\r\n  ]\r\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/orders",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "orders"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "TC_PAYMENT_12 - Giỏ hàng rỗng",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test(\"TC_PAYMENT_12 - Phải trả về 400 khi không có sản phẩm trong đơn hàng\", function () {\r",
-                  "    pm.response.to.have.status(400);\r",
-                  "});\r",
-                  "\r",
-                  "pm.test(\"TC_PAYMENT_12 - Response phải có lỗi giỏ hàng hoặc sản phẩm rỗng\", function () {\r",
-                  "    const responseText = pm.response.text().toLowerCase();\r",
-                  "\r",
-                  "    pm.expect(responseText).to.satisfy(function (text) {\r",
-                  "        return (\r",
-                  "            text.includes(\"item\") ||\r",
-                  "            text.includes(\"cart\") ||\r",
-                  "            text.includes(\"sản phẩm\") ||\r",
-                  "            text.includes(\"rỗng\") ||\r",
-                  "            text.includes(\"empty\")\r",
-                  "        );\r",
-                  "    });\r",
-                  "});\r",
-                  "\r",
-                  "console.warn(\"BUG TC_PAYMENT_12 backend trả 200: Expected 400 khi items rỗng, nhưng backend vẫn tạo đơn. Cần dev validate không cho tạo đơn khi không có sản phẩm.\");"
-                ],
-                "type": "text/javascript",
-                "packages": {},
-                "requests": {}
-              }
-            }
-          ],
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{token}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "method": "POST",
-            "header": [],
-            "body": {
-              "mode": "raw",
-              "raw": "{\r\n  \"fullName\": \"Nguyễn Văn C\",\r\n  \"phone\": \"0901234567\",\r\n  \"shippingAddress\": \"123 ABC, TP.HCM\",\r\n  \"note\": \"empty cart/items test\",\r\n  \"address\": \"hcm\",\r\n  \"items\": []\r\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/orders",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "orders"
-              ]
-            }
-          },
-          "response": []
-        }
-      ]
-    },
-    {
-      "name": "Payment_Vận chuyển",
-      "item": []
-    }
-  ],
-  "variable": [
-    {
-      "key": "baseUrl",
-      "value": ""
-    },
-    {
-      "key": "loginUsername",
-      "value": ""
-    },
-    {
-      "key": "randomEmail",
-      "value": ""
-    },
-    {
-      "key": "bankPaymentId",
-      "value": ""
-    },
-    {
-      "key": "bankTransactionCode",
-      "value": ""
-    },
-    {
-      "key": "adminToken",
-      "value": ""
-    },
-    {
-      "key": "codPaymentId",
-      "value": ""
-    },
-    {
-      "key": "token",
-      "value": ""
-    },
-    {
-      "key": "orderId",
-      "value": ""
-    },
-    {
-      "key": "momoCallbackBody",
-      "value": ""
-    },
-    {
-      "key": "activeProductId",
-      "value": ""
-    },
-    {
-      "key": "userId",
-      "value": ""
-    },
-    {
-      "key": "paymentId",
-      "value": ""
-    },
-    {
-      "key": "pendingOrderId",
-      "value": ""
     }
   ]
 }
