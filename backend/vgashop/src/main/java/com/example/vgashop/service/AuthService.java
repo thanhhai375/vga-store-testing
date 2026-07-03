@@ -91,8 +91,18 @@ public class AuthService {
         if (user == null) {
             String prefix   = req.getEmail().split("@")[0];
             String username = prefix;
+            
+            if (username.length() > 50 || !username.matches("^[A-Za-z0-9_]+$")) {
+                throw new RuntimeException("Generated username is invalid");
+            }
+
             int    counter  = 1;
-            while (userRepository.existsByUsername(username)) username = prefix + counter++;
+            while (userRepository.existsByUsername(username)) {
+                username = prefix + counter++;
+                if (username.length() > 50) {
+                    throw new RuntimeException("Generated username is invalid");
+                }
+            }
 
             user = new User();
             user.setUsername(username);
@@ -103,6 +113,8 @@ public class AuthService {
             user.setStatus(true);
             user = userRepository.save(user);
         } else {
+            if (Boolean.TRUE.equals(user.isDeleted()))
+                throw new RuntimeException("Account does not exist or has been removed");
             if (Boolean.FALSE.equals(user.getStatus()))
                 throw new RuntimeException("Account is disabled");
         }
