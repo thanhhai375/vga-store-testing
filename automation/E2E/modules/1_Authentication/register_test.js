@@ -10,6 +10,7 @@ const SELECTORS = {
   email: 'input[placeholder="Nhập email của bạn"]',
   password: 'input[placeholder="Nhập mật khẩu"]',
   loginUsername: 'input[placeholder="Nhập tài khoản hoặc email"]',
+  confirmPassword: '(//div[contains(@class,"auth-modal")]//input[@type="password"])[2]',
   submit: '.auth-submit-btn'
 };
 
@@ -43,6 +44,7 @@ const fillRegisterForm = (I, user) => {
   I.fillField(SELECTORS.fullName, user.fullName);
   I.fillField(SELECTORS.email, user.email);
   I.fillField(SELECTORS.password, user.password);
+  I.fillField(SELECTORS.confirmPassword, user.confirmPassword || user.password);
 };
 
 const clickSubmit = (I) => {
@@ -92,7 +94,7 @@ Scenario('R-002: Kiem tra validation truc tiep khi bo trong', ({ I }) => {
   I.waitForFunction((selectors) => {
     const fields = selectors.map((selector) => document.querySelector(selector));
     return fields.every(Boolean) && fields.some((field) => !field.checkValidity());
-  }, [SELECTORS.username, SELECTORS.fullName, SELECTORS.email, SELECTORS.password], 5);
+  }, [SELECTORS.username, SELECTORS.fullName, SELECTORS.email, SELECTORS.password, SELECTORS.confirmPassword], 5);
 
   I.seeElement(SELECTORS.modal);
 });
@@ -184,6 +186,7 @@ Scenario('R-007: Username chi gom khoang trang bi tu choi', ({ I }) => {
   I.fillField(SELECTORS.fullName, VALID_REGISTER_USER.fullName);
   I.fillField(SELECTORS.email, `blank_username_${Date.now()}@gmail.com`);
   I.fillField(SELECTORS.password, VALID_REGISTER_USER.password);
+  I.fillField(SELECTORS.confirmPassword, VALID_REGISTER_USER.password);
   clickSubmit(I);
 
   I.waitForFunction((selector) => {
@@ -202,6 +205,7 @@ Scenario('R-008: Thieu username thi form bi chan submit', ({ I }) => {
   I.fillField(SELECTORS.fullName, VALID_REGISTER_USER.fullName);
   I.fillField(SELECTORS.email, `missing_username_${Date.now()}@gmail.com`);
   I.fillField(SELECTORS.password, VALID_REGISTER_USER.password);
+  I.fillField(SELECTORS.confirmPassword, VALID_REGISTER_USER.password);
   clickSubmit(I);
 
   assertFieldInvalid(I, SELECTORS.username);
@@ -211,6 +215,7 @@ Scenario('R-009: Thieu full name thi form bi chan submit', ({ I }) => {
   I.fillField(SELECTORS.username, `missing_fullname_${Date.now()}`);
   I.fillField(SELECTORS.email, `missing_fullname_${Date.now()}@gmail.com`);
   I.fillField(SELECTORS.password, VALID_REGISTER_USER.password);
+  I.fillField(SELECTORS.confirmPassword, VALID_REGISTER_USER.password);
   clickSubmit(I);
 
   assertFieldInvalid(I, SELECTORS.fullName);
@@ -220,6 +225,7 @@ Scenario('R-010: Thieu email thi form bi chan submit', ({ I }) => {
   I.fillField(SELECTORS.username, `missing_email_${Date.now()}`);
   I.fillField(SELECTORS.fullName, VALID_REGISTER_USER.fullName);
   I.fillField(SELECTORS.password, VALID_REGISTER_USER.password);
+  I.fillField(SELECTORS.confirmPassword, VALID_REGISTER_USER.password);
   clickSubmit(I);
 
   assertFieldInvalid(I, SELECTORS.email);
@@ -278,6 +284,7 @@ Scenario('R-015: Click ra ngoai modal khong duoc lam mat form dang nhap do dang 
   I.fillField(SELECTORS.fullName, 'Draft User');
   I.fillField(SELECTORS.email, 'draft_user@gmail.com');
   I.fillField(SELECTORS.password, 'Pass123456!');
+  I.fillField(SELECTORS.confirmPassword, 'Pass123456!');
 
   I.executeScript(() => {
     const overlay = document.querySelector('.auth-overlay');
@@ -288,4 +295,5 @@ Scenario('R-015: Click ra ngoai modal khong duoc lam mat form dang nhap do dang 
   I.seeInField(SELECTORS.username, 'draft_user');
   I.seeInField(SELECTORS.fullName, 'Draft User');
   I.seeInField(SELECTORS.email, 'draft_user@gmail.com');
+  I.seeInField(SELECTORS.confirmPassword, 'Pass123456!');
 });

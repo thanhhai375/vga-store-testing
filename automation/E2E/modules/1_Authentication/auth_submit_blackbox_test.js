@@ -7,6 +7,7 @@ const {
   resetAuthState,
   openLoginForm,
   openRegisterForm,
+  fillRegisterConfirmPassword,
   registerByUi,
   loginByUi,
   goToChangePassword,
@@ -59,6 +60,7 @@ Scenario('UI-RG-010: Register voi password qua ngan bi tu choi sau submit', ({ I
   I.fillField(SELECTORS.fullName, user.fullName);
   I.fillField(SELECTORS.email, user.email);
   I.fillField(SELECTORS.password, '123');
+  fillRegisterConfirmPassword(I, '123');
   submitAuthForm(I);
 
   expectAuthModalStillOpen(I);
@@ -74,6 +76,7 @@ Scenario('UI-RG-011: Register voi password thieu chu hoa bi tu choi sau submit',
   I.fillField(SELECTORS.fullName, user.fullName);
   I.fillField(SELECTORS.email, user.email);
   I.fillField(SELECTORS.password, 'password123!');
+  fillRegisterConfirmPassword(I, 'password123!');
   submitAuthForm(I);
 
   expectAuthModalStillOpen(I);
@@ -88,6 +91,7 @@ Scenario('UI-RG-012: Register voi password thieu chu thuong bi tu choi sau submi
   I.fillField(SELECTORS.fullName, user.fullName);
   I.fillField(SELECTORS.email, user.email);
   I.fillField(SELECTORS.password, 'PASSWORD123!');
+  fillRegisterConfirmPassword(I, 'PASSWORD123!');
   submitAuthForm(I);
 
   expectAuthModalStillOpen(I);
@@ -102,6 +106,7 @@ Scenario('UI-RG-013: Register voi password thieu so bi tu choi sau submit', ({ I
   I.fillField(SELECTORS.fullName, user.fullName);
   I.fillField(SELECTORS.email, user.email);
   I.fillField(SELECTORS.password, 'Password!');
+  fillRegisterConfirmPassword(I, 'Password!');
   submitAuthForm(I);
 
   expectAuthModalStillOpen(I);
@@ -116,6 +121,7 @@ Scenario('UI-RG-014: Register voi password thieu ky tu dac biet bi tu choi sau s
   I.fillField(SELECTORS.fullName, user.fullName);
   I.fillField(SELECTORS.email, user.email);
   I.fillField(SELECTORS.password, 'Password123');
+  fillRegisterConfirmPassword(I, 'Password123');
   submitAuthForm(I);
 
   expectAuthModalStillOpen(I);
@@ -132,6 +138,7 @@ Scenario('UI-RG-016: Register voi email da ton tai bi tu choi sau submit', ({ I 
   I.fillField(SELECTORS.fullName, duplicateUser.fullName);
   I.fillField(SELECTORS.email, existingUser.email);
   I.fillField(SELECTORS.password, duplicateUser.password);
+  fillRegisterConfirmPassword(I, duplicateUser.password);
   submitAuthForm(I);
 
   expectAuthModalStillOpen(I);
@@ -147,6 +154,7 @@ Scenario('UI-RG-018: Register fail khong xoa du lieu nguoi dung da nhap', ({ I }
   I.fillField(SELECTORS.fullName, user.fullName);
   I.fillField(SELECTORS.email, 'invalidgmail');
   I.fillField(SELECTORS.password, user.password);
+  fillRegisterConfirmPassword(I, user.password);
   submitAuthForm(I);
 
   expectAuthModalStillOpen(I);
