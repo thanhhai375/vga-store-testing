@@ -977,21 +977,22 @@ jobs:
 
           function testcaseFingerprintPart(testcase) {
             const text = String(testcase || '').trim();
-            const explicitId = text.match(/\b[A-Z]{1,6}-[0-9]{1,5}\b/i);
-            if (explicitId) return explicitId[0].toUpperCase();
-
+            if (!text) return '';
+            const idMatch = text.match(/\b[A-Z]{1,4}-\d{2,4}\b/i);
+            if (idMatch) return idMatch[0].toUpperCase();
             return text
-              .replace(/^[0-9]+\)\s*/, '')
+              .normalize('NFD')
+              .replace(/[\u0300-\u036f]/g, '')
               .replace(/[^A-Za-z0-9]+/g, '_')
               .replace(/^_+|_+$/g, '')
               .slice(0, 80)
               .toUpperCase();
           }
 
-          function buildFailureGroupKey(issueKey, labels, failedFile, testcase) {
+          function buildFailureGroupKey(issueKey, labels, failedFile, testcase = '') {
             const base = `${issueKey}:${detectFailureKind(labels)}_${detectFailureModule(labels, failedFile)}`;
             const testcasePart = testcaseFingerprintPart(testcase);
-            return testcasePart ? `${base}:${testcasePart}` : base;
+            return testcasePart ? `${base}:TESTCASE:${testcasePart}` : base;
           }
 
           function uniqueLines(text) {
@@ -1156,8 +1157,8 @@ jobs:
               const failureLabels = detectFailureLabels(file, failedFile);
               const testcaseGroups = failedTestcases.length ? failedTestcases : [''];
 
-              for (const failedTestcase of testcaseGroups) {
-                const primaryFailedTestcase = failedTestcase || '';
+              for (const testcase of testcaseGroups) {
+                const primaryFailedTestcase = testcase || '';
                 const fingerprint = buildFailureGroupKey(issueKey, failureLabels, failedFile || summaryTitle, primaryFailedTestcase);
                 const group = failureGroups.get(fingerprint) || {
                   fingerprint,
@@ -1185,11 +1186,13 @@ jobs:
               const primaryRecord = group.records[0] || {};
               const failedFile = primaryRecord.failedFile || '';
               const summaryTitle = primaryRecord.summaryTitle || 'GitHub Actions CI failed';
+              const staleSuccessLabels = ['ci-passed', 'ci-resolved'];
               const labelsToRemove = failureLabels.includes('whitebox')
                 ? ['blackbox', 'ui', 'fe', 'codeceptjs', 'api', 'newman', 'postman']
                 : failureLabels.includes('ui')
                   ? ['whitebox', 'backend', 'junit', 'maven', 'jacoco', 'newman', 'postman', 'api']
                   : ['whitebox', 'backend', 'junit', 'maven', 'jacoco', 'ui', 'fe', 'codeceptjs'];
+              const failureLabelsToRemove = [...new Set([...labelsToRemove, ...staleSuccessLabels])];
 
               let culprit = sh("git log -1 --pretty=format:'%an <%ae>'");
               if (failedFile) {
@@ -1222,25 +1225,6 @@ jobs:
               let existingFailureIssue = await searchExistingFailureIssue(issueKey, fingerprint);
               let duplicateFailureIssues = [];
 
-              const legacyIssueMap = new Map();
-              if (!group.primaryFailedTestcase) {
-                for (const record of group.records) {
-                  if (!record.failedFile) continue;
-                  const legacyFailureIssues = await searchFailureIssuesByFile(issueKey, record.failedFile);
-                  for (const legacyIssue of legacyFailureIssues) {
-                    legacyIssueMap.set(legacyIssue.key, legacyIssue);
-                  }
-                }
-              }
-
-              const legacyFailureIssues = [...legacyIssueMap.values()];
-              if (existingFailureIssue) {
-                duplicateFailureIssues = legacyFailureIssues.filter((issue) => issue.key !== existingFailureIssue.key);
-              } else if (legacyFailureIssues.length > 0) {
-                existingFailureIssue = legacyFailureIssues[0];
-                duplicateFailureIssues = legacyFailureIssues.slice(1);
-              }
-
               const failureType = existingFailureIssue ? 'LOI CU TAI PHAT' : 'LOI MOI';
               const failureBody = buildCompactFailureComment({
                 fingerprint,
@@ -1263,25 +1247,25 @@ jobs:
               const failureDescription = buildFailureDescription(parentIssue, failureLabels);
 
               if (existingFailureIssue) {
+                const existingStatus = String(existingFailureIssue.fields && existingFailureIssue.fields.status && existingFailureIssue.fields.status.name || '').toLowerCase();
                 await addComment(existingFailureIssue.key, failureBody);
-                await updateIssueLabels(existingFailureIssue.key, failureLabels, labelsToRemove);
+                await updateIssueLabels(existingFailureIssue.key, failureLabels, failureLabelsToRemove);
                 await updateIssueFields(existingFailureIssue.key, { description: jiraDoc(failureDescription) });
                 if (failureDueDate !== 'None') {
                   await updateIssueFields(existingFailureIssue.key, { duedate: failureDueDate });
                 }
-                await assignIssue(existingFailureIssue.key, jiraUser);
-                const existingStatus = String(existingFailureIssue.fields && existingFailureIssue.fields.status && existingFailureIssue.fields.status.name || '').toLowerCase();
+                if (!(existingFailureIssue.fields && existingFailureIssue.fields.assignee)) {
+                  await assignIssue(existingFailureIssue.key, jiraUser);
+                }
                 if (existingStatus.includes('done') || existingStatus.includes('resolved') || existingStatus.includes('complete')) {
-                  const reopened = await transitionIssue(existingFailureIssue.key, ['to do', 'reopen', 'reopened', 'in progress', 'start progress']);
-                  if (reopened) {
-                    await addComment(existingFailureIssue.key, [
-                      'CI failure reappeared after this subtask had been resolved.',
-                      '',
-                      `Status reset by CI because this failure group is failing again.`,
-                      `CI-FINGERPRINT: ${fingerprint}`,
-                      `GitHub Actions log: ${runUrl}`
-                    ].join('\n'));
-                  }
+                  await transitionIssue(existingFailureIssue.key, ['to do', 'reopen', 'reopened', 'in progress', 'start progress']);
+                  await addComment(existingFailureIssue.key, [
+                    'CI detected this failure again after the subtask had been completed.',
+                    '',
+                    `Status before reset: ${existingFailureIssue.fields.status.name}`,
+                    `CI-FINGERPRINT: ${fingerprint}`,
+                    `GitHub Actions log: ${runUrl}`
+                  ].join('\n'));
                 }
                 for (const duplicateIssue of duplicateFailureIssues) {
                   const duplicateStatus = String(duplicateIssue.fields && duplicateIssue.fields.status && duplicateIssue.fields.status.name || '').toLowerCase();

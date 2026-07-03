@@ -221,6 +221,16 @@ Ket luan: Google Login co `5/5` nhanh chinh duoc cover.
 | AUTH_INT_019 | Google Login | User Google disabled | Seed user `status=false` | HTTP 400, `Account is disabled` |
 | AUTH_INT_020 | Google Login validation | Email invalid | Email sai dinh dang | HTTP 400, co loi `data.email` |
 
+### 5.3 Test case de xuat bo sung
+
+| Test ID | Flow | Ky thuat | Muc tieu bao phu | Input/Trang thai | Expected | Trang thai |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| AUTH_INT_021 | Google Login | State transition / Branch testing | User Google da ton tai nhung `deleted=true` phai bi chan nhu login thuong | Seed user theo email, `deleted=true`, `status=true` | HTTP 400, message account removed/not allowed | Proposed |
+| AUTH_INT_022 | Google Login | Boundary Value Analysis + Data flow testing | Email prefix tao username vuot 50 ky tu khong duoc luu thanh username khong hop le | Email moi co local-part >50 ky tu | HTTP 400 validation hoac username duoc normalize <=50 theo rule | Proposed |
+| AUTH_INT_023 | Google Login | Equivalence Partitioning + Data flow testing | Email prefix chua ky tu khong hop le voi username rule (`+`, `.`) phai duoc normalize hoac reject | Email moi dang `user+tag@gmail.com` hoac `john.doe@gmail.com` | Username luu DB chi gom chu/so/gach duoi hoac HTTP 400 validation | Proposed |
+
+Ghi chu: Cac testcase tren chua thay trong branch matrix hien tai. Chung nham kiem tra su nhat quan giua rule username cua Register va luong tao username tu Google Login.
+
 ## 6. Branch coverage matrix
 
 Chi tiet branch matrix nam tai:
@@ -277,4 +287,4 @@ Ghi chu: Test code duoc viet theo JUnit 5, Spring Boot `MockMvc`, H2 in-memory d
 
 Module Auth da co bo white-box integration test rieng cho cac nhanh logic chinh trong register, register-admin, login va Google login. Bo test phu hop voi cac ky thuat trong bai hoc: statement coverage, branch coverage, condition coverage, loop coverage va data flow testing.
 
-Theo branch matrix hien tai, muc bao phu nhanh chinh dat 100%. Ngoai ra, Maven da duoc cau hinh JaCoCo de xuat report coverage HTML cho cac class Auth lien quan.
+Theo branch matrix hien tai, muc bao phu nhanh chinh dat 100%. Cac testcase de xuat bo sung trong muc 5.3 la gap nang cao ve state/data-flow cua Google Login, chua tinh vao ket qua coverage hien tai. Ngoai ra, Maven da duoc cau hinh JaCoCo de xuat report coverage HTML cho cac class Auth lien quan.
