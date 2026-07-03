@@ -32,11 +32,11 @@ const clearAuthState = (I) => {
 };
 
 const openRegisterForm = (I) => {
-  I.waitForElement(SELECTORS.openAuthButton, 10);
-  I.forceClick(SELECTORS.openAuthButton);
-  I.waitForVisible(SELECTORS.modal, 5);
-  I.forceClick(SELECTORS.registerTab);
-  I.waitForVisible(SELECTORS.username, 5);
+  I.waitForElement(SELECTORS.openAuthButton, 15);
+  I.click(SELECTORS.openAuthButton);
+  I.waitForVisible(SELECTORS.modal, 10);
+  I.click(SELECTORS.registerTab);
+  I.waitForVisible(SELECTORS.username, 10);
 };
 
 const fillRegisterForm = (I, user) => {
