@@ -1,27 +1,26 @@
-﻿🛠 VGA STORE ADMIN API – REQUEST & RESPONSE REFERENCE,,,,,,
-TC_ID,Method,Endpoint,Request Headers,Request Body,Expected HTTP Code,Expected Response
-TC_ADM_AUTH_01,POST,/api/auth/register,Content-Type: application/json,"{""username"":""{{adminUsername}}"",""password"":""123456"",""email"":""{{adminEmail}}"",""fullName"":""Super Admin"",""role"":""ADMIN""}",200/201/400/409,Admin được tạo hoặc báo trùng dữ liệu
-TC_ADM_AUTH_02,POST,/api/auth/login,Content-Type: application/json,"{""username"":""{{adminUsername}}"",""password"":""123456""}",200,Trả về JWT token Admin
-TC_ADM_BRND_01,POST,/api/admin/brands,Authorization: Bearer {{adminToken}},"{""name"":""Test Brand {{$timestamp}}"",""description"":""Brand for e2e testing""}",200,Tạo Brand thành công
-TC_ADM_CAT_01,POST,/api/admin/categories,Authorization: Bearer {{adminToken}},"{""name"":""Test Category {{$timestamp}}"",""description"":""Category for e2e testing""}",200,Tạo Category thành công
-TC_ADM_BRND_02,GET,/api/admin/brands,Authorization: Bearer {{adminToken}},-,200,Danh sách Brand
-TC_ADM_BRND_03,PUT,/api/admin/brands/{{brandId}},Authorization: Bearer {{adminToken}},"{""name"":""Test Brand Updated"",""description"":""Updated description""}",200,Brand được cập nhật
-TC_ADM_CAT_02,GET,/api/admin/categories,Authorization: Bearer {{adminToken}},-,200,Danh sách Category
-TC_ADM_PRD_01,POST,/api/admin/products,Authorization: Bearer {{adminToken}},{Product Payload},200/201/400,Tạo Product thành công
-TC_ADM_PRD_02,GET,/api/products,Authorization: Bearer {{adminToken}},-,200,Danh sách Product
-TC_ADM_PRD_03,GET,/api/products/{{productId}},Authorization: Bearer {{adminToken}},-,200/404,Chi tiết Product
-TC_ADM_PRD_04,DELETE,/api/admin/products/{{productId}},Authorization: Bearer {{adminToken}},-,200/404,Xóa Product
-TC_ADM_USR_01,POST,/api/auth/register,Content-Type: application/json,"{""username"":""usertest_{{$timestamp}}"",""password"":""123456"",""email"":""usertest{{$timestamp}}@gmail.com"",""fullName"":""Test User""}",200/201/400,Tạo User
-TC_ADM_USR_02,POST,/api/auth/login,Content-Type: application/json,"{""username"":""{{e2e_user}}"",""password"":""123456""}",200,Login User thành công
-TC_ADM_USR_03,GET,/api/admin/users,Authorization: Bearer {{adminToken}},-,200,Danh sách User
-TC_ADM_USR_04,GET,/api/admin/users/{{userId}},Authorization: Bearer {{adminToken}},-,200/404,Chi tiết User
-TC_ADM_USR_05,DELETE,/api/admin/users/{{userId}},Authorization: Bearer {{adminToken}},-,200/404,Xóa User
-TC_ADM_ORD_00,POST,/api/cart,Authorization: Bearer {{userToken}},"{""productId"":{{productId}},""quantity"":1}",200/201,Thêm vào giỏ hàng
-TC_ADM_ORD_01,POST,/api/orders,Authorization: Bearer {{userToken}},"{""fullName"":""{{fullName}}"",""email"":""{{email}}"",""phone"":""{{phone}}"",""shippingAddress"":""{{shippingAddress}}"",""note"":""{{note}}"",""paymentMethod"":""{{paymentMethod}}""}",200/201,Tạo đơn hàng
-TC_ADM_ORD_02,GET,/api/admin/orders,Authorization: Bearer {{adminToken}},-,200,Danh sách đơn hàng
-TC_ADM_ORD_03,GET,/api/admin/orders/{{orderId}},Authorization: Bearer {{adminToken}},-,200/404,Chi tiết đơn hàng
-TC_ADM_ORD_04,PUT,/api/admin/orders/{{orderId}}/status,Authorization: Bearer {{adminToken}},"{""status"":""SHIPPING""}",200/404,Cập nhật trạng thái đơn
-TC_ADM_DASH_01,GET,/api/admin/dashboard,Authorization: Bearer {{adminToken}},-,200,Dữ liệu Dashboard
-TC_ADM_CLN_01,DELETE,/api/admin/orders/{{orderId}},Authorization: Bearer {{adminToken}},-,200/404/409,Cleanup Order
-TC_ADM_CLN_02,DELETE,/api/admin/products/{{productId}},Authorization: Bearer {{adminToken}},-,200/404/409,Cleanup Product
-TC_ADM_CLN_03,DELETE,/api/admin/brands/{{brandId}},Authorization: Bearer {{adminToken}},-,200/404/409,Cleanup Brand/Category
+﻿TC_ID,Module,Test_Case,Method,Endpoint,Authorization,Request_Body,Expected_HTTP,Technique,Security_Focus,Expected_Result
+TC_ADM_AUTH_01,1. Auth Admin,Kiểm tra đăng ký tài khoản ADMIN từ endpoint công khai,POST,/api/auth/register-admin,Không token,"{""username"":""admin_test_{{$timestamp}}"",""password"":""Admin@12345"",""email"":""admin{{$timestamp}}@gmail.com"",""fullName"":""Super Admin"",""role"":""ADMIN""}",401/403,Negative authorization,Privilege escalation,Hệ thống an toàn phải từ chối người chưa xác thực. Nếu trả 200/201 thì phát hiện lỗi vượt quyền vì /api/auth/** đang permitAll.
+TC_ADM_AUTH_02,1. Auth Admin,Đăng nhập bằng tài khoản Admin có sẵn,POST,/api/auth/login,Không token,"{""username"":""{{adminUsername}}"",""password"":""{{adminPassword}}""}",200,Positive test,Xác thực ADMIN,"Đăng nhập thành công, response có token; lưu adminToken để chạy các API /api/admin/."
+TC_ADM_BRND_01,2. Brand & Category Management,Tạo thương hiệu để test,POST,/api/admin/brands,Bearer {{adminToken}},"{""name"":""Test Brand {{$timestamp}}"",""description"":""Brand for e2e testing""}",200,Equivalence partitioning,ADMIN authorization,Tạo Brand thành công và lưu brandId từ response.data.id.
+TC_ADM_CAT_01,2. Brand & Category Management,Tạo danh mục để test,POST,/api/admin/categories,Bearer {{adminToken}},"{""name"":""Test Category {{$timestamp}}"",""description"":""Category for e2e testing""}",200,Equivalence partitioning,ADMIN authorization,Tạo Category thành công và lưu categoryId từ response.data.id.
+TC_ADM_BRND_02,2. Brand & Category Management,Lấy danh sách thương hiệu,GET,/api/admin/brands?page=0&size=12,Bearer {{adminToken}},-,200,Positive test,ADMIN authorization,Response thành công và data.content là danh sách thương hiệu.
+TC_ADM_BRND_03,2. Brand & Category Management,Sửa thương hiệu,PUT,/api/admin/brands/{{brandId}},Bearer {{adminToken}},"{""name"":""Test Brand Updated"",""description"":""Updated description""}",200,State transition,ADMIN authorization,Cập nhật đúng Brand có brandId và trả dữ liệu sau cập nhật.
+TC_ADM_CAT_02,2. Brand & Category Management,Lấy danh sách danh mục,GET,/api/admin/categories?page=0&size=12,Bearer {{adminToken}},-,200,Positive test,ADMIN authorization,Response thành công và data.content là danh sách danh mục.
+TC_ADM_PRD_01,3. Product Management,Tạo sản phẩm bằng Form Data,POST,/api/admin/products,Bearer {{adminToken}},"multipart/form-data: name, price, oldPrice, stock, description, sku, brandId, categoryId",200,Equivalence partitioning,ADMIN authorization,Tạo Product thành công và lưu productId từ response.data.id.
+TC_ADM_PRD_02,3. Product Management,Lấy danh sách sản phẩm,GET,/api/admin/products?page=0&size=12,Bearer {{adminToken}},-,200,Positive test,ADMIN authorization,Response có data.content; dùng trường id của sản phẩm để lưu productId.
+TC_ADM_PRD_03,3. Product Management,Cập nhật tồn kho sản phẩm,PUT,/api/admin/products/{{productId}}/stock?stock=200,Bearer {{adminToken}},-,200,Boundary/valid value,ADMIN authorization,Cập nhật stock thành 200 và response.data bằng OK.
+TC_ADM_PRD_04,3. Product Management,Xem chi tiết sản phẩm,GET,/api/admin/products/{{productId}},Bearer {{adminToken}},-,200,Positive test,ADMIN authorization,Trả đúng sản phẩm có id bằng productId.
+TC_ADM_USR_01,4. User Management,Tạo User ảo làm dữ liệu tiền đề,POST,/api/auth/register,Không token,"{""username"":""usertest_{{$timestamp}}"",""password"":""User@12345"",""email"":""usertest{{$timestamp}}@gmail.com"",""fullName"":""Test User""}",200,Equivalence partitioning,Tạo USER để kiểm tra phân quyền,"Tạo USER thành công. Mật khẩu đáp ứng điều kiện tối thiểu 8 ký tự, chữ hoa, chữ thường, số và ký tự đặc biệt."
+TC_ADM_USR_02,4. User Management,Đăng nhập User lấy Token,POST,/api/auth/login,Không token,"{""username"":""{{e2e_user}}"",""password"":""User@12345""}",200,Positive test,Xác thực USER,"Đăng nhập thành công, lưu userToken và userId."
+TC_ADM_USR_03,4. User Management,Admin lấy danh sách người dùng,GET,/api/admin/users?page=0&size=12,Bearer {{adminToken}},-,200,Positive test,ADMIN authorization,Admin lấy danh sách thành công. Khi dùng userToken gọi cùng endpoint phải trả 403.
+TC_ADM_USR_04,4. User Management,Cập nhật vai trò người dùng thành USER,GET,/api/admin/users/{{userId}}/role?role=USER,Bearer {{adminToken}},-,200,State transition,ADMIN authorization,"Endpoint này thực hiện thay đổi role, không phải chỉ xem role; response.data bằng OK."
+TC_ADM_USR_05,4. User Management,Đảo trạng thái hoạt động của người dùng,PUT,/api/admin/users/{{userId}}/status,Bearer {{adminToken}},-,200,State transition,ADMIN authorization,API tự toggle trạng thái hiện tại; không dùng query parameter isActive.
+TC_ADM_ORD_00,5. Order Management,User thêm sản phẩm vào giỏ hàng,POST,/api/cart/add,Bearer {{userToken}},"{""productId"":{{productId}},""quantity"":1}",200,Positive test,Authenticated USER,Thêm sản phẩm hợp lệ vào giỏ hàng thành công.
+TC_ADM_ORD_01,5. Order Management,User tạo đơn hàng từ giỏ hàng,POST,/api/orders/checkout,Bearer {{userToken}},"{""shippingAddress"":""123 Test Street"",""phone"":""0123456789"",""note"":""Test Order""}",200,Positive test,Authenticated USER,"Tạo Order thành công và lưu orderId. DTO không nhận fullName, email hoặc paymentMethod."
+TC_ADM_ORD_02,5. Order Management,Admin lấy danh sách đơn hàng,GET,/api/admin/orders?page=0&size=12,Bearer {{adminToken}},-,200,Positive test,ADMIN authorization,Admin lấy danh sách đơn hàng thành công; data.content chứa đơn vừa tạo.
+TC_ADM_ORD_03,5. Order Management,Admin xem chi tiết đơn hàng,GET,/api/admin/orders/{{orderId}},Bearer {{adminToken}},-,200,Positive test,ADMIN authorization,Trả đúng đơn hàng có orderId tương ứng.
+TC_ADM_ORD_04,5. Order Management,Admin cập nhật trạng thái đơn hàng,PUT,/api/admin/orders/{{orderId}}/status,Bearer {{adminToken}},"{""status"":""SHIPPING""}",200,State transition,ADMIN authorization,Cập nhật trạng thái đơn hàng thành SHIPPING.
+TC_ADM_DASH_01,6. Dashboard & Cleanup,Lấy thống kê Dashboard và kiểm tra khoảng ngày sai logic,GET,/api/admin/dashboard,Bearer {{adminToken}},-,200,Negative/date logic,"ADMIN authorization, invalid date range",Dashboard chính trả 200. Kiểm tra phụ: GET /api/admin/dashboard/charts?startDate=2026-12-31&endDate=2026-01-01; hệ thống nên trả 400 và không được trả 500. Source hiện chỉ nhận period nên nếu trả 200 thì ghi nhận thiếu validate.
+TC_ADM_CLN_01,6. Dashboard & Cleanup,Xóa mềm sản phẩm,DELETE,/api/admin/products/{{productId}},Bearer {{adminToken}},-,200,Cleanup,ADMIN authorization,"Xóa mềm Product thành công, response.data bằng OK."
+TC_ADM_CLN_02,6. Dashboard & Cleanup,Xóa mềm danh mục,DELETE,/api/admin/categories/{{categoryId}},Bearer {{adminToken}},-,200,Cleanup,ADMIN authorization,"Xóa mềm Category thành công, response.data bằng OK."
+TC_ADM_CLN_03,6. Dashboard & Cleanup,Xóa mềm thương hiệu,DELETE,/api/admin/brands/{{brandId}},Bearer {{adminToken}},-,200,Cleanup,ADMIN authorization,"Xóa mềm Brand thành công, response.data bằng OK."

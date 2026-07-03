@@ -21,6 +21,7 @@ public class RegisterRequest {
     @Pattern(regexp = "^(?!.*\\s)(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[\\W_]).+$", message = "Mật khẩu phải chứa ít nhất 1 chữ hoa, 1 chữ thường, 1 số, 1 ký tự đặc biệt và không có khoảng trắng")
     private String password;
 
+    @NotBlank(message = "Họ và tên không được trống")
     private String fullName;
 
     public String getUsername() { return username; }

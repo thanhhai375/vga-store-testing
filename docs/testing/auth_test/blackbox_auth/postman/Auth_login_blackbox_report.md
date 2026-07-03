@@ -64,6 +64,8 @@ Kiem tra API dang nhap theo hanh vi dau vao/dau ra, khong phu thuoc vao code ben
 | 17 | L-017 | Username co khoang trang cuoi | `hai123` | 400 | Khong trim de bypass | X1,B11 | Medium | Ready |
 | 18 | L-018 | Sai hoa/thuong | `hai123` | 400 | Kiem tra case-sensitive | X1,B12 | Medium | Ready |
 | 19 | L-019 | Username co khoang trang ben trong | `123456` | 400 | Username sai pattern | X1,B10 | High | Ready |
+| 20 | L-020 | User disabled | Password dung | 400 | Tai khoan bi khoa khong duoc dang nhap | X3 | High | Proposed |
+| 21 | L-021 | User deleted | Password dung | 400 | Tai khoan da xoa mem khong duoc dang nhap | X3 | High | Proposed |
 
 ---
 
@@ -77,4 +79,4 @@ Kiem tra API dang nhap theo hanh vi dau vao/dau ra, khong phu thuoc vao code ben
 | `expectedStatus` | HTTP status mong doi |
 | `expectedMessage` | Token hoac message loi mong doi |
 
-**Ket luan:** Login co 19 test case black-box, bao phu positive, negative, equivalence partitioning va boundary value analysis.
+**Ket luan:** Login co 19 test case black-box hien co, bao phu positive, negative, equivalence partitioning va boundary value analysis. Cac case L-020 va L-021 la testcase de xuat bo sung cho state transition/business rule cua tai khoan disabled/deleted, hien da duoc white-box cover nhung chua co trong CSV Postman black-box.

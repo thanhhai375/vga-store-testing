@@ -159,3 +159,61 @@ Scenario('L-012: Dang xuat xoa token va hien lai nut dang nhap', ({ I }) => {
   I.waitForFunction(() => !localStorage.getItem('token'), [], 5);
   I.waitForElement(SELECTORS.openAuthButton, 10);
 });
+
+Scenario('L-013: Auth modal khong hien thi text tieng Viet bi loi font encoding', ({ I }) => {
+  I.waitForFunction((modalSelector) => {
+    const modal = document.querySelector(modalSelector);
+    const mojibakeChars = ['\u00c3', '\u00c4', '\u00c2', '\u00e2', '\u00a1', '\u00ba', '\u00bb'];
+    return Boolean(modal) && !mojibakeChars.some((char) => modal.innerText.includes(char));
+  }, [SELECTORS.modal], 5);
+});
+
+Scenario('L-014: Link quen mat khau phai co hanh vi xu ly that', ({ I }) => {
+  I.waitForFunction(() => {
+    const forgotLink = document.querySelector('.auth-forgot');
+    if (!forgotLink) return false;
+
+    forgotLink.click();
+
+    const text = document.body.innerText.toLowerCase();
+    const hasResetUi = Boolean(
+      document.querySelector('input[type="email"]')
+      || document.querySelector('[data-testid*="forgot"]')
+      || document.querySelector('[data-testid*="reset"]')
+    );
+
+    return window.location.hash !== '#forgot'
+      && (hasResetUi || text.includes('reset') || text.includes('dat lai') || text.includes('quen mat khau'));
+  }, [], 5);
+});
+
+Scenario('L-015: Checkbox ghi nho dang nhap phai dieu khien noi luu token', ({ I }) => {
+  I.waitForFunction(() => {
+    const remember = document.querySelector('.auth-remember input[type="checkbox"]');
+    return Boolean(remember);
+  }, [], 5);
+
+  I.executeScript(() => {
+    const remember = document.querySelector('.auth-remember input[type="checkbox"]');
+    if (remember.checked) remember.click();
+  });
+
+  I.fillField(SELECTORS.username, VALID_USER.username);
+  I.fillField(SELECTORS.password, VALID_USER.password);
+  clickSubmit(I);
+
+  I.waitForFunction(() => {
+    const hasTokenInLocalStorage = Boolean(localStorage.getItem('token'));
+    const hasTokenInSessionStorage = Boolean(sessionStorage.getItem('token'));
+    return !hasTokenInLocalStorage && hasTokenInSessionStorage;
+  }, [], 20);
+});
+
+Scenario('L-016: Facebook login chua ho tro thi khong duoc hien nhu nut dang nhap that', ({ I }) => {
+  I.waitForFunction(() => {
+    const facebookButton = document.querySelector('.facebook-btn');
+    return !facebookButton
+      || facebookButton.disabled
+      || facebookButton.getAttribute('aria-disabled') === 'true';
+  }, [], 5);
+});

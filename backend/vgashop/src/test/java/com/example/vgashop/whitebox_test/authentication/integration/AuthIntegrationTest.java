@@ -10,11 +10,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.nullValue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -252,6 +254,7 @@ class AuthIntegrationTest {
 
     @Test
     @DisplayName("AUTH_INT_014 - Register admin success uses requested role")
+    @WithMockUser(roles = "ADMIN")
     void registerAdmin_withValidRole_returnsApiResponseAndToken() throws Exception {
         mockMvc.perform(post("/api/auth/register-admin")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -270,6 +273,7 @@ class AuthIntegrationTest {
 
     @Test
     @DisplayName("AUTH_INT_015 - Register admin defaults role to USER")
+    @WithMockUser(roles = "ADMIN")
     void registerAdmin_withoutRole_defaultsToUser() throws Exception {
         mockMvc.perform(post("/api/auth/register-admin")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -374,5 +378,58 @@ class AuthIntegrationTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.data.email").exists());
+    }
+
+    @Test
+    @DisplayName("AUTH_INT_021 - Google login deleted existing user returns bad request")
+    void googleLogin_withDeletedExistingUser_returnsBadRequest() throws Exception {
+        User user = AuthIntegrationTestData.user(
+                "deleted_google",
+                "deleted_google@example.com",
+                "123456");
+        user.setDeleted(true);
+        user.setStatus(true);
+        userRepository.save(user);
+
+        mockMvc.perform(post("/api/auth/google")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(AuthIntegrationTestData.googleLoginJson(
+                                "deleted_google@example.com",
+                                "Deleted Google")))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Account does not exist or has been removed"));
+    }
+
+    @Test
+    @DisplayName("AUTH_INT_022 - Google login rejects email prefix that would create username longer than 50 characters")
+    void googleLogin_withLongEmailPrefix_rejectsInvalidGeneratedUsername() throws Exception {
+        String longLocalPart = "a".repeat(51);
+        String email = longLocalPart + "@example.com";
+
+        mockMvc.perform(post("/api/auth/google")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(AuthIntegrationTestData.googleLoginJson(
+                                email,
+                                "Long Prefix Google")))
+                .andExpect(status().isBadRequest());
+
+        assertFalse(userRepository.existsByEmail(email));
+        assertFalse(userRepository.existsByUsername(longLocalPart));
+    }
+
+    @Test
+    @DisplayName("AUTH_INT_023 - Google login rejects email prefix with characters invalid for username rule")
+    void googleLogin_withInvalidUsernameCharactersInEmailPrefix_rejectsGeneratedUsername() throws Exception {
+        String email = "john.doe+tag@example.com";
+
+        mockMvc.perform(post("/api/auth/google")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(AuthIntegrationTestData.googleLoginJson(
+                                email,
+                                "Invalid Prefix Google")))
+                .andExpect(status().isBadRequest());
+
+        assertFalse(userRepository.existsByEmail(email));
+        assertFalse(userRepository.existsByUsername("john.doe+tag"));
     }
 }

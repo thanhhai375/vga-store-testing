@@ -31,7 +31,7 @@ Test implementation:
 | :--- | :--- |
 | Statement coverage | Moi flow thanh cong va loi chinh duoc thuc thi it nhat 1 lan qua MockMvc integration test. |
 | Branch/Decision coverage | Moi cau lenh `if`, `else`, `orElseThrow`, `try/catch` quan trong trong `AuthController` va `AuthService` co test case rieng. |
-| Condition coverage | Cac dieu kien validation va business rule duoc tach rieng: email trung, username trung, deleted, disabled, password sai, role null, email Google invalid. |
+| Condition coverage | Cac dieu kien validation va business rule duoc tach rieng: email trung, username trung, deleted, disabled, password sai, role null, email Google invalid, user Google bi xoa mem, username sinh tu Google email khong hop le. |
 | Loop coverage | Vong `while (userRepository.existsByUsername(username))` trong Google login duoc cover bang case username prefix bi trung 2 lan. |
 | Data flow testing | Kiem tra du lieu tao user moi duoc luu DB va response tra ve dung username, email, role, token. |
 
@@ -117,6 +117,7 @@ Control flow:
 5. Neu user da ton tai:
    - Neu status false thi throw `RuntimeException`.
    - Neu active thi tao token cho user hien co.
+   - Hien tai chua chan user `deleted=true`, day la gap duoc phat hien boi `AUTH_INT_021`.
 6. Tra ve `AuthResponse`.
 
 Nhanh can cover:
@@ -126,6 +127,8 @@ Nhanh can cover:
 - Email da ton tai, user active.
 - Email da ton tai, user disabled.
 - Request invalid.
+- Email da ton tai, user deleted.
+- Email moi co prefix qua dai hoac co ky tu khong hop le khi sinh username.
 
 ## 4. Do phuc tap Cyclomatic
 
@@ -184,7 +187,7 @@ O flow Login co cac duong di nhanh chinh:
 
 Ket luan: Login co `7/7` nhanh chinh duoc cover.
 
-#### Google Login: 5 nhanh
+#### Google Login: 8 nhanh / rule can kiem tra
 
 O flow Google Login co cac duong di nhanh chinh:
 
@@ -193,8 +196,11 @@ O flow Google Login co cac duong di nhanh chinh:
 - Email Google da ton tai va user active thi login thanh cong.
 - Email Google da ton tai nhung user bi khoa thi tra 400.
 - Request Google Login co email khong hop le thi validation tra 400.
+- Email Google da ton tai nhung user bi xoa mem thi phai tra 400.
+- Email Google moi co local-part qua 50 ky tu thi khong duoc tao username vuot rule.
+- Email Google moi co local-part chua ky tu khong hop le voi username rule thi phai reject hoac normalize theo rule.
 
-Ket luan: Google Login co `5/5` nhanh chinh duoc cover.
+Ket luan hien tai: Google Login co `5/8` rule pass va `3/8` rule fail. Ba rule fail la gap logic trong `AuthService.googleLogin`.
 
 ### 5.2 Danh sach test case
 
@@ -220,6 +226,19 @@ Ket luan: Google Login co `5/5` nhanh chinh duoc cover.
 | AUTH_INT_018 | Google Login | User Google da ton tai va active | Seed user theo email | HTTP 200, tra ve user hien co |
 | AUTH_INT_019 | Google Login | User Google disabled | Seed user `status=false` | HTTP 400, `Account is disabled` |
 | AUTH_INT_020 | Google Login validation | Email invalid | Email sai dinh dang | HTTP 400, co loi `data.email` |
+| AUTH_INT_021 | Google Login | User Google deleted | Seed user theo email, `deleted=true`, `status=true` | Expected HTTP 400, actual HTTP 200 -> Fail |
+| AUTH_INT_022 | Google Login | Email prefix qua dai | Email moi co local-part 51 ky tu | Expected HTTP 400, actual HTTP 200 -> Fail |
+| AUTH_INT_023 | Google Login | Email prefix co ky tu khong hop le | Email `john.doe+tag@example.com` | Expected HTTP 400, actual HTTP 200 -> Fail |
+
+### 5.3 Test case bo sung va ket qua hien tai
+
+| Test ID | Flow | Ky thuat | Muc tieu bao phu | Input/Trang thai | Expected | Trang thai |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| AUTH_INT_021 | Google Login | State transition / Branch testing | User Google da ton tai nhung `deleted=true` phai bi chan nhu login thuong | Seed user theo email, `deleted=true`, `status=true` | HTTP 400, message account removed/not allowed | Implemented - Fail hien tai: BE tra 200 |
+| AUTH_INT_022 | Google Login | Boundary Value Analysis + Data flow testing | Email prefix tao username vuot 50 ky tu khong duoc luu thanh username khong hop le | Email moi co local-part >50 ky tu | HTTP 400 validation, khong tao user moi | Implemented - Fail hien tai: BE tra 200 |
+| AUTH_INT_023 | Google Login | Equivalence Partitioning + Data flow testing | Email prefix chua ky tu khong hop le voi username rule (`+`, `.`) phai bi reject | Email moi dang `john.doe+tag@example.com` | HTTP 400 validation, khong tao user moi | Implemented - Fail hien tai: BE tra 200 |
+
+Ghi chu: Cac testcase tren da duoc them vao `AuthIntegrationTest.java` de kiem tra su nhat quan giua rule username cua Register va luong tao username tu Google Login. Ket qua hien tai cho thay BE chua validate cac rule nay, nen 3 testcase moi dang fail va can duoc xu ly nhu loi logic Auth.
 
 ## 6. Branch coverage matrix
 
@@ -234,12 +253,12 @@ Tom tat:
 | Register | 6 | 6 | 0 |
 | Register Admin | 2 | 2 | 0 |
 | Login | 7 | 7 | 0 |
-| Google Login | 5 | 5 | 0 |
-| Tong | 20 | 20 | 0 |
+| Google Login | 8 | 5 pass, 3 fail | 3 |
+| Tong | 23 | 20 pass, 3 fail | 3 |
 
-Ti le branch coverage theo branch matrix:
+Ti le rule/testcase pass theo branch matrix hien tai:
 
-`20 / 20 = 100%`
+`20 / 23 = 86.96%`
 
 ## 7. Ket qua thuc thi
 
@@ -249,21 +268,30 @@ Lenh chay:
 cd backend/vgashop
 .\mvnw.cmd -Pwhitebox test
 ```
+.\mvnw.cmd -Pwhitebox -Dtest=AuthIntegrationTest test
 
-Ket qua:
+Ket qua hien tai:
 
-- Tests run: 20
-- Failures: 0
+- Tests run: 23
+- Failures: 3
 - Errors: 0
 - Skipped: 0
-- Build: SUCCESS
+- Build: FAILURE
+
+Danh sach failure:
+
+| Test ID | Method | Expected | Actual | Nguyen nhan |
+| :--- | :--- | :--- | :--- | :--- |
+| AUTH_INT_021 | `googleLogin_withDeletedExistingUser_returnsBadRequest` | HTTP 400 | HTTP 200 | `AuthService.googleLogin` chua chan user da bi xoa mem (`deleted=true`). |
+| AUTH_INT_022 | `googleLogin_withLongEmailPrefix_rejectsInvalidGeneratedUsername` | HTTP 400 | HTTP 200 | BE van tao user moi voi username sinh tu local-part dai hon 50 ky tu. |
+| AUTH_INT_023 | `googleLogin_withInvalidUsernameCharactersInEmailPrefix_rejectsGeneratedUsername` | HTTP 400 | HTTP 200 | BE van tao user moi voi username co ky tu khong hop le nhu `john.doe+tag`. |
 
 Report duoc tao tai:
 
 - Test result: `backend/vgashop/target/surefire-reports/`
 - Coverage HTML: `backend/vgashop/target/site/jacoco/index.html`
 
-Ket qua JaCoCo sau khi chay test:
+Ket qua JaCoCo gan nhat tu lan report truoc:
 
 | Pham vi | Line coverage | Branch coverage | Method coverage | Ghi chu |
 | :--- | :---: | :---: | :---: | :--- |
@@ -271,10 +299,10 @@ Ket qua JaCoCo sau khi chay test:
 | Cac class Auth DTO trong report | 53/96 = 55.2% | Khong co branch | 39/54 = 72.2% | DTO co nhieu getter/setter/constructor khong duoc goi het |
 | Tong 7 class Auth duoc JaCoCo do | 132/163 = 81.0% | 20/22 = 90.9% | 50/65 = 76.9% | Bao gom controller, service va DTO |
 
-Ghi chu: Test code duoc viet theo JUnit 5, Spring Boot `MockMvc`, H2 in-memory database va target rieng `AuthIntegrationTest`.
+Ghi chu: Do build hien tai fail o 3 testcase moi, can fix logic Google Login va chay lai de cap nhat lai bang JaCoCo chinh thuc.
 
 ## 8. Ket luan
 
 Module Auth da co bo white-box integration test rieng cho cac nhanh logic chinh trong register, register-admin, login va Google login. Bo test phu hop voi cac ky thuat trong bai hoc: statement coverage, branch coverage, condition coverage, loop coverage va data flow testing.
 
-Theo branch matrix hien tai, muc bao phu nhanh chinh dat 100%. Ngoai ra, Maven da duoc cau hinh JaCoCo de xuat report coverage HTML cho cac class Auth lien quan.
+Theo ket qua hien tai, 20/23 testcase pass va 3/23 testcase fail. Cac failure deu nam o flow Google Login va cho thay BE chua dong bo rule voi Login/Register: user da xoa mem van login duoc bang Google, username sinh tu email co the vuot 50 ky tu, va username co the chua ky tu khong hop le. Can fix `AuthService.googleLogin`, sau do chay lai `.\mvnw.cmd -Pwhitebox -Dtest=AuthIntegrationTest test` de cap nhat report pass/coverage.
