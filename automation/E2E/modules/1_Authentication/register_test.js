@@ -10,7 +10,7 @@ const SELECTORS = {
   email: 'input[placeholder="Nhập email của bạn"]',
   password: 'input[placeholder="Nhập mật khẩu"]',
   loginUsername: 'input[placeholder="Nhập tài khoản hoặc email"]',
-  confirmPassword: '(//div[contains(@class,"auth-modal")]//input[@type="password"])[2]',
+  confirmPassword: 'input[placeholder="Xac nhan mat khau"]',
   submit: '.auth-submit-btn'
 };
 

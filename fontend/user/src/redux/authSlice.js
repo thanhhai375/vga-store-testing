@@ -1,9 +1,12 @@
 import { createSlice } from '@reduxjs/toolkit';
 
+const user = JSON.parse(localStorage.getItem('user')) || JSON.parse(sessionStorage.getItem('user')) || null;
+const token = localStorage.getItem('token') || sessionStorage.getItem('token') || null;
+
 const initialState = {
-  user: JSON.parse(localStorage.getItem('user')) || null,
-  token: localStorage.getItem('token') || null,
-  isAuthenticated: !!localStorage.getItem('token'),
+  user: user,
+  token: token,
+  isAuthenticated: !!token,
   loading: false,
   error: null,
   isAuthModalOpen: false, // Login
@@ -22,8 +25,10 @@ const authSlice = createSlice({
       state.isAuthenticated = true;
       state.user = action.payload.user;
       state.token = action.payload.token;
-      localStorage.setItem('user', JSON.stringify(action.payload.user));
-      localStorage.setItem('token', action.payload.token);
+      
+      const storage = action.payload.rememberMe ? localStorage : sessionStorage;
+      storage.setItem('user', JSON.stringify(action.payload.user));
+      storage.setItem('token', action.payload.token);
     },
     loginFailure: (state, action) => {
       state.loading = false;
@@ -38,10 +43,16 @@ const authSlice = createSlice({
       state.isAuthenticated = false;
       localStorage.removeItem('user');
       localStorage.removeItem('token');
+      sessionStorage.removeItem('user');
+      sessionStorage.removeItem('token');
     },
     updateUser: (state, action) => {
       state.user = { ...state.user, ...action.payload };
-      localStorage.setItem('user', JSON.stringify(state.user));
+      if (localStorage.getItem('user')) {
+        localStorage.setItem('user', JSON.stringify(state.user));
+      } else if (sessionStorage.getItem('user')) {
+        sessionStorage.setItem('user', JSON.stringify(state.user));
+      }
     },
     registerStart: (state) => {
       state.loading = true;
