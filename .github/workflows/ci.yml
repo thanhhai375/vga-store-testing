@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - master
       - develop
       - "feature/**"
       - "fe/**"
@@ -15,6 +16,7 @@ on:
   pull_request:
     branches:
       - main
+      - master
       - develop
 
 permissions:
@@ -106,10 +108,10 @@ jobs:
 
           full_regression=false
           if [ "$GITHUB_EVENT_NAME" = "pull_request" ]; then
-            if [ "$base_branch" = "main" ] || [ "$base_branch" = "develop" ]; then
+            if [ "$base_branch" = "main" ] || [ "$base_branch" = "master" ] || [ "$base_branch" = "develop" ]; then
               full_regression=true
             fi
-          elif [ "$branch_name" = "main" ] || [ "$branch_name" = "develop" ]; then
+          elif [ "$branch_name" = "main" ] || [ "$branch_name" = "master" ] || [ "$branch_name" = "develop" ]; then
             full_regression=true
           fi
 
@@ -296,7 +298,7 @@ jobs:
           exit "$failed"
 
       - name: Run backend white-box tests with Maven
-        if: ${{ always() && (startsWith(github.ref_name, 'whitebox/') || startsWith(github.ref_name, 'fixWhitebox/') || startsWith(github.head_ref, 'whitebox/') || startsWith(github.head_ref, 'fixWhitebox/') || github.ref_name == 'main' || github.ref_name == 'develop') }}
+        if: ${{ always() && (startsWith(github.ref_name, 'whitebox/') || startsWith(github.ref_name, 'fixWhitebox/') || startsWith(github.head_ref, 'whitebox/') || startsWith(github.head_ref, 'fixWhitebox/') || github.ref_name == 'main' || github.ref_name == 'master' || github.ref_name == 'develop') }}
         working-directory: backend/vgashop
         run: |
           set +e
@@ -310,10 +312,10 @@ jobs:
 
           full_regression=false
           if [ "$GITHUB_EVENT_NAME" = "pull_request" ]; then
-            if [ "$base_branch" = "main" ] || [ "$base_branch" = "develop" ]; then
+            if [ "$base_branch" = "main" ] || [ "$base_branch" = "master" ] || [ "$base_branch" = "develop" ]; then
               full_regression=true
             fi
-          elif [ "$branch_name" = "main" ] || [ "$branch_name" = "develop" ]; then
+          elif [ "$branch_name" = "main" ] || [ "$branch_name" = "master" ] || [ "$branch_name" = "develop" ]; then
             full_regression=true
           fi
 
@@ -492,10 +494,10 @@ jobs:
 
           full_regression=false
           if [ "$GITHUB_EVENT_NAME" = "pull_request" ]; then
-            if [ "$base_branch" = "main" ] || [ "$base_branch" = "develop" ]; then
+            if [ "$base_branch" = "main" ] || [ "$base_branch" = "master" ] || [ "$base_branch" = "develop" ]; then
               full_regression=true
             fi
-          elif [ "$branch_name" = "main" ] || [ "$branch_name" = "develop" ]; then
+          elif [ "$branch_name" = "main" ] || [ "$branch_name" = "master" ] || [ "$branch_name" = "develop" ]; then
             full_regression=true
           fi
 
@@ -556,7 +558,27 @@ jobs:
 
             if [ "$ui_status" -ne 0 ]; then
               failed=1
-              failed_cases="$(grep -E "^[[:space:]]*[0-9]+\\) " "$log_file" | sed 's/^[[:space:]]*//' | tail -n 20 || true)"
+              failed_cases="$(awk '
+                /^[[:space:]]*[0-9]+\)[[:space:]]+/ {
+                  current=$0;
+                  sub(/^[[:space:]]*/, "", current);
+                  next;
+                }
+                current != "" && /^[[:space:]]+[A-Za-z0-9_-]+:/ {
+                  detail=$0;
+                  sub(/^[[:space:]]*/, "", detail);
+                  print current " - " detail;
+                  current="";
+                  next;
+                }
+                current != "" && /^[[:space:]]*$/ {
+                  print current;
+                  current="";
+                }
+                END {
+                  if (current != "") print current;
+                }
+              ' "$log_file" | tail -n 30 || true)"
               failure_reasons="$(grep -E "still not visible|was not found on page|Timeout [0-9]+ms exceeded|AssertionError|ElementNotFound|expected web application|expected .* to |Error:" "$log_file" | sed 's/^[[:space:]]*//' | head -n 20 || true)"
               failure_locations="$(grep -E " at Test\\.<anonymous>| File: file:|File: file:" "$log_file" | sed 's/^[[:space:]]*//' | head -n 20 || true)"
               failure_screenshots="$(grep -E "screenshot: .*\\.png" "$log_file" | sed 's/^[[:space:]]*[- ]*//' | head -n 20 || true)"

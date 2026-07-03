@@ -10,6 +10,7 @@ const SELECTORS = {
   fullName: 'input[placeholder="Nhập họ và tên của bạn"]',
   email: 'input[placeholder="Nhập email của bạn"]',
   password: 'input[placeholder="Nhập mật khẩu"]',
+  registerConfirmPassword: 'input[placeholder="Xac nhan mat khau"]',
   submit: '.auth-submit-btn',
   close: '.auth-close-btn',
   userAvatar: '.user-avatar-trigger',
@@ -26,9 +27,11 @@ const SELECTORS = {
 };
 
 const uniqueUser = (prefix = 'fe_auth') => {
-  const suffix = `${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+  const safePrefix = String(prefix).replace(/[^a-zA-Z0-9_]/g, '_').slice(0, 20) || 'fe_auth';
+  const suffix = `${Date.now().toString(36)}_${Math.floor(Math.random() * 1000)}`;
+  const username = `${safePrefix}_${suffix}`.slice(0, 50);
   return {
-    username: `${prefix}_${suffix}`,
+    username,
     fullName: 'FE Auth Test User',
     email: `${prefix}_${suffix}@gmail.com`,
     password: 'Pass123456!'
@@ -68,12 +71,18 @@ const submitAuthForm = (I) => {
   I.forceClick(SELECTORS.submit);
 };
 
+const fillRegisterConfirmPassword = (I, password) => {
+  I.waitForElement(SELECTORS.registerConfirmPassword, 5);
+  I.fillField(SELECTORS.registerConfirmPassword, password);
+};
+
 const registerByUi = (I, user) => {
   openRegisterForm(I);
   I.fillField(SELECTORS.registerUsername, user.username);
   I.fillField(SELECTORS.fullName, user.fullName);
   I.fillField(SELECTORS.email, user.email);
   I.fillField(SELECTORS.password, user.password);
+  fillRegisterConfirmPassword(I, user.confirmPassword || user.password);
   submitAuthForm(I);
   I.waitForVisible(SELECTORS.loginUsername, 10);
 };
@@ -116,6 +125,7 @@ module.exports = {
   resetAuthState,
   openLoginForm,
   openRegisterForm,
+  fillRegisterConfirmPassword,
   registerByUi,
   loginByUi,
   logoutFromHeader,
