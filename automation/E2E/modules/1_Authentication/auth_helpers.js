@@ -10,6 +10,7 @@ const SELECTORS = {
   fullName: 'input[placeholder="Nhập họ và tên của bạn"]',
   email: 'input[placeholder="Nhập email của bạn"]',
   password: 'input[placeholder="Nhập mật khẩu"]',
+  registerConfirmPassword: '(//div[contains(@class,"auth-modal")]//input[@type="password"])[2]',
   submit: '.auth-submit-btn',
   close: '.auth-close-btn',
   userAvatar: '.user-avatar-trigger',
@@ -70,12 +71,18 @@ const submitAuthForm = (I) => {
   I.forceClick(SELECTORS.submit);
 };
 
+const fillRegisterConfirmPassword = (I, password) => {
+  I.waitForElement(SELECTORS.registerConfirmPassword, 5);
+  I.fillField(SELECTORS.registerConfirmPassword, password);
+};
+
 const registerByUi = (I, user) => {
   openRegisterForm(I);
   I.fillField(SELECTORS.registerUsername, user.username);
   I.fillField(SELECTORS.fullName, user.fullName);
   I.fillField(SELECTORS.email, user.email);
   I.fillField(SELECTORS.password, user.password);
+  fillRegisterConfirmPassword(I, user.confirmPassword || user.password);
   submitAuthForm(I);
   I.waitForVisible(SELECTORS.loginUsername, 10);
 };
@@ -118,6 +125,7 @@ module.exports = {
   resetAuthState,
   openLoginForm,
   openRegisterForm,
+  fillRegisterConfirmPassword,
   registerByUi,
   loginByUi,
   logoutFromHeader,
