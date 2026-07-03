@@ -558,7 +558,27 @@ jobs:
 
             if [ "$ui_status" -ne 0 ]; then
               failed=1
-              failed_cases="$(grep -E "^[[:space:]]*[0-9]+\\) " "$log_file" | sed 's/^[[:space:]]*//' | tail -n 20 || true)"
+              failed_cases="$(awk '
+                /^[[:space:]]*[0-9]+\)[[:space:]]+/ {
+                  current=$0;
+                  sub(/^[[:space:]]*/, "", current);
+                  next;
+                }
+                current != "" && /^[[:space:]]+[A-Za-z0-9_-]+:/ {
+                  detail=$0;
+                  sub(/^[[:space:]]*/, "", detail);
+                  print current " - " detail;
+                  current="";
+                  next;
+                }
+                current != "" && /^[[:space:]]*$/ {
+                  print current;
+                  current="";
+                }
+                END {
+                  if (current != "") print current;
+                }
+              ' "$log_file" | tail -n 30 || true)"
               failure_reasons="$(grep -E "still not visible|was not found on page|Timeout [0-9]+ms exceeded|AssertionError|ElementNotFound|expected web application|expected .* to |Error:" "$log_file" | sed 's/^[[:space:]]*//' | head -n 20 || true)"
               failure_locations="$(grep -E " at Test\\.<anonymous>| File: file:|File: file:" "$log_file" | sed 's/^[[:space:]]*//' | head -n 20 || true)"
               failure_screenshots="$(grep -E "screenshot: .*\\.png" "$log_file" | sed 's/^[[:space:]]*[- ]*//' | head -n 20 || true)"
@@ -955,8 +975,23 @@ jobs:
             return 'GENERAL';
           }
 
-          function buildFailureGroupKey(issueKey, labels, failedFile) {
-            return `${issueKey}:${detectFailureKind(labels)}_${detectFailureModule(labels, failedFile)}`;
+          function testcaseFingerprintPart(testcase) {
+            const text = String(testcase || '').trim();
+            const explicitId = text.match(/\b[A-Z]{1,6}-[0-9]{1,5}\b/i);
+            if (explicitId) return explicitId[0].toUpperCase();
+
+            return text
+              .replace(/^[0-9]+\)\s*/, '')
+              .replace(/[^A-Za-z0-9]+/g, '_')
+              .replace(/^_+|_+$/g, '')
+              .slice(0, 80)
+              .toUpperCase();
+          }
+
+          function buildFailureGroupKey(issueKey, labels, failedFile, testcase) {
+            const base = `${issueKey}:${detectFailureKind(labels)}_${detectFailureModule(labels, failedFile)}`;
+            const testcasePart = testcaseFingerprintPart(testcase);
+            return testcasePart ? `${base}:${testcasePart}` : base;
           }
 
           function uniqueLines(text) {
@@ -1118,26 +1153,30 @@ jobs:
               const failedTestcases = [...errorReason.matchAll(/^FAILED TESTCASE:\s*(.+)$/gm)]
                 .map((match) => match[1].trim())
                 .filter(Boolean);
-              const primaryFailedTestcase = failedTestcases[0] || '';
               const failureLabels = detectFailureLabels(file, failedFile);
-              const fingerprint = buildFailureGroupKey(issueKey, failureLabels, failedFile || summaryTitle);
-              const group = failureGroups.get(fingerprint) || {
-                fingerprint,
-                labels: failureLabels,
-                records: [],
-                summaryTitle,
-                primaryFailedTestcase
-              };
-              group.records.push({
-                file,
-                errorReason,
-                failedFile,
-                failedTestcases,
-                summaryTitle,
-                primaryFailedTestcase
-              });
-              group.labels = [...new Set([...(group.labels || []), ...failureLabels])];
-              failureGroups.set(fingerprint, group);
+              const testcaseGroups = failedTestcases.length ? failedTestcases : [''];
+
+              for (const failedTestcase of testcaseGroups) {
+                const primaryFailedTestcase = failedTestcase || '';
+                const fingerprint = buildFailureGroupKey(issueKey, failureLabels, failedFile || summaryTitle, primaryFailedTestcase);
+                const group = failureGroups.get(fingerprint) || {
+                  fingerprint,
+                  labels: failureLabels,
+                  records: [],
+                  summaryTitle,
+                  primaryFailedTestcase
+                };
+                group.records.push({
+                  file,
+                  errorReason,
+                  failedFile,
+                  failedTestcases: primaryFailedTestcase ? [primaryFailedTestcase] : failedTestcases,
+                  summaryTitle,
+                  primaryFailedTestcase
+                });
+                group.labels = [...new Set([...(group.labels || []), ...failureLabels])];
+                failureGroups.set(fingerprint, group);
+              }
             }
 
             for (const group of failureGroups.values()) {
@@ -1184,11 +1223,13 @@ jobs:
               let duplicateFailureIssues = [];
 
               const legacyIssueMap = new Map();
-              for (const record of group.records) {
-                if (!record.failedFile) continue;
-                const legacyFailureIssues = await searchFailureIssuesByFile(issueKey, record.failedFile);
-                for (const legacyIssue of legacyFailureIssues) {
-                  legacyIssueMap.set(legacyIssue.key, legacyIssue);
+              if (!group.primaryFailedTestcase) {
+                for (const record of group.records) {
+                  if (!record.failedFile) continue;
+                  const legacyFailureIssues = await searchFailureIssuesByFile(issueKey, record.failedFile);
+                  for (const legacyIssue of legacyFailureIssues) {
+                    legacyIssueMap.set(legacyIssue.key, legacyIssue);
+                  }
                 }
               }
 
@@ -1229,6 +1270,19 @@ jobs:
                   await updateIssueFields(existingFailureIssue.key, { duedate: failureDueDate });
                 }
                 await assignIssue(existingFailureIssue.key, jiraUser);
+                const existingStatus = String(existingFailureIssue.fields && existingFailureIssue.fields.status && existingFailureIssue.fields.status.name || '').toLowerCase();
+                if (existingStatus.includes('done') || existingStatus.includes('resolved') || existingStatus.includes('complete')) {
+                  const reopened = await transitionIssue(existingFailureIssue.key, ['to do', 'reopen', 'reopened', 'in progress', 'start progress']);
+                  if (reopened) {
+                    await addComment(existingFailureIssue.key, [
+                      'CI failure reappeared after this subtask had been resolved.',
+                      '',
+                      `Status reset by CI because this failure group is failing again.`,
+                      `CI-FINGERPRINT: ${fingerprint}`,
+                      `GitHub Actions log: ${runUrl}`
+                    ].join('\n'));
+                  }
+                }
                 for (const duplicateIssue of duplicateFailureIssues) {
                   const duplicateStatus = String(duplicateIssue.fields && duplicateIssue.fields.status && duplicateIssue.fields.status.name || '').toLowerCase();
                   await addComment(duplicateIssue.key, [
