@@ -4,7 +4,7 @@
 **Function/API:** Register  
 **Endpoint:** `POST /api/auth/register`  
 **Loai kiem thu:** Black-box API test  
-**File data automation:** `automation/postman/VGA-AUTH-USER/VGA-Store-Auth/VGA-Store-Auth-Testcase.csv`  
+**File data automation:** `automation/postman/VGA-AUTH-USER/VGA-Store-Auth/Register/Auth_Register_Testcase.csv`  
 **CSV filter:** `testType=REGISTER`
 
 ---
@@ -33,7 +33,7 @@ Kiem tra API dang ky tai khoan theo chuan Auth muc tieu, khong chi theo behavior
 
 ## 3. Phan tich gia tri bien
 
-| Bien | Min invalid | Min | Nominal | Max | Max invalid | Tag |
+| Bien | min- | min | nominal | max | max+ | Tag |
 | :--- | :---: | :---: | :---: | :---: | :---: | :--- |
 | `username.length` | 2 | 3 | 8-12 | 50 | 51 | B1-B5 |
 | `password.length` | 7 | 8 | 10-16 | 64 | 65 | B6-B10 |
@@ -44,7 +44,25 @@ Kiem tra API dang ky tai khoan theo chuan Auth muc tieu, khong chi theo behavior
 
 ---
 
-## 4. Thiet ke test case
+## 4. Ma tran do bao phu testcase
+
+| Rule/Input can bao phu | Ky thuat | Testcase bao phu | So case | Ly do can co |
+| :--- | :--- | :--- | ---: | :--- |
+| Dang ky hop le | Positive/Happy path | R-001 | 1 | Xac nhan bo input hop le tao user va tra token. |
+| Truong bat buoc | Equivalence Partitioning | R-002, R-003, R-004, R-005 | 4 | Bao phu thieu username, email, password va thieu tat ca field bat buoc. |
+| Username length | Boundary Value Analysis | R-006, R-007, R-008, R-009 | 4 | Bao phu <3, =3, =50 va >50 ky tu. |
+| Username format | Equivalence Partitioning | R-018, R-019 | 2 | Bao phu username co khoang trang va ky tu dac biet. |
+| Email format/length | Equivalence Partitioning + Boundary Value Analysis | R-010, R-011, R-017, R-026 | 4 | Bao phu email sai format, thieu @, co khoang trang va >254 ky tu. |
+| Duplicate data | State/Uniqueness | R-012, R-013 | 2 | Bao phu username da ton tai va email da ton tai. |
+| Password length | Boundary Value Analysis | R-014, R-015, R-016 | 3 | Bao phu <8, =8 va >64 ky tu. |
+| Password complexity | Equivalence Partitioning | R-020, R-021, R-022, R-023 | 4 | Bao phu thieu chu hoa, thieu chu thuong, thieu so, thieu ky tu dac biet. |
+| FullName quality | Business Rule/Negative Validation | R-024, R-025 | 2 | Bao phu fullName rong va chi gom khoang trang theo rule muc tieu. |
+
+**Tong coverage hien tai:** 9 nhom rule, 26 testcase. So luong nay cao hon muc toi thieu vi password policy duoc tach tung nhom loi, email va fullName co them rule chat luong.
+
+---
+
+## 5. Thiet ke test case
 
 | STT | Test ID | Username | Email | Password | Expected status | Expected result | Tag | Priority | Status |
 | :---: | :--- | :--- | :--- | :--- | :---: | :--- | :--- | :---: | :---: |
@@ -77,7 +95,7 @@ Kiem tra API dang ky tai khoan theo chuan Auth muc tieu, khong chi theo behavior
 
 ---
 
-## 5. Mapping automation
+## 6. Mapping automation
 
 | Cot CSV | Cach dung |
 | :--- | :--- |
@@ -87,4 +105,4 @@ Kiem tra API dang ky tai khoan theo chuan Auth muc tieu, khong chi theo behavior
 | `expectedStatus` | HTTP status mong doi |
 | `expectedMessage` | Token hoac message loi mong doi |
 
-**Ket luan:** Register co 23 test case black-box hien co, bao phu positive, negative, equivalence partitioning, boundary value analysis va password quality. Cac case R-024 den R-026 la testcase de xuat bo sung de kiem tra gap `fullName` va gioi han do dai email theo rule muc tieu.
+**Ket luan:** Register co 26 test case black-box hien co, bao phu positive, negative, equivalence partitioning, boundary value analysis va password quality. Cac case R-024 den R-026 la testcase bo sung de kiem tra gap `fullName` va gioi han do dai email theo rule muc tieu.
