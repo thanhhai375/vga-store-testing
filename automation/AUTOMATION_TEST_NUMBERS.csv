@@ -1,5 +1,5 @@
 Loai test,Module,Tong testcase,Passed,Failed,Chua co ket qua,Nguon so lieu,Ghi chu
-TONG HOP,Tat ca automation,368,2,11,355,E2E test files + Postman CSV + E2E/testlog.md,Tong testcase da viet; pass/fail chi lay tu log E2E hien co
+TONG HOP,Tat ca automation,382,2,11,369,E2E test files + Postman CSV + E2E/testlog.md,Tong testcase da viet; pass/fail chi lay tu log E2E hien co
 E2E - ket qua chay gan nhat,Tat ca module da chay trong testlog,13,2,11,0,automation/E2E/testlog.md,Chi tinh cac dong co OK/FAILED trong testlog
 E2E - testcase da viet,Authentication,4,0,0,4,automation/E2E/modules/1_Authentication,Dem so Scenario trong file test
 E2E - testcase da viet,Shopping Experience,18,0,0,18,automation/E2E/modules/2_Shopping_Experience,Dem so Scenario trong file test
@@ -8,7 +8,7 @@ E2E - testcase da viet,Product & Category Management,37,0,0,37,automation/E2E/mo
 E2E - testcase da viet,Order Management,17,0,0,17,automation/E2E/modules/5_Order_Management,Dem so Scenario trong file test
 E2E - testcase da viet,Dashboard & User Management,10,0,0,10,automation/E2E/modules/6_Dashboard&User_Management,Dem so Scenario trong file test
 E2E - testcase da viet,User Profile,0,0,0,0,automation/E2E/modules/7_User_Profile,Chua co Scenario trong file example
-POSTMAN API/BVA,Authentication,65,0,0,65,automation/postman/VGA-AUTH-USER/VGA-Store-Auth/VGA-Store-Auth-Testcase.csv,Chua co file ket qua pass/fail
+POSTMAN API/BVA,Authentication,79,0,0,79,automation/postman/VGA-AUTH-USER/VGA-Store-Auth,Da tach thanh 4 CSV theo API: Register/Login/Google-Login/ChangePassword
 POSTMAN API/BVA,User Address,12,0,0,12,automation/postman/VGA-AUTH-USER/VGA-Store-USER/VGA_Store_User_Address_BVA.csv,Chua co file ket qua pass/fail
 POSTMAN API/BVA,User Profile,12,0,0,12,automation/postman/VGA-AUTH-USER/VGA-Store-USER/VGA_Store_User_Profile_BVA.csv,Chua co file ket qua pass/fail
 POSTMAN API/BVA,Admin BVA,20,0,0,20,automation/postman/VGA-Store-Admin/VGA_Admin_BVA_TestCases.csv,Chua co file ket qua pass/fail
