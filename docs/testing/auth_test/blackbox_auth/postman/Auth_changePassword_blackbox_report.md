@@ -4,7 +4,7 @@
 **Function/API:** Change Password  
 **Endpoint:** `PUT /api/users/change-password`  
 **Loai kiem thu:** Black-box API test  
-**File data automation:** `automation/postman/VGA-AUTH-USER/VGA-Store-Auth/VGA-Store-Auth-Testcase.csv`  
+**File data automation:** `automation/postman/VGA-AUTH-USER/VGA-Store-Auth/ChangePassword/Auth_ChangePassword_Testcase.csv`  
 **CSV filter:** `testType=CHANGE_PWD`
 
 ---
@@ -34,7 +34,7 @@ Kiem tra API doi mat khau theo hanh vi dau vao/dau ra:
 
 ## 3. Phan tich gia tri bien
 
-| Bien | Min invalid | Min | Nominal | Max | Max invalid | Tag |
+| Bien | min- | min | nominal | max | max+ | Tag |
 | :--- | :---: | :---: | :---: | :---: | :---: | :--- |
 | `newPassword.length` | 7 | 8 | 10-16 | 64 | 65 | B1-B5 |
 | `newPassword.complexity` | Thieu 1 nhom | Du 4 nhom | Password manh | Du 4 nhom | Thieu nhom ky tu | B6-B9 |
@@ -43,7 +43,22 @@ Kiem tra API doi mat khau theo hanh vi dau vao/dau ra:
 
 ---
 
-## 4. Thiet ke test case
+## 4. Ma tran do bao phu testcase
+
+| Rule/Input can bao phu | Ky thuat | Testcase bao phu | So case | Ly do can co |
+| :--- | :--- | :--- | ---: | :--- |
+| Doi mat khau hop le | Positive/Happy path | C-001 | 1 | Xac nhan user co token hop le doi mat khau thanh cong. |
+| Old password validation | Equivalence Partitioning | C-002, C-005, C-011 | 3 | Bao phu old password rong, sai, va co khoang trang dau/cuoi. |
+| New password required/length | Boundary Value Analysis | C-003, C-006, C-007, C-008 | 4 | Bao phu new password rong, <8, =8, >64 ky tu. |
+| Confirm password | Equivalence Partitioning | C-004, C-009 | 2 | Bao phu confirm rong va confirm khong khop. |
+| Password business rule | Business Rule/Negative Validation | C-010, C-012 | 2 | Bao phu new password trung old password va co khoang trang dau/cuoi. |
+| Password complexity | Equivalence Partitioning | C-013, C-014, C-015, C-016 | 4 | Bao phu thieu chu hoa, thieu chu thuong, thieu so, thieu ky tu dac biet. |
+
+**Tong coverage hien tai:** 6 nhom rule, 16 testcase. Day la bo gan voi muc toi thieu can co cho Change Password vi moi nhom loi chinh da co it nhat mot testcase dai dien.
+
+---
+
+## 5. Thiet ke test case
 
 | STT | Test ID | Old password | New password | Confirm password | Expected status | Expected result | Tag | Priority | Status |
 | :---: | :--- | :--- | :--- | :--- | :---: | :--- | :--- | :---: | :---: |
@@ -66,7 +81,7 @@ Kiem tra API doi mat khau theo hanh vi dau vao/dau ra:
 
 ---
 
-## 5. Mapping automation
+## 6. Mapping automation
 
 | Cot CSV | Cach dung |
 | :--- | :--- |

@@ -115,10 +115,13 @@ Rule muc tieu:
 
 ## 8. Cach ap dung vao CI/CD
 
-File CSV trong Postman la nguon data chay automation:
+File CSV trong Postman la nguon data chay automation. Hien tai bo Auth da tach thanh 4 CSV theo tung API de Newman co the xuat 4 bang ket qua rieng:
 
 ```text
-automation/postman/VGA-AUTH-USER/VGA-Store-Auth/VGA-Store-Auth-Testcase.csv
+automation/postman/VGA-AUTH-USER/VGA-Store-Auth/Register/Auth_Register_Testcase.csv
+automation/postman/VGA-AUTH-USER/VGA-Store-Auth/Login/Auth_Login_Testcase.csv
+automation/postman/VGA-AUTH-USER/VGA-Store-Auth/Google-Login/Auth_Google_Login_Testcase.csv
+automation/postman/VGA-AUTH-USER/VGA-Store-Auth/ChangePassword/Auth_ChangePassword_Testcase.csv
 ```
 
 Neu backend hien tai van cho phep password yeu nhu `123456`, test Register/ChangePassword se fail. GitHub Actions se ghi log len Jira theo task `KCPM-xxx` cua commit.

@@ -4,7 +4,7 @@
 **Function/API:** Login  
 **Endpoint:** `POST /api/auth/login`  
 **Loai kiem thu:** Black-box API test  
-**File data automation:** `automation/postman/VGA-AUTH-USER/VGA-Store-Auth/VGA-Store-Auth-Testcase.csv`  
+**File data automation:** `automation/postman/VGA-AUTH-USER/VGA-Store-Auth/Login/Auth_Login_Testcase.csv`  
 **CSV filter:** `testType=LOGIN`
 
 ---
@@ -33,15 +33,30 @@ Kiem tra API dang nhap theo hanh vi dau vao/dau ra, khong phu thuoc vao code ben
 
 ## 3. Phan tich gia tri bien
 
-| Bien | Min invalid | Min/Nominal | Max/Edge | Invalid edge | Tag |
-| :--- | :---: | :---: | :---: | :---: | :--- |
-| `username.length` | 1-2 | 3 | 50 | > 50 | B1-B4 |
-| `password.length` | Rong/5 | Password seed dung | Rat dai | Sai password | B5-B8 |
-| `username.format` | Ky tu dac biet | Username seed | Co khoang trang | Sai case | B9-B12 |
+| Bien | min- | min | nominal | max | max+ | Tag |
+| :--- | :---: | :---: | :---: | :---: | :---: | :--- |
+| `username.length` | 1-2 | 3 | `hai123` | 50 | > 50 | B1-B4 |
+| `password.length` | Rong/5 | `hai123` | Sai password thong dung | Rat dai | Vuot do dai hop ly | B5-B8 |
+| `username.format` | Ky tu dac biet | Username seed | Email-like username | Co khoang trang | Sai case | B9-B12 |
 
 ---
 
-## 4. Thiet ke test case
+## 4. Ma tran do bao phu testcase
+
+| Rule/Input can bao phu | Ky thuat | Testcase bao phu | So case | Ly do can co |
+| :--- | :--- | :--- | ---: | :--- |
+| Dang nhap hop le | Positive/Happy path | L-001 | 1 | Xac nhan tai khoan seed hop le tra token. |
+| Truong bat buoc | Equivalence Partitioning | L-002, L-003, L-004 | 3 | Tach rieng ca hai rong, thieu password, thieu username de biet field nao validate sai. |
+| Bien do dai username | Boundary Value Analysis | L-005, L-006, L-007, L-008, L-009 | 5 | Bao phu <3, =3, dai/gan max, >50 va user khong ton tai. |
+| Bien do dai password | Boundary Value Analysis | L-010, L-012 | 2 | Bao phu password qua ngan va password rat dai de dam bao khong crash/khong bypass. |
+| Credential sai | Negative Validation | L-011, L-013, L-014 | 3 | Bao phu password sai voi user ton tai, user khong ton tai va password sai dang khac. |
+| Format/normalize username | Equivalence Partitioning + Negative Validation | L-015, L-016, L-017, L-018, L-019 | 5 | Bao phu email-like username, ky tu dac biet, khoang trang cuoi, sai hoa/thuong, khoang trang giua. |
+
+**Tong coverage hien tai:** 6 nhom rule, 19 testcase. Neu chi lay muc toi thieu, co the gop con khoang 10 testcase, nhung khi fail se kho xac dinh loi nam o do dai, format, khoang trang, case-sensitive hay credential sai.
+
+---
+
+## 5. Thiet ke test case
 
 | STT | Test ID | Username | Password | Expected status | Expected result | Tag | Priority | Status |
 | :---: | :--- | :--- | :--- | :---: | :--- | :--- | :---: | :---: |
@@ -69,7 +84,7 @@ Kiem tra API dang nhap theo hanh vi dau vao/dau ra, khong phu thuoc vao code ben
 
 ---
 
-## 5. Mapping automation
+## 6. Mapping automation
 
 | Cot CSV | Cach dung |
 | :--- | :--- |

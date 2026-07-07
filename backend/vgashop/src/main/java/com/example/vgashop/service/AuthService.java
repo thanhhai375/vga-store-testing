@@ -89,7 +89,7 @@ public class AuthService {
         User user = userRepository.findByEmail(req.getEmail()).orElse(null);
 
         if (user == null) {
-            String prefix   = req.getEmail().split("@")[0];
+            String prefix   = normalizeGoogleUsernamePrefix(req.getEmail().split("@")[0]);
             String username = prefix;
             
             if (username.length() > 50 || !username.matches("^[A-Za-z0-9_]+$")) {
@@ -122,5 +122,9 @@ public class AuthService {
         return new AuthResponse(jwtUtil.generateToken(user.getUsername(), user.getRole()),
                 user.getUsername(), user.getEmail(), user.getRole().name(), user.getId(),
                 "Login successful");
+    }
+
+    private String normalizeGoogleUsernamePrefix(String prefix) {
+        return prefix.replaceAll("[^A-Za-z0-9_]", "_");
     }
 }
