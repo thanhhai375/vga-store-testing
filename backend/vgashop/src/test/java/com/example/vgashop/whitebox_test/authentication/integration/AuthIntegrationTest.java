@@ -418,8 +418,8 @@ class AuthIntegrationTest {
     }
 
     @Test
-    @DisplayName("AUTH_INT_023 - Google login rejects email prefix with characters invalid for username rule")
-    void googleLogin_withInvalidUsernameCharactersInEmailPrefix_rejectsGeneratedUsername() throws Exception {
+    @DisplayName("AUTH_INT_023 - Google login normalizes email prefix characters invalid for username rule")
+    void googleLogin_withInvalidUsernameCharactersInEmailPrefix_normalizesGeneratedUsername() throws Exception {
         String email = "john.doe+tag@example.com";
 
         mockMvc.perform(post("/api/auth/google")
@@ -427,9 +427,12 @@ class AuthIntegrationTest {
                         .content(AuthIntegrationTestData.googleLoginJson(
                                 email,
                                 "Invalid Prefix Google")))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.username").value("john_doe_tag"))
+                .andExpect(jsonPath("$.email").value(email))
+                .andExpect(jsonPath("$.token", not(nullValue())));
 
-        assertFalse(userRepository.existsByEmail(email));
-        assertFalse(userRepository.existsByUsername("john.doe+tag"));
+        assertTrue(userRepository.existsByEmail(email));
+        assertTrue(userRepository.existsByUsername("john_doe_tag"));
     }
 }
