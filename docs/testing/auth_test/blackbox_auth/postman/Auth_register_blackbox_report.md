@@ -4,7 +4,7 @@
 **Function/API:** Register  
 **Endpoint:** `POST /api/auth/register`  
 **Loai kiem thu:** Black-box API test  
-**File data automation:** `automation/postman/VGA-AUTH-USER/VGA-Store-Auth/VGA-Store-Auth-Testcase.csv`  
+**File data automation:** `automation/postman/VGA-AUTH-USER/VGA-Store-Auth/Register/Auth_Register_Testcase.csv`  
 **CSV filter:** `testType=REGISTER`
 
 ---
@@ -33,16 +33,28 @@ Kiem tra API dang ky tai khoan theo chuan Auth muc tieu, khong chi theo behavior
 
 ## 3. Phan tich gia tri bien
 
-| Bien | Min invalid | Min | Nominal | Max | Max invalid | Tag |
+| Bien | min- | min | nominal | max | max+ | Tag |
 | :--- | :---: | :---: | :---: | :---: | :---: | :--- |
 | `username.length` | 2 | 3 | 8-12 | 50 | 51 | B1-B5 |
 | `password.length` | 7 | 8 | 10-16 | 64 | 65 | B6-B10 |
 | `password.complexity` | Thieu 1 nhom ky tu | Du 4 nhom | Password manh | Du 4 nhom | Thieu nhom ky tu | B11-B14 |
 | `email.format` | Khong co `@` | Email hop le | Email hop le | Email dai hop le | Sai format | B15-B18 |
+| `email.length` |  | Email hop le | Email thong dung | 254 | >254 | B19-B20 |
+| `fullName` | Rong/toan khoang trang | Ten hop le | Ten nguoi dung |  |  | B21-B22 |
 
 ---
 
-## 4. Thiet ke test case
+## 4. Do bao phu
+
+| Function/API | So testcase toi thieu de phu 100% | Testcase hien co trong CSV | Do bao phu hien tai | Ghi chu |
+| :--- | ---: | ---: | :---: | :--- |
+| Register | 26 | 26 | 26/26 = 100% | Bao phu required fields, username, email, duplicate, password policy va fullName |
+
+Function **Register** dat **100%** theo pham vi testcase hien co.
+
+---
+
+## 5. Thiet ke test case
 
 | STT | Test ID | Username | Email | Password | Expected status | Expected result | Tag | Priority | Status |
 | :---: | :--- | :--- | :--- | :--- | :---: | :--- | :--- | :---: | :---: |
@@ -69,10 +81,13 @@ Kiem tra API dang ky tai khoan theo chuan Auth muc tieu, khong chi theo behavior
 | 21 | R-021 | Hop le | Hop le | Thieu chu thuong | 400 | Password yeu | X3,B12 | High | Ready |
 | 22 | R-022 | Hop le | Hop le | Thieu chu so | 400 | Password yeu | X3,B13 | High | Ready |
 | 23 | R-023 | Hop le | Hop le | Thieu ky tu dac biet | 400 | Password yeu | X3,B14 | High | Ready |
+| 24 | R-024 | Hop le | Hop le | Hop le | 400 | `fullName` rong bi tu choi neu fullName la required theo rule muc tieu | X4,B21 | Medium | Proposed |
+| 25 | R-025 | Hop le | Hop le | Hop le | 400 | `fullName` chi gom khoang trang bi tu choi | X4,B22 | Medium | Proposed |
+| 26 | R-026 | Hop le | Email >254 ky tu | Hop le | 400 | Email vuot max length bi tu choi | X2,B20 | Medium | Proposed |
 
 ---
 
-## 5. Mapping automation
+## 6. Mapping automation
 
 | Cot CSV | Cach dung |
 | :--- | :--- |
@@ -82,4 +97,4 @@ Kiem tra API dang ky tai khoan theo chuan Auth muc tieu, khong chi theo behavior
 | `expectedStatus` | HTTP status mong doi |
 | `expectedMessage` | Token hoac message loi mong doi |
 
-**Ket luan:** Register co 23 test case black-box, bao phu positive, negative, equivalence partitioning, boundary value analysis va password quality.
+**Ket luan:** Register co 26 test case black-box hien co, bao phu positive, negative, equivalence partitioning, boundary value analysis va password quality. Cac case R-024 den R-026 la testcase bo sung de kiem tra gap `fullName` va gioi han do dai email theo rule muc tieu.

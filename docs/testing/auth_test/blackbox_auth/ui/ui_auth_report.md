@@ -58,26 +58,29 @@ Ghi chu:
 
 ## 4. Register Test Cases
 
+Ghi chu cap nhat: Form Register hien co truong `confirmPassword`. Tat ca testcase Register co submit form va khong co muc tieu test rieng ve confirm password phai nhap `confirmPassword` trung voi `password` de tranh fail sai nguyen nhan.
+
 | ID | Testcase | Precondition | Steps | Test data | Expected after submit/action | Pass condition | Priority |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| UI-RG-001 | Dang ky thanh cong | Chua login; username/email chua ton tai | 1. Mo Register; 2. Nhap day du du lieu hop le; 3. Bam Tao tai khoan | username=`e2e_user_<time>`; fullName=`E2E Test User`; email=`e2e_user_<time>@gmail.com`; password=`Pass123456!` | Hien thong bao thanh cong, chuyen ve Login hoac trang thai theo thiet ke | User duoc tao, form khong bao loi, co phan hoi thanh cong | P1 |
-| UI-RG-002 | Bo trong username | Chua login | 1. Mo Register; 2. Bo trong username; 3. Nhap cac field khac; 4. Bam Tao tai khoan | username=`""`; email hop le; password=`Pass123456!`; fullName hop le | Field username bi invalid hoac hien loi bat buoc | Khong tao user, modal van mo, focus/loi nam o username | P1 |
-| UI-RG-003 | Bo trong full name | Chua login | 1. Mo Register; 2. Bo trong full name; 3. Nhap field khac; 4. Bam Tao tai khoan | fullName=`""` | Field full name bi invalid hoac hien loi bat buoc | Khong tao user, modal van mo | P1 |
-| UI-RG-004 | Bo trong email | Chua login | 1. Mo Register; 2. Bo trong email; 3. Nhap field khac; 4. Bam Tao tai khoan | email=`""` | Field email bi invalid hoac hien loi bat buoc | Khong tao user, modal van mo | P1 |
+| UI-RG-001 | Dang ky thanh cong | Chua login; username/email chua ton tai | 1. Mo Register; 2. Nhap day du du lieu hop le; 3. Bam Tao tai khoan | username=`e2e_user_<time>`; fullName=`E2E Test User`; email=`e2e_user_<time>@gmail.com`; password=`Pass123456!`; confirmPassword=`Pass123456!` | Hien thong bao thanh cong, chuyen ve Login hoac trang thai theo thiet ke | User duoc tao, form khong bao loi, co phan hoi thanh cong | P1 |
+| UI-RG-002 | Bo trong username | Chua login | 1. Mo Register; 2. Bo trong username; 3. Nhap cac field khac; 4. Bam Tao tai khoan | username=`""`; email hop le; password=`Pass123456!`; confirmPassword=`Pass123456!`; fullName hop le | Field username bi invalid hoac hien loi bat buoc | Khong tao user, modal van mo, focus/loi nam o username | P1 |
+| UI-RG-003 | Bo trong full name | Chua login | 1. Mo Register; 2. Bo trong full name; 3. Nhap field khac; 4. Bam Tao tai khoan | fullName=`""`; password=`Pass123456!`; confirmPassword=`Pass123456!` | Field full name bi invalid hoac hien loi bat buoc | Khong tao user, modal van mo | P1 |
+| UI-RG-004 | Bo trong email | Chua login | 1. Mo Register; 2. Bo trong email; 3. Nhap field khac; 4. Bam Tao tai khoan | email=`""`; password=`Pass123456!`; confirmPassword=`Pass123456!` | Field email bi invalid hoac hien loi bat buoc | Khong tao user, modal van mo | P1 |
 | UI-RG-005 | Bo trong password | Chua login | 1. Mo Register; 2. Bo trong password; 3. Nhap field khac; 4. Bam Tao tai khoan | password=`""` | Field password bi invalid hoac hien loi bat buoc | Khong tao user, modal van mo | P1 |
-| UI-RG-006 | Email sai dinh dang | Chua login | 1. Mo Register; 2. Nhap email sai; 3. Bam Tao tai khoan | email=`invalidgmail`; password=`Pass123456!` | UI hien loi email khong hop le sau submit | Khong tao user, email field/form co loi ro rang | P1 |
-| UI-RG-007 | Username qua ngan | Chua login | 1. Mo Register; 2. Nhap username 2 ky tu; 3. Bam Tao tai khoan | username=`ab`; password=`Pass123456!` | UI hien loi username qua ngan hoac rule username | Khong tao user, modal van mo | P1 |
-| UI-RG-008 | Username toan khoang trang | Chua login | 1. Mo Register; 2. Nhap username chi gom space; 3. Bam Tao tai khoan | username=`   `; password=`Pass123456!` | UI trim/reject va bao username khong duoc trong | Khong tao user; neu hien loi bat buoc/invalid thi pass | P1 |
-| UI-RG-009 | Username co ky tu dac biet | Chua login | 1. Mo Register; 2. Nhap username co ky tu dac biet; 3. Bam Tao tai khoan | username=`user@123`; password=`Pass123456!` | Neu rule khong cho, UI hien loi ky tu hop le; neu cho, tao user thanh cong theo rule | Ket qua nhat quan voi rule hien thi/yeu cau | P2 |
-| UI-RG-010 | Password qua ngan/y eu | Chua login | 1. Mo Register; 2. Nhap password yeu; 3. Bam Tao tai khoan | password=`123` | UI hien loi mat khau yeu/qua ngan, khong dang ky thanh cong | Khong tao user, loi gan password hoac thong bao de hieu | P1 |
-| UI-RG-011 | Password thieu chu hoa | Chua login | 1. Mo Register; 2. Nhap password thieu chu hoa; 3. Bam Tao tai khoan | password=`password123!` | UI hien loi password chua dat yeu cau neu he thong yeu cau password manh | Khong tao user hoac co phan hoi rule ro rang | P2 |
-| UI-RG-012 | Password thieu chu thuong | Chua login | 1. Mo Register; 2. Nhap password thieu chu thuong; 3. Bam Tao tai khoan | password=`PASSWORD123!` | UI hien loi password chua dat yeu cau neu he thong yeu cau password manh | Khong tao user hoac co phan hoi rule ro rang | P2 |
-| UI-RG-013 | Password thieu so | Chua login | 1. Mo Register; 2. Nhap password thieu so; 3. Bam Tao tai khoan | password=`Password!` | UI hien loi password chua dat yeu cau neu he thong yeu cau password manh | Khong tao user hoac co phan hoi rule ro rang | P2 |
-| UI-RG-014 | Password thieu ky tu dac biet | Chua login | 1. Mo Register; 2. Nhap password thieu ky tu dac biet; 3. Bam Tao tai khoan | password=`Password123` | UI hien loi password chua dat yeu cau neu he thong yeu cau password manh | Khong tao user hoac co phan hoi rule ro rang | P2 |
-| UI-RG-015 | Username da ton tai | Database co user `hai123` | 1. Mo Register; 2. Nhap username da ton tai; 3. Bam Tao tai khoan | username=`hai123`; email moi; password=`Pass123456!` | Hien loi username da ton tai, khong xoa du lieu form | Khong tao user moi, modal van mo | P1 |
-| UI-RG-016 | Email da ton tai | Database co email test da ton tai | 1. Mo Register; 2. Nhap email da ton tai; 3. Bam Tao tai khoan | username moi; email da ton tai; password=`Pass123456!` | Hien loi email da duoc su dung, khong xoa du lieu form | Khong tao user moi, modal van mo | P1 |
-| UI-RG-017 | Submit nhieu lan lien tuc | Chua login; du lieu hop le | 1. Nhap form hop le; 2. Bam Tao tai khoan lien tuc nhieu lan | Du lieu hop le moi | Nut submit loading/disabled hoac chi tao mot request hop le | Khong tao trung user, UI khong bi treo | P2 |
-| UI-RG-018 | Dang ky fail khong mat du lieu | Chua login | 1. Nhap du lieu co loi; 2. Bam Tao tai khoan | email=`invalidgmail`; cac field khac hop le | UI hien loi va giu cac field nguoi dung da nhap de sua | Username/fullName/password/email khong bi xoa bat ngo | P2 |
+| UI-RG-006 | Email sai dinh dang | Chua login | 1. Mo Register; 2. Nhap email sai; 3. Bam Tao tai khoan | email=`invalidgmail`; password=`Pass123456!`; confirmPassword=`Pass123456!` | UI hien loi email khong hop le sau submit | Khong tao user, email field/form co loi ro rang | P1 |
+| UI-RG-007 | Username qua ngan | Chua login | 1. Mo Register; 2. Nhap username 2 ky tu; 3. Bam Tao tai khoan | username=`ab`; password=`Pass123456!`; confirmPassword=`Pass123456!` | UI hien loi username qua ngan hoac rule username | Khong tao user, modal van mo | P1 |
+| UI-RG-008 | Username toan khoang trang | Chua login | 1. Mo Register; 2. Nhap username chi gom space; 3. Bam Tao tai khoan | username=`   `; password=`Pass123456!`; confirmPassword=`Pass123456!` | UI trim/reject va bao username khong duoc trong | Khong tao user; neu hien loi bat buoc/invalid thi pass | P1 |
+| UI-RG-009 | Username co ky tu dac biet | Chua login | 1. Mo Register; 2. Nhap username co ky tu dac biet; 3. Bam Tao tai khoan | username=`user@123`; password=`Pass123456!`; confirmPassword=`Pass123456!` | Neu rule khong cho, UI hien loi ky tu hop le; neu cho, tao user thanh cong theo rule | Ket qua nhat quan voi rule hien thi/yeu cau | P2 |
+| UI-RG-010 | Password qua ngan/y eu | Chua login | 1. Mo Register; 2. Nhap password yeu; 3. Nhap confirm password trung password; 4. Bam Tao tai khoan | password=`123`; confirmPassword=`123` | UI hien loi mat khau yeu/qua ngan, khong dang ky thanh cong | Khong tao user, loi gan password hoac thong bao de hieu | P1 |
+| UI-RG-011 | Password thieu chu hoa | Chua login | 1. Mo Register; 2. Nhap password thieu chu hoa; 3. Nhap confirm password trung password; 4. Bam Tao tai khoan | password=`password123!`; confirmPassword=`password123!` | UI hien loi password chua dat yeu cau neu he thong yeu cau password manh | Khong tao user hoac co phan hoi rule ro rang | P2 |
+| UI-RG-012 | Password thieu chu thuong | Chua login | 1. Mo Register; 2. Nhap password thieu chu thuong; 3. Nhap confirm password trung password; 4. Bam Tao tai khoan | password=`PASSWORD123!`; confirmPassword=`PASSWORD123!` | UI hien loi password chua dat yeu cau neu he thong yeu cau password manh | Khong tao user hoac co phan hoi rule ro rang | P2 |
+| UI-RG-013 | Password thieu so | Chua login | 1. Mo Register; 2. Nhap password thieu so; 3. Nhap confirm password trung password; 4. Bam Tao tai khoan | password=`Password!`; confirmPassword=`Password!` | UI hien loi password chua dat yeu cau neu he thong yeu cau password manh | Khong tao user hoac co phan hoi rule ro rang | P2 |
+| UI-RG-014 | Password thieu ky tu dac biet | Chua login | 1. Mo Register; 2. Nhap password thieu ky tu dac biet; 3. Nhap confirm password trung password; 4. Bam Tao tai khoan | password=`Password123`; confirmPassword=`Password123` | UI hien loi password chua dat yeu cau neu he thong yeu cau password manh | Khong tao user hoac co phan hoi rule ro rang | P2 |
+| UI-RG-015 | Username da ton tai | Database co user `hai123` | 1. Mo Register; 2. Nhap username da ton tai; 3. Bam Tao tai khoan | username=`hai123`; email moi; password=`Pass123456!`; confirmPassword=`Pass123456!` | Hien loi username da ton tai, khong xoa du lieu form | Khong tao user moi, modal van mo | P1 |
+| UI-RG-016 | Email da ton tai | Database co email test da ton tai | 1. Mo Register; 2. Nhap email da ton tai; 3. Bam Tao tai khoan | username moi; email da ton tai; password=`Pass123456!`; confirmPassword=`Pass123456!` | Hien loi email da duoc su dung, khong xoa du lieu form | Khong tao user moi, modal van mo | P1 |
+| UI-RG-017 | Submit nhieu lan lien tuc | Chua login; du lieu hop le | 1. Nhap form hop le; 2. Bam Tao tai khoan lien tuc nhieu lan | Du lieu hop le moi, confirmPassword trung password | Nut submit loading/disabled hoac chi tao mot request hop le | Khong tao trung user, UI khong bi treo | P2 |
+| UI-RG-018 | Dang ky fail khong mat du lieu | Chua login | 1. Nhap du lieu co loi; 2. Bam Tao tai khoan | email=`invalidgmail`; cac field khac hop le; confirmPassword trung password | UI hien loi va giu cac field nguoi dung da nhap de sua | Username/fullName/password/email/confirmPassword khong bi xoa bat ngo | P2 |
+| UI-RG-019 | Confirm password khong khop | Chua login | 1. Mo Register; 2. Nhap password va confirm password khac nhau; 3. Bam Tao tai khoan | password=`Pass123456!`; confirmPassword=`Different123!` | UI chan dang ky va hien loi xac nhan mat khau khong khop | Khong tao user, modal van mo, nguoi dung biet can sua confirm password | P1 |
 
 ---
 
@@ -138,7 +141,21 @@ Day la cac testcase dung de phat hien diem FE chua xu ly tot. Neu hien tai fail,
 
 ---
 
-## 9. Ket luan
+## 9. Do bao phu
+
+| Function/UI flow | Tong rule/test condition can phu | So testcase toi thieu de phu 100% | Testcase hien co | Do bao phu hien tai | Ghi chu |
+| :--- | ---: | ---: | ---: | :---: | :--- |
+| Login UI | 10 | 10 | 10 | 10/10 = 100% | `UI-LG-001` den `UI-LG-010` |
+| Register UI | 19 | 19 | 19 | 19/19 = 100% | `UI-RG-001` den `UI-RG-019` |
+| Change Password UI | 8 | 8 | 8 | 8/8 = 100% | `UI-CP-001` den `UI-CP-008` |
+| Logout va Protected Route | 6 | 6 | 6 | 6/6 = 100% | `UI-SE-001` den `UI-SE-006` |
+| UX enhancement checklist | 5 | 5 | 5 | 5/5 = 100% | `UI-UX-001` den `UI-UX-005`, dung lam checklist cai thien UX |
+
+**Tong:** 48/48 testcase = 100%.
+
+---
+
+## 10. Ket luan
 
 Bo testcase nay phu hop voi UI black-box vi khong dua vao code noi bo hay gia dinh nguoi dung biet rule backend. Moi case deu xuat phat tu hanh vi that:
 

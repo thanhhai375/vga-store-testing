@@ -1,0 +1,2102 @@
+{
+  "info": {
+    "_postman_id": "7395a4d8-a656-4ea4-afe0-266bc7f2a818",
+    "name": "VGA Store Admin Blackbox",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "55075753",
+    "_collection_link": "https://go.postman.co/collection/55075753-7395a4d8-a656-4ea4-afe0-266bc7f2a818?source=collection_link"
+  },
+  "item": [
+    {
+      "name": "1. Auth Admin",
+      "item": [
+        {
+          "name": "Đăng ký Admin",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "console.log(\"AUTH01 RESPONSE:\", pm.response.text());",
+                  "",
+                  "pm.test(\"TC_ADM_AUTH_01 - Không được trả lỗi 500\", function () {",
+                  "    pm.expect(pm.response.code).to.not.eql(500);",
+                  "});",
+                  "",
+                  "pm.test(",
+                  "    \"TC_ADM_AUTH_01 - Không được tự đăng ký ADMIN khi chưa xác thực\",",
+                  "    function () {",
+                  "        pm.expect(pm.response.code).to.be.oneOf([",
+                  "            400,",
+                  "            401,",
+                  "            403",
+                  "        ]);",
+                  "    }",
+                  ");",
+                  "",
+                  "/*",
+                  "Nếu hệ thống có lỗi và vẫn tạo được Admin,",
+                  "dùng tài khoản vừa tạo để tiếp tục Collection.",
+                  "*/",
+                  "if ([200, 201].includes(pm.response.code)) {",
+                  "    pm.collectionVariables.set(",
+                  "        \"adminLoginUsername\",",
+                  "        pm.collectionVariables.get(\"generatedAdminUsername\")",
+                  "    );",
+                  "",
+                  "    pm.collectionVariables.set(",
+                  "        \"adminLoginPassword\",",
+                  "        pm.collectionVariables.get(\"generatedAdminPassword\")",
+                  "    );",
+                  "}"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "const runId = Date.now().toString();\r",
+                  "\r",
+                  "/* Tài khoản Admin có sẵn từ CSV hoặc Environment */\r",
+                  "const existingUsername =\r",
+                  "    pm.iterationData.get(\"adminUsername\") ||\r",
+                  "    pm.environment.get(\"adminUsername\") ||\r",
+                  "    pm.collectionVariables.get(\"adminUsername\");\r",
+                  "\r",
+                  "const existingPassword =\r",
+                  "    pm.iterationData.get(\"adminPassword\") ||\r",
+                  "    pm.environment.get(\"adminPassword\") ||\r",
+                  "    pm.collectionVariables.get(\"adminPassword\");\r",
+                  "\r",
+                  "/* Mặc định request đăng nhập sẽ dùng tài khoản Admin có sẵn */\r",
+                  "pm.collectionVariables.set(\r",
+                  "    \"adminLoginUsername\",\r",
+                  "    existingUsername || \"\"\r",
+                  ");\r",
+                  "\r",
+                  "pm.collectionVariables.set(\r",
+                  "    \"adminLoginPassword\",\r",
+                  "    existingPassword || \"\"\r",
+                  ");\r",
+                  "\r",
+                  "/* Tài khoản giả dùng để kiểm tra đăng ký Admin trái phép */\r",
+                  "pm.collectionVariables.set(\r",
+                  "    \"generatedAdminUsername\",\r",
+                  "    \"bb_admin_\" + runId\r",
+                  ");\r",
+                  "\r",
+                  "pm.collectionVariables.set(\r",
+                  "    \"generatedAdminEmail\",\r",
+                  "    \"bb_admin_\" + runId + \"@example.com\"\r",
+                  ");\r",
+                  "\r",
+                  "pm.collectionVariables.set(\r",
+                  "    \"generatedAdminPassword\",\r",
+                  "    \"Admin@12345\"\r",
+                  ");\r",
+                  "\r",
+                  "/* Dữ liệu cho các module sau */\r",
+                  "pm.collectionVariables.set(\"brandName\", \"BB Brand \" + runId);\r",
+                  "pm.collectionVariables.set(\r",
+                  "    \"brandNameUpdated\",\r",
+                  "    \"BB Brand Updated \" + runId\r",
+                  ");\r",
+                  "\r",
+                  "pm.collectionVariables.set(\r",
+                  "    \"categoryName\",\r",
+                  "    \"BB Category \" + runId\r",
+                  ");\r",
+                  "\r",
+                  "pm.collectionVariables.set(\r",
+                  "    \"productName\",\r",
+                  "    \"BB Product \" + runId\r",
+                  ");\r",
+                  "\r",
+                  "pm.collectionVariables.set(\r",
+                  "    \"productSku\",\r",
+                  "    \"BB-SKU-\" + runId\r",
+                  ");\r",
+                  "\r",
+                  "pm.collectionVariables.set(\r",
+                  "    \"testUsername\",\r",
+                  "    \"bb_user_\" + runId\r",
+                  ");\r",
+                  "\r",
+                  "pm.collectionVariables.set(\r",
+                  "    \"testUserEmail\",\r",
+                  "    \"bb_user_\" + runId + \"@example.com\"\r",
+                  ");"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"username\": \"{{generatedAdminUsername}}\",\r\n  \"password\": \"{{generatedAdminPassword}}\",\r\n  \"email\": \"{{generatedAdminEmail}}\",\r\n  \"fullName\": \"Blackbox Admin\",\r\n  \"role\": \"ADMIN\"\r\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/register-admin",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "register-admin"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Đăng nhập Admin",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "console.log(\"AUTH02 RESPONSE:\", pm.response.text());",
+                  "",
+                  "pm.test(\"TC_ADM_AUTH_02 - Đăng nhập Admin thành công\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "let res = {};",
+                  "",
+                  "try {",
+                  "    res = pm.response.json();",
+                  "} catch (e) {",
+                  "    console.log(\"Response đăng nhập không phải JSON\");",
+                  "}",
+                  "",
+                  "const responseData = res.data || {};",
+                  "",
+                  "const token =",
+                  "    res.token ||",
+                  "    res.accessToken ||",
+                  "    responseData.token ||",
+                  "    responseData.accessToken;",
+                  "",
+                  "pm.test(\"TC_ADM_AUTH_02 - Response có Admin token\", function () {",
+                  "    pm.expect(token).to.be.a(\"string\").and.not.empty;",
+                  "});",
+                  "",
+                  "if (token) {",
+                  "    pm.collectionVariables.set(\"adminToken\", token);",
+                  "    pm.environment.set(\"adminToken\", token);",
+                  "}"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "const username =\r",
+                  "    pm.collectionVariables.get(\"adminLoginUsername\") ||\r",
+                  "    pm.iterationData.get(\"adminUsername\") ||\r",
+                  "    pm.environment.get(\"adminUsername\");\r",
+                  "\r",
+                  "const password =\r",
+                  "    pm.collectionVariables.get(\"adminLoginPassword\") ||\r",
+                  "    pm.iterationData.get(\"adminPassword\") ||\r",
+                  "    pm.environment.get(\"adminPassword\");\r",
+                  "\r",
+                  "pm.collectionVariables.set(\r",
+                  "    \"adminLoginUsername\",\r",
+                  "    username || \"\"\r",
+                  ");\r",
+                  "\r",
+                  "pm.collectionVariables.set(\r",
+                  "    \"adminLoginPassword\",\r",
+                  "    password || \"\"\r",
+                  ");\r",
+                  "\r",
+                  "console.log(\"ADMIN LOGIN USERNAME:\", username);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"username\": \"{{adminLoginUsername}}\",\r\n  \"password\": \"{{adminLoginPassword}}\"\r\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "2. Brand & Category Management",
+      "item": [
+        {
+          "name": "Tạo thương hiệu để test",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "console.log(\"BRND01 RESPONSE:\", pm.response.text());",
+                  "",
+                  "pm.test(\"TC_ADM_BRND_01 - Tạo thương hiệu thành công\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "let res = {};",
+                  "",
+                  "try {",
+                  "    res = pm.response.json();",
+                  "} catch (e) {",
+                  "    console.log(\"Response không phải JSON\");",
+                  "}",
+                  "",
+                  "const responseData = res.data || res;",
+                  "",
+                  "if (pm.response.code === 200) {",
+                  "    pm.test(\"Response có Brand ID\", function () {",
+                  "        pm.expect(responseData.id).to.exist;",
+                  "    });",
+                  "",
+                  "    if (responseData.id) {",
+                  "        pm.environment.set(\"brandId\", String(responseData.id));",
+                  "        pm.collectionVariables.set(\"brandId\", String(responseData.id));",
+                  "",
+                  "        console.log(\"BRAND ID MỚI:\", responseData.id);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"{{brandName}}\",\n  \"description\": \"Brand for Admin Blackbox testing\",\n  \"status\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/brands",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "brands"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Tạo danh mục để test",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "console.log(\"CAT01 RESPONSE:\", pm.response.text());",
+                  "",
+                  "pm.test(\"TC_ADM_CAT_01 - Tạo danh mục thành công\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "let res = {};",
+                  "",
+                  "try {",
+                  "    res = pm.response.json();",
+                  "} catch (e) {",
+                  "    console.log(\"Response không phải JSON\");",
+                  "}",
+                  "",
+                  "const responseData = res.data || res;",
+                  "",
+                  "if (pm.response.code === 200) {",
+                  "    pm.test(\"Response có Category ID\", function () {",
+                  "        pm.expect(responseData.id).to.exist;",
+                  "    });",
+                  "",
+                  "    if (responseData.id) {",
+                  "        pm.environment.set(\"categoryId\", String(responseData.id));",
+                  "        pm.collectionVariables.set(\"categoryId\", String(responseData.id));",
+                  "",
+                  "        console.log(\"CATEGORY ID MỚI:\", responseData.id);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"{{categoryName}}\",\n  \"description\": \"Category for Admin Blackbox testing\",\n  \"active\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/categories",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "categories"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Lấy danh sách thương hiệu",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"TC_ADM_BRND_02 - Lấy danh sách thương hiệu thành công\", function () {\r",
+                  "    pm.response.to.have.status(200);\r",
+                  "});\r",
+                  "\r",
+                  "const r = pm.response.json();\r",
+                  "\r",
+                  "pm.test(\"Response là dữ liệu phân trang\", function () {\r",
+                  "    pm.expect(r.success).to.eql(true);\r",
+                  "    pm.expect(r.data).to.be.an(\"object\");\r",
+                  "    pm.expect(r.data.content).to.be.an(\"array\");\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/brands",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "brands"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Sửa thương hiệu",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "console.log(\"BRND03 RESPONSE:\", pm.response.text());",
+                  "",
+                  "pm.test(\"TC_ADM_BRND_03 - Sửa thương hiệu thành công\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"TC_ADM_BRND_03 - Không được trả lỗi 500\", function () {",
+                  "    pm.expect(pm.response.code).to.not.eql(500);",
+                  "});",
+                  "",
+                  "let res = {};",
+                  "",
+                  "try {",
+                  "    res = pm.response.json();",
+                  "} catch (e) {",
+                  "    console.log(\"Response không phải JSON\");",
+                  "}",
+                  "",
+                  "const responseData = res.data || res;",
+                  "",
+                  "if (pm.response.code === 200) {",
+                  "    const expectedName =",
+                  "        pm.collectionVariables.get(\"brandNameUpdated\") ||",
+                  "        pm.environment.get(\"brandNameUpdated\");",
+                  "",
+                  "    pm.test(\"Tên thương hiệu đã được cập nhật\", function () {",
+                  "        pm.expect(responseData.name).to.eql(expectedName);",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "const brandId =\r",
+                  "    pm.environment.get(\"brandId\") ||\r",
+                  "    pm.collectionVariables.get(\"brandId\");\r",
+                  "\r",
+                  "console.log(\"BRAND ID DÙNG ĐỂ UPDATE:\", brandId);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"{{brandNameUpdated}}\",\n  \"description\": \"Updated description\",\n  \"status\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/brands/{{brandId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "brands",
+                "{{brandId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Lấy danh sách danh mục",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"TC_ADM_CAT_02 - Lấy danh sách danh mục thành công\", function () {\r",
+                  "    pm.response.to.have.status(200);\r",
+                  "});\r",
+                  "\r",
+                  "const r = pm.response.json();\r",
+                  "\r",
+                  "pm.test(\"Response là dữ liệu phân trang\", function () {\r",
+                  "    pm.expect(r.success).to.eql(true);\r",
+                  "    pm.expect(r.data).to.be.an(\"object\");\r",
+                  "    pm.expect(r.data.content).to.be.an(\"array\");\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/categories",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "categories"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "3. Product Management",
+      "item": [
+        {
+          "name": "Tạo sản phẩm bằng Form Data",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "console.log(\"PRD01 RESPONSE:\", pm.response.text());",
+                  "",
+                  "pm.test(\"TC_ADM_PRD_01 - Tạo sản phẩm thành công\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"TC_ADM_PRD_01 - Không được trả lỗi 500\", function () {",
+                  "    pm.expect(pm.response.code).to.not.eql(500);",
+                  "});",
+                  "",
+                  "let res = {};",
+                  "",
+                  "try {",
+                  "    res = pm.response.json();",
+                  "} catch (e) {",
+                  "    console.log(\"Response không phải JSON\");",
+                  "}",
+                  "",
+                  "const responseData = res.data || res;",
+                  "",
+                  "if (pm.response.code === 200 && responseData.id) {",
+                  "    pm.environment.set(\"productId\", String(responseData.id));",
+                  "    pm.collectionVariables.set(\"productId\", String(responseData.id));",
+                  "",
+                  "    console.log(\"PRODUCT ID MỚI:\", responseData.id);",
+                  "}"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "const brandId =\r",
+                  "    pm.environment.get(\"brandId\") ||\r",
+                  "    pm.collectionVariables.get(\"brandId\");\r",
+                  "\r",
+                  "const categoryId =\r",
+                  "    pm.environment.get(\"categoryId\") ||\r",
+                  "    pm.collectionVariables.get(\"categoryId\");\r",
+                  "\r",
+                  "console.log(\"PRODUCT BRAND ID:\", brandId);\r",
+                  "console.log(\"PRODUCT CATEGORY ID:\", categoryId);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "name",
+                  "value": "{{productName}}",
+                  "type": "text"
+                },
+                {
+                  "key": "price",
+                  "value": "1000000",
+                  "type": "text"
+                },
+                {
+                  "key": "oldPrice",
+                  "value": "1200000",
+                  "type": "text"
+                },
+                {
+                  "key": "stock",
+                  "value": "50",
+                  "type": "text"
+                },
+                {
+                  "key": "description",
+                  "value": "Product created by Admin Blackbox testing",
+                  "type": "text"
+                },
+                {
+                  "key": "sku",
+                  "value": "{{productSku}}",
+                  "type": "text"
+                },
+                {
+                  "key": "brandId",
+                  "value": "{{brandId}}",
+                  "type": "text"
+                },
+                {
+                  "key": "categoryId",
+                  "value": "{{categoryId}}",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/products",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "products"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Lấy danh sách sản phẩm",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "console.log(\"PRD02 RESPONSE:\", pm.response.text());",
+                  "",
+                  "pm.test(\"TC_ADM_PRD_02 - Lấy danh sách sản phẩm thành công\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "let res = {};",
+                  "",
+                  "try {",
+                  "    res = pm.response.json();",
+                  "} catch (e) {",
+                  "    console.log(\"Response không phải JSON\");",
+                  "}",
+                  "",
+                  "const responseData = res && res.data ? res.data : res;",
+                  "",
+                  "let products = [];",
+                  "",
+                  "if (Array.isArray(responseData)) {",
+                  "    products = responseData;",
+                  "} else if (responseData && Array.isArray(responseData.content)) {",
+                  "    products = responseData.content;",
+                  "}",
+                  "",
+                  "pm.test(\"Danh sách sản phẩm là một mảng\", function () {",
+                  "    pm.expect(products).to.be.an(\"array\");",
+                  "});",
+                  "",
+                  "/*",
+                  "Nếu request tạo Product thất bại, lấy một Product đang có",
+                  "trong database để các request tiếp theo vẫn kiểm thử được.",
+                  "*/",
+                  "if (products.length > 0) {",
+                  "    const firstProduct = products[0];",
+                  "",
+                  "    const id =",
+                  "        firstProduct.id ||",
+                  "        firstProduct.productId;",
+                  "",
+                  "    if (id) {",
+                  "        pm.environment.set(\"productId\", id);",
+                  "        console.log(\"PRODUCT ID ĐƯỢC LƯU:\", id);",
+                  "    }",
+                  "} else {",
+                  "    console.log(\"Không có sản phẩm nào trong danh sách\");",
+                  "}"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/products",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "products"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Cập nhật tồn kho",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "console.log(\"PRD03 RESPONSE:\", pm.response.text());\r",
+                  "\r",
+                  "pm.test(\"TC_ADM_PRD_03 - Cập nhật tồn kho thành công\", function () {\r",
+                  "    pm.response.to.have.status(200);\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"TC_ADM_PRD_03 - Không được trả lỗi 500\", function () {\r",
+                  "    pm.expect(pm.response.code).to.not.eql(500);\r",
+                  "});\r",
+                  "\r",
+                  "if (pm.response.code === 200) {\r",
+                  "    let res = {};\r",
+                  "\r",
+                  "    try {\r",
+                  "        res = pm.response.json();\r",
+                  "    } catch (e) {\r",
+                  "        console.log(\"Response không phải JSON\");\r",
+                  "    }\r",
+                  "\r",
+                  "    pm.test(\"Response xác nhận cập nhật thành công\", function () {\r",
+                  "        pm.expect(res.success).to.eql(true);\r",
+                  "    });\r",
+                  "}"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/products/{{productId}}/stock?stock=200",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "products",
+                "{{productId}}",
+                "stock"
+              ],
+              "query": [
+                {
+                  "key": "stock",
+                  "value": "200"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Chi tiết sản phẩm",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "console.log(\"PRD04 RESPONSE:\", pm.response.text());",
+                  "",
+                  "pm.test(\"TC_ADM_PRD_04 - Lấy chi tiết sản phẩm thành công\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"TC_ADM_PRD_04 - Không được trả lỗi 500\", function () {",
+                  "    pm.expect(pm.response.code).to.not.eql(500);",
+                  "});",
+                  "",
+                  "let res = {};",
+                  "",
+                  "try {",
+                  "    res = pm.response.json();",
+                  "} catch (e) {",
+                  "    console.log(\"Response không phải JSON\");",
+                  "}",
+                  "",
+                  "const responseData = res && res.data ? res.data : null;",
+                  "",
+                  "/*",
+                  "Chỉ đọc responseData.id khi API thật sự trả 200 và có responseData.",
+                  "*/",
+                  "if (pm.response.code === 200 && responseData) {",
+                  "    pm.test(\"Đúng Product ID\", function () {",
+                  "        const actualId =",
+                  "            responseData.id ||",
+                  "            responseData.productId;",
+                  "",
+                  "        pm.expect(String(actualId))",
+                  "            .to.eql(String(pm.environment.get(\"productId\")));",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/products/{{productId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "products",
+                "{{productId}}"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "4. User Management",
+      "item": [
+        {
+          "name": "Tạo User ảo để test Admin",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "console.log(\"USR01 RESPONSE:\", pm.response.text());",
+                  "",
+                  "pm.test(\"TC_ADM_USR_01 - Tạo USER thành công\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});",
+                  "",
+                  "pm.test(\"TC_ADM_USR_01 - Không được trả lỗi 500\", function () {",
+                  "    pm.expect(pm.response.code).to.not.eql(500);",
+                  "});",
+                  "",
+                  "let res = {};",
+                  "",
+                  "try {",
+                  "    res = pm.response.json();",
+                  "} catch (e) {",
+                  "    console.log(\"Response không phải JSON\");",
+                  "}",
+                  "",
+                  "const responseData = res && res.data ? res.data : res;",
+                  "",
+                  "if ([200, 201].includes(pm.response.code)) {",
+                  "    pm.test(\"Tài khoản có role USER\", function () {",
+                  "        if (responseData.role !== undefined) {",
+                  "            pm.expect(responseData.role).to.eql(\"USER\");",
+                  "        }",
+                  "    });",
+                  "",
+                  "    const username =",
+                  "        responseData.username ||",
+                  "        pm.environment.get(\"testUsername\");",
+                  "",
+                  "    const userId =",
+                  "        responseData.userId ||",
+                  "        responseData.id;",
+                  "",
+                  "    pm.environment.set(\"e2e_user\", username);",
+                  "",
+                  "    if (userId) {",
+                  "        pm.environment.set(\"userId\", userId);",
+                  "    }",
+                  "",
+                  "    if (responseData.token) {",
+                  "        pm.environment.set(\"userToken\", responseData.token);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "const runId = Date.now().toString();\r",
+                  "\r",
+                  "pm.environment.set(\r",
+                  "    \"testUsername\",\r",
+                  "    \"usertest_\" + runId\r",
+                  ");\r",
+                  "\r",
+                  "pm.environment.set(\r",
+                  "    \"testUserEmail\",\r",
+                  "    \"usertest_\" + runId + \"@gmail.com\"\r",
+                  ");\r",
+                  "\r",
+                  "pm.environment.set(\r",
+                  "    \"userPassword\",\r",
+                  "    \"User@12345\"\r",
+                  ");"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"username\": \"{{testUsername}}\",\r\n  \"password\": \"{{userPassword}}\",\r\n  \"email\": \"{{testUserEmail}}\",\r\n  \"fullName\": \"Test User\"\r\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "register"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Đăng nhập User lấy Token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "console.log(\"USR02 RESPONSE:\", pm.response.text());",
+                  "",
+                  "pm.test(\"TC_ADM_USR_02 - Đăng nhập USER thành công\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"TC_ADM_USR_02 - Không được trả lỗi 500\", function () {",
+                  "    pm.expect(pm.response.code).to.not.eql(500);",
+                  "});",
+                  "",
+                  "let res = {};",
+                  "",
+                  "try {",
+                  "    res = pm.response.json();",
+                  "} catch (e) {",
+                  "    console.log(\"Response không phải JSON\");",
+                  "}",
+                  "",
+                  "const responseData = res && res.data ? res.data : res;",
+                  "",
+                  "const token =",
+                  "    responseData.token ||",
+                  "    responseData.accessToken;",
+                  "",
+                  "const userId =",
+                  "    responseData.userId ||",
+                  "    responseData.id;",
+                  "",
+                  "if (pm.response.code === 200) {",
+                  "    pm.test(\"Response có USER token\", function () {",
+                  "        pm.expect(token).to.be.a(\"string\").and.not.empty;",
+                  "    });",
+                  "",
+                  "    if (responseData.role !== undefined) {",
+                  "        pm.test(\"Role đăng nhập là USER\", function () {",
+                  "            pm.expect(responseData.role).to.eql(\"USER\");",
+                  "        });",
+                  "    }",
+                  "",
+                  "    if (token) {",
+                  "        pm.environment.set(\"userToken\", token);",
+                  "    }",
+                  "",
+                  "    if (userId) {",
+                  "        pm.environment.set(\"userId\", userId);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"username\": \"{{e2e_user}}\",\r\n  \"password\": \"{{userPassword}}\"\r\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Admin Lấy danh sách người dùng",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"TC_ADM_USR_03 - ADMIN lấy danh sách người dùng thành công\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const main = pm.response.json();",
+                  "",
+                  "pm.test(\"Danh sách người dùng có cấu trúc phân trang\", function () {",
+                  "    pm.expect(main.success).to.eql(true);",
+                  "    pm.expect(main.data.content).to.be.an(\"array\");",
+                  "});",
+                  "",
+                  "/*",
+                  "Kiểm tra quyền mà không tạo thêm request trong cây Collection.",
+                  "USER token thử truy cập các endpoint /api/admin/ của User, Brand,",
+                  "Category, Order và Dashboard. Tất cả phải trả 403.",
+                  "*/",
+                  "const baseUrl = pm.variables.get(\"baseUrl\") || pm.collectionVariables.get(\"baseUrl\");",
+                  "const userToken =",
+                  "    pm.environment.get(\"userToken\") ||",
+                  "    pm.collectionVariables.get(\"userToken\");",
+                  "",
+                  "const adminEndpoints = [",
+                  "    { name: \"User Management\", path: \"/api/admin/users?page=0&size=5\" },",
+                  "    { name: \"Brand Management\", path: \"/api/admin/brands?page=0&size=5\" },",
+                  "    { name: \"Category Management\", path: \"/api/admin/categories?page=0&size=5\" },",
+                  "    { name: \"Order Management\", path: \"/api/admin/orders?page=0&size=5\" },",
+                  "    { name: \"Dashboard\", path: \"/api/admin/dashboard\" }",
+                  "];",
+                  "",
+                  "adminEndpoints.forEach(function (item) {",
+                  "    pm.sendRequest({",
+                  "        url: baseUrl + item.path,",
+                  "        method: \"GET\",",
+                  "        header: {",
+                  "            \"Authorization\": \"Bearer \" + userToken",
+                  "        }",
+                  "    }, function (err, res) {",
+                  "        pm.test(\"ROLE - USER không được vượt rào vào \" + item.name, function () {",
+                  "            pm.expect(err).to.eql(null);",
+                  "            pm.expect(res.code).to.eql(403);",
+                  "        });",
+                  "",
+                  "        pm.test(\"ROLE - \" + item.name + \" không được trả 500\", function () {",
+                  "            pm.expect(res.code).to.not.eql(500);",
+                  "        });",
+                  "    });",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/users",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "users"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Xem vai trò người dùng",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "console.log(\"USR04 RESPONSE:\", pm.response.text());",
+                  "",
+                  "pm.test(\"TC_ADM_USR_04 - Cập nhật vai trò thành công\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"TC_ADM_USR_04 - Không được trả lỗi 500\", function () {",
+                  "    pm.expect(pm.response.code).to.not.eql(500);",
+                  "});",
+                  "",
+                  "if (pm.response.code === 200) {",
+                  "    let res = {};",
+                  "",
+                  "    try {",
+                  "        res = pm.response.json();",
+                  "    } catch (e) {",
+                  "        console.log(\"Response không phải JSON\");",
+                  "    }",
+                  "",
+                  "    pm.test(\"Response xác nhận cập nhật role\", function () {",
+                  "        pm.expect(res.success).to.eql(true);",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/users/{{userId}}/role?role=USER",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "users",
+                "{{userId}}",
+                "role"
+              ],
+              "query": [
+                {
+                  "key": "role",
+                  "value": "USER"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Cập nhật trạng thái người dùng",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "console.log(\"USR05 RESPONSE:\", pm.response.text());\r",
+                  "\r",
+                  "pm.test(\"TC_ADM_USR_05 - Cập nhật trạng thái thành công\", function () {\r",
+                  "    pm.response.to.have.status(200);\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"TC_ADM_USR_05 - Không được trả lỗi 500\", function () {\r",
+                  "    pm.expect(pm.response.code).to.not.eql(500);\r",
+                  "});\r",
+                  "\r",
+                  "if (pm.response.code === 200) {\r",
+                  "    let res = {};\r",
+                  "\r",
+                  "    try {\r",
+                  "        res = pm.response.json();\r",
+                  "    } catch (e) {\r",
+                  "        console.log(\"Response không phải JSON\");\r",
+                  "    }\r",
+                  "\r",
+                  "    pm.test(\"Response xác nhận cập nhật trạng thái\", function () {\r",
+                  "        pm.expect(res.success).to.eql(true);\r",
+                  "    });\r",
+                  "}"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/users/{{userId}}/status?isActive=false",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "users",
+                "{{userId}}",
+                "status"
+              ],
+              "query": [
+                {
+                  "key": "isActive",
+                  "value": "false"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "5. Order Management",
+      "item": [
+        {
+          "name": "User thêm sản phẩm vào giỏ hàng",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "console.log(\"ORD00 RESPONSE:\", pm.response.text());\r",
+                  "\r",
+                  "pm.test(\"TC_ADM_ORD_00 - Thêm sản phẩm vào giỏ hàng thành công\", function () {\r",
+                  "    pm.response.to.have.status(200);\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"TC_ADM_ORD_00 - Không được trả lỗi 500\", function () {\r",
+                  "    pm.expect(pm.response.code).to.not.eql(500);\r",
+                  "});\r",
+                  "\r",
+                  "if (pm.response.code === 200) {\r",
+                  "    let res = {};\r",
+                  "\r",
+                  "    try {\r",
+                  "        res = pm.response.json();\r",
+                  "    } catch (e) {\r",
+                  "        console.log(\"Response không phải JSON\");\r",
+                  "    }\r",
+                  "\r",
+                  "    pm.test(\"Giỏ hàng trả về success=true\", function () {\r",
+                  "        pm.expect(res.success).to.eql(true);\r",
+                  "    });\r",
+                  "}"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{userToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"productId\": {{productId}},\n  \"quantity\": 1\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/cart/add",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "cart",
+                "add"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "User tạo Đơn hàng (Tiền đề)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "console.log(\"ORD01 RESPONSE:\", pm.response.text());",
+                  "",
+                  "pm.test(\"TC_ADM_ORD_01 - Tạo đơn hàng thành công\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"TC_ADM_ORD_01 - Không được trả lỗi 500\", function () {",
+                  "    pm.expect(pm.response.code).to.not.eql(500);",
+                  "});",
+                  "",
+                  "let res = {};",
+                  "",
+                  "try {",
+                  "    res = pm.response.json();",
+                  "} catch (e) {",
+                  "    console.log(\"Response không phải JSON\");",
+                  "}",
+                  "",
+                  "const responseData = res && res.data ? res.data : res;",
+                  "",
+                  "const orderId =",
+                  "    responseData &&",
+                  "    (responseData.orderId || responseData.id);",
+                  "",
+                  "if (pm.response.code === 200) {",
+                  "    pm.test(\"TC_ADM_ORD_01 - Response có Order ID\", function () {",
+                  "        pm.expect(orderId).to.exist;",
+                  "    });",
+                  "",
+                  "    if (orderId) {",
+                  "        /*",
+                  "         * Lưu cả Environment và Collection để tránh",
+                  "         * các request sau đọc sai phạm vi biến.",
+                  "         */",
+                  "        pm.environment.set(\"orderId\", orderId);",
+                  "        pm.collectionVariables.set(\"orderId\", orderId);",
+                  "",
+                  "        console.log(\"ORDER ID ĐÃ LƯU:\", orderId);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{userToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"shippingAddress\": \"123 Test Street\",\r\n  \"phone\": \"0123456789\",\r\n  \"note\": \"Test Order\"\r\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/orders/checkout",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "orders",
+                "checkout"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Admin Lấy danh sách đơn hàng",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "console.log(\"ORD02 RESPONSE:\", pm.response.text());",
+                  "",
+                  "pm.test(\"TC_ADM_ORD_02 - Lấy danh sách đơn hàng thành công\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "let res = {};",
+                  "",
+                  "try {",
+                  "    res = pm.response.json();",
+                  "} catch (e) {",
+                  "    console.log(\"Response không phải JSON\");",
+                  "}",
+                  "",
+                  "const responseData = res && res.data ? res.data : res;",
+                  "",
+                  "let orders = [];",
+                  "",
+                  "if (Array.isArray(responseData)) {",
+                  "    orders = responseData;",
+                  "} else if (responseData && Array.isArray(responseData.content)) {",
+                  "    orders = responseData.content;",
+                  "}",
+                  "",
+                  "const expectedOrderId =",
+                  "    pm.environment.get(\"orderId\") ||",
+                  "    pm.collectionVariables.get(\"orderId\");",
+                  "",
+                  "pm.test(\"TC_ADM_ORD_02 - Danh sách đơn hàng là mảng\", function () {",
+                  "    pm.expect(orders).to.be.an(\"array\");",
+                  "});",
+                  "",
+                  "pm.test(\"TC_ADM_ORD_02 - Order ID đã được lưu\", function () {",
+                  "    pm.expect(expectedOrderId).to.exist;",
+                  "});",
+                  "",
+                  "pm.test(\"TC_ADM_ORD_02 - Danh sách chứa đơn vừa tạo\", function () {",
+                  "    const found = orders.some(function (order) {",
+                  "        const actualId =",
+                  "            order.orderId ||",
+                  "            order.id;",
+                  "",
+                  "        return String(actualId) === String(expectedOrderId);",
+                  "    });",
+                  "",
+                  "    pm.expect(found).to.eql(true);",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/orders",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "orders"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Admin Xem chi tiết đơn hàng",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "console.log(\"ORD03 RESPONSE:\", pm.response.text());",
+                  "",
+                  "pm.test(\"TC_ADM_ORD_03 - Xem chi tiết đơn hàng thành công\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"TC_ADM_ORD_03 - Không được trả lỗi 500\", function () {",
+                  "    pm.expect(pm.response.code).to.not.eql(500);",
+                  "});",
+                  "",
+                  "let res = {};",
+                  "",
+                  "try {",
+                  "    res = pm.response.json();",
+                  "} catch (e) {",
+                  "    console.log(\"Response không phải JSON\");",
+                  "}",
+                  "",
+                  "const responseData = res && res.data ? res.data : res;",
+                  "",
+                  "const actualOrderId =",
+                  "    responseData &&",
+                  "    (responseData.orderId || responseData.id);",
+                  "",
+                  "const expectedOrderId =",
+                  "    pm.environment.get(\"orderId\") ||",
+                  "    pm.collectionVariables.get(\"orderId\");",
+                  "",
+                  "if (pm.response.code === 200) {",
+                  "    pm.test(\"TC_ADM_ORD_03 - Order ID mong đợi đã tồn tại\", function () {",
+                  "        pm.expect(expectedOrderId).to.exist;",
+                  "    });",
+                  "",
+                  "    pm.test(\"TC_ADM_ORD_03 - Chi tiết trả về đúng Order ID\", function () {",
+                  "        pm.expect(actualOrderId).to.exist;",
+                  "",
+                  "        pm.expect(String(actualOrderId))",
+                  "            .to.eql(String(expectedOrderId));",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/orders/{{orderId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "orders",
+                "{{orderId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Admin Cập nhật trạng thái đơn hàng",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"TC_ADM_ORD_04 - ADMIN cập nhật trạng thái đơn hàng thành công\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const r = pm.response.json();",
+                  "",
+                  "pm.test(\"Trạng thái đơn hàng đã chuyển thành SHIPPING\", function () {",
+                  "    pm.expect(r.success).to.eql(true);",
+                  "    pm.expect(r.data.status).to.eql(\"SHIPPING\");",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"status\": \"SHIPPING\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/orders/{{orderId}}/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "orders",
+                "{{orderId}}",
+                "status"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "6. Dashboard & Cleanup",
+      "item": [
+        {
+          "name": "Lấy thông kê Dashboard",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"TC_ADM_DASH_01 - Lấy thống kê Dashboard thành công\", function () {\r",
+                  "    pm.response.to.have.status(200);\r",
+                  "});\r",
+                  "\r",
+                  "const r = pm.response.json();\r",
+                  "\r",
+                  "pm.test(\"Dashboard trả về dữ liệu\", function () {\r",
+                  "    pm.expect(r.success).to.eql(true);\r",
+                  "    pm.expect(r.data).to.be.an(\"object\");\r",
+                  "});\r",
+                  "\r",
+                  "/*\r",
+                  "Kiểm tra khoảng thời gian sai logic mà không thêm request mới vào cây:\r",
+                  "startDate > endDate phải bị từ chối bằng 400 và tuyệt đối không được văng 500.\r",
+                  "Code hiện tại có thể bỏ qua hai tham số và trả 200; khi đó test FAIL,\r",
+                  "đó là defect cần ghi nhận.\r",
+                  "*/\r",
+                  "const baseUrl = pm.variables.get(\"baseUrl\") || pm.collectionVariables.get(\"baseUrl\");\r",
+                  "const adminToken = pm.collectionVariables.get(\"adminToken\");\r",
+                  "const invalidDateUrl = baseUrl +\r",
+                  "    \"/api/admin/dashboard/charts?startDate=2026-12-31&endDate=2026-01-01\";\r",
+                  "\r",
+                  "pm.sendRequest({\r",
+                  "    url: invalidDateUrl,\r",
+                  "    method: \"GET\",\r",
+                  "    header: {\r",
+                  "        \"Authorization\": \"Bearer \" + adminToken\r",
+                  "    }\r",
+                  "}, function (err, res) {\r",
+                  "    pm.test(\"DATE - startDate > endDate phải trả 400\", function () {\r",
+                  "        pm.expect(err).to.eql(null);\r",
+                  "        pm.expect(res.code).to.eql(400);\r",
+                  "    });\r",
+                  "\r",
+                  "    pm.test(\"DATE - Khoảng ngày sai không được trả 500\", function () {\r",
+                  "        pm.expect(res.code).to.not.eql(500);\r",
+                  "    });\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/dashboard",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "dashboard"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Xóa Sản phẩm",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"TC_ADM_CLN_01 - Xóa sản phẩm thành công\", function () {\r",
+                  "    pm.response.to.have.status(200);\r",
+                  "});\r",
+                  "\r",
+                  "const r = pm.response.json();\r",
+                  "\r",
+                  "pm.test(\"Response xác nhận xóa sản phẩm\", function () {\r",
+                  "    pm.expect(r.success).to.eql(true);\r",
+                  "    pm.expect(r.data).to.eql(\"OK\");\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/products/{{productId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "products",
+                "{{productId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Xóa Danh mục",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "console.log(\"DELETE CATEGORY RESPONSE:\", pm.response.text());\r",
+                  "\r",
+                  "pm.test(\"TC_ADM_CLN_02 - Xóa danh mục thành công\", function () {\r",
+                  "    pm.response.to.have.status(200);\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"TC_ADM_CLN_02 - Không được trả lỗi 500\", function () {\r",
+                  "    pm.expect(pm.response.code).to.not.eql(500);\r",
+                  "});\r",
+                  "\r",
+                  "if (pm.response.code === 200) {\r",
+                  "    let res = {};\r",
+                  "\r",
+                  "    try {\r",
+                  "        res = pm.response.json();\r",
+                  "    } catch (e) {\r",
+                  "        console.log(\"Response không phải JSON\");\r",
+                  "    }\r",
+                  "\r",
+                  "    pm.test(\"Response xác nhận xóa danh mục\", function () {\r",
+                  "        pm.expect(res.success).to.eql(true);\r",
+                  "    });\r",
+                  "}"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/categories/{{categoryId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "categories",
+                "{{categoryId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Xóa Thương hiệu",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "console.log(\"DELETE BRAND RESPONSE:\", pm.response.text());\r",
+                  "\r",
+                  "pm.test(\"TC_ADM_CLN_03 - Xóa thương hiệu thành công\", function () {\r",
+                  "    pm.response.to.have.status(200);\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"TC_ADM_CLN_03 - Không được trả lỗi 500\", function () {\r",
+                  "    pm.expect(pm.response.code).to.not.eql(500);\r",
+                  "});\r",
+                  "\r",
+                  "if (pm.response.code === 200) {\r",
+                  "    let res = {};\r",
+                  "\r",
+                  "    try {\r",
+                  "        res = pm.response.json();\r",
+                  "    } catch (e) {\r",
+                  "        console.log(\"Response không phải JSON\");\r",
+                  "    }\r",
+                  "\r",
+                  "    pm.test(\"Response xác nhận xóa thương hiệu\", function () {\r",
+                  "        pm.expect(res.success).to.eql(true);\r",
+                  "    });\r",
+                  "}"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/brands/{{brandId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "brands",
+                "{{brandId}}"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "runId",
+      "value": ""
+    },
+    {
+      "key": "adminUsername",
+      "value": ""
+    },
+    {
+      "key": "adminEmail",
+      "value": ""
+    },
+    {
+      "key": "brandName",
+      "value": ""
+    },
+    {
+      "key": "brandNameUpdated",
+      "value": ""
+    },
+    {
+      "key": "categoryName",
+      "value": ""
+    },
+    {
+      "key": "productName",
+      "value": ""
+    },
+    {
+      "key": "productSku",
+      "value": ""
+    },
+    {
+      "key": "testUsername",
+      "value": ""
+    },
+    {
+      "key": "testUserEmail",
+      "value": ""
+    },
+    {
+      "key": "adminToken",
+      "value": ""
+    },
+    {
+      "key": "generatedAdminUsername",
+      "value": ""
+    },
+    {
+      "key": "generatedAdminEmail",
+      "value": ""
+    },
+    {
+      "key": "generatedAdminPassword",
+      "value": ""
+    },
+    {
+      "key": "adminLoginUsername",
+      "value": ""
+    },
+    {
+      "key": "adminLoginPassword",
+      "value": ""
+    },
+    {
+      "key": "newAdminUsername",
+      "value": ""
+    },
+    {
+      "key": "newAdminEmail",
+      "value": ""
+    },
+    {
+      "key": "newAdminPassword",
+      "value": ""
+    },
+    {
+      "key": "brandId",
+      "value": ""
+    },
+    {
+      "key": "categoryId",
+      "value": ""
+    },
+    {
+      "key": "e2e_user",
+      "value": ""
+    },
+    {
+      "key": "userId",
+      "value": ""
+    },
+    {
+      "key": "userToken",
+      "value": ""
+    },
+    {
+      "key": "orderId",
+      "value": ""
+    },
+    {
+      "key": "productId",
+      "value": ""
+    }
+  ]
+}

@@ -31,7 +31,7 @@ Test implementation:
 | :--- | :--- |
 | Statement coverage | Moi flow thanh cong va loi chinh duoc thuc thi it nhat 1 lan qua MockMvc integration test. |
 | Branch/Decision coverage | Moi cau lenh `if`, `else`, `orElseThrow`, `try/catch` quan trong trong `AuthController` va `AuthService` co test case rieng. |
-| Condition coverage | Cac dieu kien validation va business rule duoc tach rieng: email trung, username trung, deleted, disabled, password sai, role null, email Google invalid. |
+| Condition coverage | Cac dieu kien validation va business rule duoc tach rieng: email trung, username trung, deleted, disabled, password sai, role null, email Google invalid, user Google bi xoa mem, username sinh tu Google email duoc normalize. |
 | Loop coverage | Vong `while (userRepository.existsByUsername(username))` trong Google login duoc cover bang case username prefix bi trung 2 lan. |
 | Data flow testing | Kiem tra du lieu tao user moi duoc luu DB va response tra ve dung username, email, role, token. |
 
@@ -109,7 +109,7 @@ Control flow:
 2. `@Valid GoogleLoginRequest` kiem tra email/name.
 3. Tim user theo email.
 4. Neu user chua ton tai:
-   - Lay prefix truoc dau `@`.
+   - Lay prefix truoc dau `@` va normalize ky tu khong hop le thanh `_`.
    - Kiem tra username prefix da ton tai chua.
    - Neu trung thi lap `while` de them counter vao username.
    - Tao user moi voi role `USER`, status `true`, password random.
@@ -117,6 +117,7 @@ Control flow:
 5. Neu user da ton tai:
    - Neu status false thi throw `RuntimeException`.
    - Neu active thi tao token cho user hien co.
+   - Chan user `deleted=true` de dong bo voi login username/password.
 6. Tra ve `AuthResponse`.
 
 Nhanh can cover:
@@ -126,6 +127,8 @@ Nhanh can cover:
 - Email da ton tai, user active.
 - Email da ton tai, user disabled.
 - Request invalid.
+- Email da ton tai, user deleted.
+- Email moi co prefix qua dai hoac co ky tu khong hop le can normalize khi sinh username.
 
 ## 4. Do phuc tap Cyclomatic
 
@@ -184,7 +187,7 @@ O flow Login co cac duong di nhanh chinh:
 
 Ket luan: Login co `7/7` nhanh chinh duoc cover.
 
-#### Google Login: 5 nhanh
+#### Google Login: 8 nhanh / rule can kiem tra
 
 O flow Google Login co cac duong di nhanh chinh:
 
@@ -193,8 +196,11 @@ O flow Google Login co cac duong di nhanh chinh:
 - Email Google da ton tai va user active thi login thanh cong.
 - Email Google da ton tai nhung user bi khoa thi tra 400.
 - Request Google Login co email khong hop le thi validation tra 400.
+- Email Google da ton tai nhung user bi xoa mem thi phai tra 400.
+- Email Google moi co local-part qua 50 ky tu thi khong duoc tao username vuot rule.
+- Email Google moi co local-part chua ky tu khong hop le voi username rule thi normalize thanh `_`.
 
-Ket luan: Google Login co `5/5` nhanh chinh duoc cover.
+Ket luan hien tai: Google Login co `8/8` rule pass sau khi `AuthService.googleLogin` normalize username sinh tu email Google.
 
 ### 5.2 Danh sach test case
 
@@ -220,26 +226,37 @@ Ket luan: Google Login co `5/5` nhanh chinh duoc cover.
 | AUTH_INT_018 | Google Login | User Google da ton tai va active | Seed user theo email | HTTP 200, tra ve user hien co |
 | AUTH_INT_019 | Google Login | User Google disabled | Seed user `status=false` | HTTP 400, `Account is disabled` |
 | AUTH_INT_020 | Google Login validation | Email invalid | Email sai dinh dang | HTTP 400, co loi `data.email` |
+| AUTH_INT_021 | Google Login | User Google deleted | Seed user theo email, `deleted=true`, `status=true` | HTTP 400, message account removed/not allowed |
+| AUTH_INT_022 | Google Login | Email prefix qua dai | Email moi co local-part 51 ky tu | HTTP 400, khong tao user moi |
+| AUTH_INT_023 | Google Login | Email prefix co ky tu khong hop le | Email `john.doe+tag@example.com` | HTTP 200, username duoc normalize thanh `john_doe_tag` |
+
+### 5.3 Test case bo sung va ket qua hien tai
+
+| Test ID | Flow | Ky thuat | Muc tieu bao phu | Input/Trang thai | Expected | Trang thai |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| AUTH_INT_021 | Google Login | State transition / Branch testing | User Google da ton tai nhung `deleted=true` phai bi chan nhu login thuong | Seed user theo email, `deleted=true`, `status=true` | HTTP 400, message account removed/not allowed | Implemented - Pass |
+| AUTH_INT_022 | Google Login | Boundary Value Analysis + Data flow testing | Email prefix tao username vuot 50 ky tu khong duoc luu thanh username khong hop le | Email moi co local-part >50 ky tu | HTTP 400 validation, khong tao user moi | Implemented - Pass |
+| AUTH_INT_023 | Google Login | Equivalence Partitioning + Data flow testing | Email prefix chua ky tu khong hop le voi username rule (`+`, `.`) phai duoc normalize | Email moi dang `john.doe+tag@example.com` | HTTP 200, username `john_doe_tag`, user duoc tao | Implemented - Pass |
+
+Ghi chu: Cac testcase tren da duoc them vao `AuthIntegrationTest.java` de kiem tra su nhat quan giua rule username cua Register va luong tao username tu Google Login. Luong Google Login hien normalize ky tu khong hop le trong local-part email thanh `_`.
 
 ## 6. Branch coverage matrix
 
 Chi tiet branch matrix nam tai:
 
-`docs/testing/whitebox_auth/AUTH_BRANCH_MATRIX.csv`
+`docs/testing/auth_test/whitebox_auth/AUTH_BRANCH_MATRIX.csv`
 
-Tom tat:
+### 6.1. Do bao phu
 
-| Nhom flow | So branch chinh | Covered | Not covered |
-| :--- | :---: | :---: | :---: |
-| Register | 6 | 6 | 0 |
-| Register Admin | 2 | 2 | 0 |
-| Login | 7 | 7 | 0 |
-| Google Login | 5 | 5 | 0 |
-| Tong | 20 | 20 | 0 |
+| Function/API | Tong branch/rule can phu | So testcase toi thieu de phu 100% | Testcase hien co | Do bao phu hien tai | Ghi chu |
+| :--- | ---: | ---: | ---: | :---: | :--- |
+| Register | 6 | 6 | 6 | 6/6 = 100% | `AUTH_INT_001` den `AUTH_INT_003`, `AUTH_INT_009` den `AUTH_INT_011` |
+| Register Admin | 2 | 2 | 2 | 2/2 = 100% | `AUTH_INT_014`, `AUTH_INT_015` |
+| Login | 7 | 7 | 7 | 7/7 = 100% | `AUTH_INT_004` den `AUTH_INT_008`, `AUTH_INT_012`, `AUTH_INT_013` |
+| Google Login | 8 | 8 | 8 | 8/8 = 100% | `AUTH_INT_016` den `AUTH_INT_023` |
+| Tong Auth white-box | 23 | 23 | 23 | 23/23 = 100% | Bao phu cac branch/rule chinh trong `AuthController` va `AuthService` |
 
-Ti le branch coverage theo branch matrix:
-
-`20 / 20 = 100%`
+**Tong:** 23/23 testcase = 100%.
 
 ## 7. Ket qua thuc thi
 
@@ -249,21 +266,30 @@ Lenh chay:
 cd backend/vgashop
 .\mvnw.cmd -Pwhitebox test
 ```
+.\mvnw.cmd -Pwhitebox -Dtest=AuthIntegrationTest test
 
-Ket qua:
+Ket qua ky vong sau cap nhat logic Google Login:
 
-- Tests run: 20
+- Tests run: 23
 - Failures: 0
 - Errors: 0
 - Skipped: 0
 - Build: SUCCESS
+
+Danh sach cac case Google Login tung la gap va hien da duoc cover:
+
+| Test ID | Method | Expected | Actual | Nguyen nhan |
+| :--- | :--- | :--- | :--- | :--- |
+| AUTH_INT_021 | `googleLogin_withDeletedExistingUser_returnsBadRequest` | HTTP 400 | HTTP 400 | `AuthService.googleLogin` chan user da bi xoa mem (`deleted=true`). |
+| AUTH_INT_022 | `googleLogin_withLongEmailPrefix_rejectsInvalidGeneratedUsername` | HTTP 400 | HTTP 400 | BE khong tao user moi voi username sinh tu local-part dai hon 50 ky tu. |
+| AUTH_INT_023 | `googleLogin_withInvalidUsernameCharactersInEmailPrefix_normalizesGeneratedUsername` | HTTP 200 | HTTP 200 | Prefix `john.doe+tag` duoc normalize thanh `john_doe_tag`. |
 
 Report duoc tao tai:
 
 - Test result: `backend/vgashop/target/surefire-reports/`
 - Coverage HTML: `backend/vgashop/target/site/jacoco/index.html`
 
-Ket qua JaCoCo sau khi chay test:
+Ket qua JaCoCo gan nhat tu lan report truoc:
 
 | Pham vi | Line coverage | Branch coverage | Method coverage | Ghi chu |
 | :--- | :---: | :---: | :---: | :--- |
@@ -271,10 +297,10 @@ Ket qua JaCoCo sau khi chay test:
 | Cac class Auth DTO trong report | 53/96 = 55.2% | Khong co branch | 39/54 = 72.2% | DTO co nhieu getter/setter/constructor khong duoc goi het |
 | Tong 7 class Auth duoc JaCoCo do | 132/163 = 81.0% | 20/22 = 90.9% | 50/65 = 76.9% | Bao gom controller, service va DTO |
 
-Ghi chu: Test code duoc viet theo JUnit 5, Spring Boot `MockMvc`, H2 in-memory database va target rieng `AuthIntegrationTest`.
+Ghi chu: Logic Google Login da duoc cap nhat de normalize username sinh tu email Google. Can chay lai JaCoCo neu can so lieu coverage chinh thuc moi.
 
 ## 8. Ket luan
 
 Module Auth da co bo white-box integration test rieng cho cac nhanh logic chinh trong register, register-admin, login va Google login. Bo test phu hop voi cac ky thuat trong bai hoc: statement coverage, branch coverage, condition coverage, loop coverage va data flow testing.
 
-Theo branch matrix hien tai, muc bao phu nhanh chinh dat 100%. Ngoai ra, Maven da duoc cau hinh JaCoCo de xuat report coverage HTML cho cac class Auth lien quan.
+Theo ket qua hien tai, 23/23 testcase AuthIntegrationTest pass. Flow Google Login da chan user bi xoa mem, chan local-part qua 50 ky tu va normalize ky tu khong hop le trong username sinh tu email Google.

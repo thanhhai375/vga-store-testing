@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - master
       - develop
       - "feature/**"
       - "fe/**"
@@ -15,6 +16,7 @@ on:
   pull_request:
     branches:
       - main
+      - master
       - develop
 
 permissions:
@@ -106,10 +108,10 @@ jobs:
 
           full_regression=false
           if [ "$GITHUB_EVENT_NAME" = "pull_request" ]; then
-            if [ "$base_branch" = "main" ] || [ "$base_branch" = "develop" ]; then
+            if [ "$base_branch" = "main" ] || [ "$base_branch" = "master" ] || [ "$base_branch" = "develop" ]; then
               full_regression=true
             fi
-          elif [ "$branch_name" = "main" ] || [ "$branch_name" = "develop" ]; then
+          elif [ "$branch_name" = "main" ] || [ "$branch_name" = "master" ] || [ "$branch_name" = "develop" ]; then
             full_regression=true
           fi
 
@@ -138,7 +140,16 @@ jobs:
               selected_scripts="$(printf '%s\n%s\n' "$selected_scripts" "test:product-admin:blackbox")"
             fi
             if echo "$selector_text" | grep -Eiq 'kcpm-91|cart'; then
-            selected_scripts="$(printf '%s\n%s\n' "$selected_scripts" "test:cart:blackbox")"
+              selected_scripts="$(printf '%s\n%s\n' "$selected_scripts" "test:cart:blackbox")"
+            fi
+            if echo "$selector_text" | grep -Eq 'user|profile|address|change-password|change password|kcpm-88'; then
+              selected_scripts="$(printf '%s\n%s\n' "$selected_scripts" "test:user:blackbox")"
+            fi
+            if echo "$selector_text" | grep -Eq 'kcpm-174|admin-postman'; then
+              selected_scripts="$(printf '%s\n%s\n' "$selected_scripts" "test:admin:blackbox")"
+            fi
+            if echo "$selector_text" | grep -Eq 'payment|kcpm-92'; then
+              selected_scripts="$(printf '%s\n%s\n' "$selected_scripts" "test:payment:blackbox")"
             fi
             selected_scripts="$(printf '%s\n' "$selected_scripts" | sed '/^$/d' | sort -u)"
             if [ -z "$selected_scripts" ]; then
@@ -287,7 +298,7 @@ jobs:
           exit "$failed"
 
       - name: Run backend white-box tests with Maven
-        if: ${{ always() && (startsWith(github.ref_name, 'whitebox/') || startsWith(github.ref_name, 'fixWhitebox/') || startsWith(github.head_ref, 'whitebox/') || startsWith(github.head_ref, 'fixWhitebox/') || github.ref_name == 'main' || github.ref_name == 'develop') }}
+        if: ${{ always() && (startsWith(github.ref_name, 'whitebox/') || startsWith(github.ref_name, 'fixWhitebox/') || startsWith(github.head_ref, 'whitebox/') || startsWith(github.head_ref, 'fixWhitebox/') || github.ref_name == 'main' || github.ref_name == 'master' || github.ref_name == 'develop') }}
         working-directory: backend/vgashop
         run: |
           set +e
@@ -301,10 +312,10 @@ jobs:
 
           full_regression=false
           if [ "$GITHUB_EVENT_NAME" = "pull_request" ]; then
-            if [ "$base_branch" = "main" ] || [ "$base_branch" = "develop" ]; then
+            if [ "$base_branch" = "main" ] || [ "$base_branch" = "master" ] || [ "$base_branch" = "develop" ]; then
               full_regression=true
             fi
-          elif [ "$branch_name" = "main" ] || [ "$branch_name" = "develop" ]; then
+          elif [ "$branch_name" = "main" ] || [ "$branch_name" = "master" ] || [ "$branch_name" = "develop" ]; then
             full_regression=true
           fi
 
@@ -483,10 +494,10 @@ jobs:
 
           full_regression=false
           if [ "$GITHUB_EVENT_NAME" = "pull_request" ]; then
-            if [ "$base_branch" = "main" ] || [ "$base_branch" = "develop" ]; then
+            if [ "$base_branch" = "main" ] || [ "$base_branch" = "master" ] || [ "$base_branch" = "develop" ]; then
               full_regression=true
             fi
-          elif [ "$branch_name" = "main" ] || [ "$branch_name" = "develop" ]; then
+          elif [ "$branch_name" = "main" ] || [ "$branch_name" = "master" ] || [ "$branch_name" = "develop" ]; then
             full_regression=true
           fi
 
@@ -547,7 +558,27 @@ jobs:
 
             if [ "$ui_status" -ne 0 ]; then
               failed=1
-              failed_cases="$(grep -E "^[[:space:]]*[0-9]+\\) " "$log_file" | sed 's/^[[:space:]]*//' | tail -n 20 || true)"
+              failed_cases="$(awk '
+                /^[[:space:]]*[0-9]+\)[[:space:]]+/ {
+                  current=$0;
+                  sub(/^[[:space:]]*/, "", current);
+                  next;
+                }
+                current != "" && /^[[:space:]]+[A-Za-z0-9_-]+:/ {
+                  detail=$0;
+                  sub(/^[[:space:]]*/, "", detail);
+                  print current " - " detail;
+                  current="";
+                  next;
+                }
+                current != "" && /^[[:space:]]*$/ {
+                  print current;
+                  current="";
+                }
+                END {
+                  if (current != "") print current;
+                }
+              ' "$log_file" | tail -n 30 || true)"
               failure_reasons="$(grep -E "still not visible|was not found on page|Timeout [0-9]+ms exceeded|AssertionError|ElementNotFound|expected web application|expected .* to |Error:" "$log_file" | sed 's/^[[:space:]]*//' | head -n 20 || true)"
               failure_locations="$(grep -E " at Test\\.<anonymous>| File: file:|File: file:" "$log_file" | sed 's/^[[:space:]]*//' | head -n 20 || true)"
               failure_screenshots="$(grep -E "screenshot: .*\\.png" "$log_file" | sed 's/^[[:space:]]*[- ]*//' | head -n 20 || true)"
@@ -944,8 +975,24 @@ jobs:
             return 'GENERAL';
           }
 
-          function buildFailureGroupKey(issueKey, labels, failedFile) {
-            return `${issueKey}:${detectFailureKind(labels)}_${detectFailureModule(labels, failedFile)}`;
+          function testcaseFingerprintPart(testcase) {
+            const text = String(testcase || '').trim();
+            if (!text) return '';
+            const idMatch = text.match(/\b[A-Z]{1,4}-\d{2,4}\b/i);
+            if (idMatch) return idMatch[0].toUpperCase();
+            return text
+              .normalize('NFD')
+              .replace(/[\u0300-\u036f]/g, '')
+              .replace(/[^A-Za-z0-9]+/g, '_')
+              .replace(/^_+|_+$/g, '')
+              .slice(0, 80)
+              .toUpperCase();
+          }
+
+          function buildFailureGroupKey(issueKey, labels, failedFile, testcase = '') {
+            const base = `${issueKey}:${detectFailureKind(labels)}_${detectFailureModule(labels, failedFile)}`;
+            const testcasePart = testcaseFingerprintPart(testcase);
+            return testcasePart ? `${base}:TESTCASE:${testcasePart}` : base;
           }
 
           function uniqueLines(text) {
@@ -1107,26 +1154,30 @@ jobs:
               const failedTestcases = [...errorReason.matchAll(/^FAILED TESTCASE:\s*(.+)$/gm)]
                 .map((match) => match[1].trim())
                 .filter(Boolean);
-              const primaryFailedTestcase = failedTestcases[0] || '';
               const failureLabels = detectFailureLabels(file, failedFile);
-              const fingerprint = buildFailureGroupKey(issueKey, failureLabels, failedFile || summaryTitle);
-              const group = failureGroups.get(fingerprint) || {
-                fingerprint,
-                labels: failureLabels,
-                records: [],
-                summaryTitle,
-                primaryFailedTestcase
-              };
-              group.records.push({
-                file,
-                errorReason,
-                failedFile,
-                failedTestcases,
-                summaryTitle,
-                primaryFailedTestcase
-              });
-              group.labels = [...new Set([...(group.labels || []), ...failureLabels])];
-              failureGroups.set(fingerprint, group);
+              const testcaseGroups = failedTestcases.length ? failedTestcases : [''];
+
+              for (const testcase of testcaseGroups) {
+                const primaryFailedTestcase = testcase || '';
+                const fingerprint = buildFailureGroupKey(issueKey, failureLabels, failedFile || summaryTitle, primaryFailedTestcase);
+                const group = failureGroups.get(fingerprint) || {
+                  fingerprint,
+                  labels: failureLabels,
+                  records: [],
+                  summaryTitle,
+                  primaryFailedTestcase
+                };
+                group.records.push({
+                  file,
+                  errorReason,
+                  failedFile,
+                  failedTestcases: primaryFailedTestcase ? [primaryFailedTestcase] : failedTestcases,
+                  summaryTitle,
+                  primaryFailedTestcase
+                });
+                group.labels = [...new Set([...(group.labels || []), ...failureLabels])];
+                failureGroups.set(fingerprint, group);
+              }
             }
 
             for (const group of failureGroups.values()) {
@@ -1135,11 +1186,13 @@ jobs:
               const primaryRecord = group.records[0] || {};
               const failedFile = primaryRecord.failedFile || '';
               const summaryTitle = primaryRecord.summaryTitle || 'GitHub Actions CI failed';
+              const staleSuccessLabels = ['ci-passed', 'ci-resolved'];
               const labelsToRemove = failureLabels.includes('whitebox')
                 ? ['blackbox', 'ui', 'fe', 'codeceptjs', 'api', 'newman', 'postman']
                 : failureLabels.includes('ui')
                   ? ['whitebox', 'backend', 'junit', 'maven', 'jacoco', 'newman', 'postman', 'api']
                   : ['whitebox', 'backend', 'junit', 'maven', 'jacoco', 'ui', 'fe', 'codeceptjs'];
+              const failureLabelsToRemove = [...new Set([...labelsToRemove, ...staleSuccessLabels])];
 
               let culprit = sh("git log -1 --pretty=format:'%an <%ae>'");
               if (failedFile) {
@@ -1172,23 +1225,6 @@ jobs:
               let existingFailureIssue = await searchExistingFailureIssue(issueKey, fingerprint);
               let duplicateFailureIssues = [];
 
-              const legacyIssueMap = new Map();
-              for (const record of group.records) {
-                if (!record.failedFile) continue;
-                const legacyFailureIssues = await searchFailureIssuesByFile(issueKey, record.failedFile);
-                for (const legacyIssue of legacyFailureIssues) {
-                  legacyIssueMap.set(legacyIssue.key, legacyIssue);
-                }
-              }
-
-              const legacyFailureIssues = [...legacyIssueMap.values()];
-              if (existingFailureIssue) {
-                duplicateFailureIssues = legacyFailureIssues.filter((issue) => issue.key !== existingFailureIssue.key);
-              } else if (legacyFailureIssues.length > 0) {
-                existingFailureIssue = legacyFailureIssues[0];
-                duplicateFailureIssues = legacyFailureIssues.slice(1);
-              }
-
               const failureType = existingFailureIssue ? 'LOI CU TAI PHAT' : 'LOI MOI';
               const failureBody = buildCompactFailureComment({
                 fingerprint,
@@ -1211,13 +1247,26 @@ jobs:
               const failureDescription = buildFailureDescription(parentIssue, failureLabels);
 
               if (existingFailureIssue) {
+                const existingStatus = String(existingFailureIssue.fields && existingFailureIssue.fields.status && existingFailureIssue.fields.status.name || '').toLowerCase();
                 await addComment(existingFailureIssue.key, failureBody);
-                await updateIssueLabels(existingFailureIssue.key, failureLabels, labelsToRemove);
+                await updateIssueLabels(existingFailureIssue.key, failureLabels, failureLabelsToRemove);
                 await updateIssueFields(existingFailureIssue.key, { description: jiraDoc(failureDescription) });
                 if (failureDueDate !== 'None') {
                   await updateIssueFields(existingFailureIssue.key, { duedate: failureDueDate });
                 }
-                await assignIssue(existingFailureIssue.key, jiraUser);
+                if (!(existingFailureIssue.fields && existingFailureIssue.fields.assignee)) {
+                  await assignIssue(existingFailureIssue.key, jiraUser);
+                }
+                if (existingStatus.includes('done') || existingStatus.includes('resolved') || existingStatus.includes('complete')) {
+                  await transitionIssue(existingFailureIssue.key, ['to do', 'reopen', 'reopened', 'in progress', 'start progress']);
+                  await addComment(existingFailureIssue.key, [
+                    'CI detected this failure again after the subtask had been completed.',
+                    '',
+                    `Status before reset: ${existingFailureIssue.fields.status.name}`,
+                    `CI-FINGERPRINT: ${fingerprint}`,
+                    `GitHub Actions log: ${runUrl}`
+                  ].join('\n'));
+                }
                 for (const duplicateIssue of duplicateFailureIssues) {
                   const duplicateStatus = String(duplicateIssue.fields && duplicateIssue.fields.status && duplicateIssue.fields.status.name || '').toLowerCase();
                   await addComment(duplicateIssue.key, [

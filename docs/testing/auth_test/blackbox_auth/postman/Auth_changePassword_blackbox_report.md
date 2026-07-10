@@ -4,7 +4,7 @@
 **Function/API:** Change Password  
 **Endpoint:** `PUT /api/users/change-password`  
 **Loai kiem thu:** Black-box API test  
-**File data automation:** `automation/postman/VGA-AUTH-USER/VGA-Store-Auth/VGA-Store-Auth-Testcase.csv`  
+**File data automation:** `automation/postman/VGA-AUTH-USER/VGA-Store-Auth/ChangePassword/Auth_ChangePassword_Testcase.csv`  
 **CSV filter:** `testType=CHANGE_PWD`
 
 ---
@@ -34,7 +34,7 @@ Kiem tra API doi mat khau theo hanh vi dau vao/dau ra:
 
 ## 3. Phan tich gia tri bien
 
-| Bien | Min invalid | Min | Nominal | Max | Max invalid | Tag |
+| Bien | min- | min | nominal | max | max+ | Tag |
 | :--- | :---: | :---: | :---: | :---: | :---: | :--- |
 | `newPassword.length` | 7 | 8 | 10-16 | 64 | 65 | B1-B5 |
 | `newPassword.complexity` | Thieu 1 nhom | Du 4 nhom | Password manh | Du 4 nhom | Thieu nhom ky tu | B6-B9 |
@@ -43,7 +43,17 @@ Kiem tra API doi mat khau theo hanh vi dau vao/dau ra:
 
 ---
 
-## 4. Thiet ke test case
+## 4. Do bao phu
+
+| Function/API | So testcase toi thieu de phu 100% | Testcase hien co trong CSV | Do bao phu hien tai | Ghi chu |
+| :--- | ---: | ---: | :---: | :--- |
+| Change Password | 16 | 16 | 16/16 = 100% | Bao phu old password, new password, confirm password, password policy va business rule |
+
+Function **Change Password** dat **100%** theo pham vi testcase hien co.
+
+---
+
+## 5. Thiet ke test case
 
 | STT | Test ID | Old password | New password | Confirm password | Expected status | Expected result | Tag | Priority | Status |
 | :---: | :--- | :--- | :--- | :--- | :---: | :--- | :--- | :---: | :---: |
@@ -66,7 +76,7 @@ Kiem tra API doi mat khau theo hanh vi dau vao/dau ra:
 
 ---
 
-## 5. Mapping automation
+## 6. Mapping automation
 
 | Cot CSV | Cach dung |
 | :--- | :--- |

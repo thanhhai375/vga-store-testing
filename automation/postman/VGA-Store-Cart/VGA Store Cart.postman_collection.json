@@ -522,8 +522,8 @@
           "listen": "test",
           "script": {
             "exec": [
-              "pm.test(\"TC_CART_010 - status code = 403\", function () {",
-              "    pm.expect(pm.response.code).to.eql(403);",
+              "pm.test(\"TC_CART_010 - status code = 401\", function () {",
+              "    pm.expect(pm.response.code).to.eql(401);",
               "});"
             ],
             "type": "text/javascript"
@@ -572,8 +572,8 @@
           "listen": "test",
           "script": {
             "exec": [
-              "pm.test(\"TC_CART_011 - status code = 403\", function () {",
-              "    pm.expect(pm.response.code).to.eql(403);",
+              "pm.test(\"TC_CART_011 - status code = 401\", function () {",
+              "    pm.expect(pm.response.code).to.eql(401);",
               "});"
             ],
             "type": "text/javascript"
@@ -1027,8 +1027,8 @@
           "listen": "test",
           "script": {
             "exec": [
-              "pm.test(\"TC_CART_019 - status code = 403\", function () {",
-              "    pm.expect(pm.response.code).to.eql(403);",
+              "pm.test(\"TC_CART_019 - status code = 401\", function () {",
+              "    pm.expect(pm.response.code).to.eql(401);",
               "});"
             ],
             "type": "text/javascript"
@@ -1078,8 +1078,8 @@
           "listen": "test",
           "script": {
             "exec": [
-              "pm.test(\"TC_CART_020 - status code = 403\", function () {",
-              "    pm.expect(pm.response.code).to.eql(403);",
+              "pm.test(\"TC_CART_020 - status code = 401\", function () {",
+              "    pm.expect(pm.response.code).to.eql(401);",
               "});"
             ],
             "type": "text/javascript"
@@ -1179,8 +1179,8 @@
           "listen": "test",
           "script": {
             "exec": [
-              "pm.test(\"TC_CART_022 - status code = 403\", function () {",
-              "    pm.expect(pm.response.code).to.eql(403);",
+              "pm.test(\"TC_CART_022 - status code = 401\", function () {",
+              "    pm.expect(pm.response.code).to.eql(401);",
               "});"
             ],
             "type": "text/javascript"
@@ -1218,8 +1218,8 @@
           "listen": "test",
           "script": {
             "exec": [
-              "pm.test(\"TC_CART_023 - status code = 403\", function () {",
-              "    pm.expect(pm.response.code).to.eql(403);",
+              "pm.test(\"TC_CART_023 - status code = 401\", function () {",
+              "    pm.expect(pm.response.code).to.eql(401);",
               "});"
             ],
             "type": "text/javascript"
@@ -1357,8 +1357,8 @@
           "listen": "test",
           "script": {
             "exec": [
-              "pm.test(\"TC_CART_026 - status code = 403\", function () {",
-              "    pm.expect(pm.response.code).to.eql(403);",
+              "pm.test(\"TC_CART_026 - status code = 401\", function () {",
+              "    pm.expect(pm.response.code).to.eql(401);",
               "});"
             ],
             "type": "text/javascript"
@@ -1398,8 +1398,8 @@
           "listen": "test",
           "script": {
             "exec": [
-              "pm.test(\"TC_CART_027 - status code = 403\", function () {",
-              "    pm.expect(pm.response.code).to.eql(403);",
+              "pm.test(\"TC_CART_027 - status code = 401\", function () {",
+              "    pm.expect(pm.response.code).to.eql(401);",
               "});"
             ],
             "type": "text/javascript"
