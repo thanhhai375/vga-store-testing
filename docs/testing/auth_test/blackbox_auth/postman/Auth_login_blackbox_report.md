@@ -41,18 +41,14 @@ Kiem tra API dang nhap theo hanh vi dau vao/dau ra, khong phu thuoc vao code ben
 
 ---
 
-## 4. Ma tran do bao phu testcase
+## 4. Do bao phu
 
-| Rule/Input can bao phu | Ky thuat | Testcase bao phu | So case | Ly do can co |
-| :--- | :--- | :--- | ---: | :--- |
-| Dang nhap hop le | Positive/Happy path | L-001 | 1 | Xac nhan tai khoan seed hop le tra token. |
-| Truong bat buoc | Equivalence Partitioning | L-002, L-003, L-004 | 3 | Tach rieng ca hai rong, thieu password, thieu username de biet field nao validate sai. |
-| Bien do dai username | Boundary Value Analysis | L-005, L-006, L-007, L-008, L-009 | 5 | Bao phu <3, =3, dai/gan max, >50 va user khong ton tai. |
-| Bien do dai password | Boundary Value Analysis | L-010, L-012 | 2 | Bao phu password qua ngan va password rat dai de dam bao khong crash/khong bypass. |
-| Credential sai | Negative Validation | L-011, L-013, L-014 | 3 | Bao phu password sai voi user ton tai, user khong ton tai va password sai dang khac. |
-| Format/normalize username | Equivalence Partitioning + Negative Validation | L-015, L-016, L-017, L-018, L-019 | 5 | Bao phu email-like username, ky tu dac biet, khoang trang cuoi, sai hoa/thuong, khoang trang giua. |
+| Function/API | So testcase toi thieu de phu 100% | Testcase hien co trong CSV | Do bao phu hien tai | Ghi chu |
+| :--- | ---: | ---: | :---: | :--- |
+| Login trong pham vi Postman hien tai | 19 | 19 | 19/19 = 100% | Bao phu du cac rule dang Ready trong CSV |
+| Login neu tinh them account disabled/deleted | 21 | 19 | 19/21 = 90.5% | Con thieu `L-020`, `L-021` neu muon cover state disabled/deleted bang Postman |
 
-**Tong coverage hien tai:** 6 nhom rule, 19 testcase. Neu chi lay muc toi thieu, co the gop con khoang 10 testcase, nhung khi fail se kho xac dinh loi nam o do dai, format, khoang trang, case-sensitive hay credential sai.
+Voi pham vi CSV hien tai, function **Login** dat **100%**. Neu tinh them account disabled/deleted vao Postman thi can 21 testcase.
 
 ---
 

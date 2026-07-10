@@ -44,21 +44,13 @@ Kiem tra API dang ky tai khoan theo chuan Auth muc tieu, khong chi theo behavior
 
 ---
 
-## 4. Ma tran do bao phu testcase
+## 4. Do bao phu
 
-| Rule/Input can bao phu | Ky thuat | Testcase bao phu | So case | Ly do can co |
-| :--- | :--- | :--- | ---: | :--- |
-| Dang ky hop le | Positive/Happy path | R-001 | 1 | Xac nhan bo input hop le tao user va tra token. |
-| Truong bat buoc | Equivalence Partitioning | R-002, R-003, R-004, R-005 | 4 | Bao phu thieu username, email, password va thieu tat ca field bat buoc. |
-| Username length | Boundary Value Analysis | R-006, R-007, R-008, R-009 | 4 | Bao phu <3, =3, =50 va >50 ky tu. |
-| Username format | Equivalence Partitioning | R-018, R-019 | 2 | Bao phu username co khoang trang va ky tu dac biet. |
-| Email format/length | Equivalence Partitioning + Boundary Value Analysis | R-010, R-011, R-017, R-026 | 4 | Bao phu email sai format, thieu @, co khoang trang va >254 ky tu. |
-| Duplicate data | State/Uniqueness | R-012, R-013 | 2 | Bao phu username da ton tai va email da ton tai. |
-| Password length | Boundary Value Analysis | R-014, R-015, R-016 | 3 | Bao phu <8, =8 va >64 ky tu. |
-| Password complexity | Equivalence Partitioning | R-020, R-021, R-022, R-023 | 4 | Bao phu thieu chu hoa, thieu chu thuong, thieu so, thieu ky tu dac biet. |
-| FullName quality | Business Rule/Negative Validation | R-024, R-025 | 2 | Bao phu fullName rong va chi gom khoang trang theo rule muc tieu. |
+| Function/API | So testcase toi thieu de phu 100% | Testcase hien co trong CSV | Do bao phu hien tai | Ghi chu |
+| :--- | ---: | ---: | :---: | :--- |
+| Register | 26 | 26 | 26/26 = 100% | Bao phu required fields, username, email, duplicate, password policy va fullName |
 
-**Tong coverage hien tai:** 9 nhom rule, 26 testcase. So luong nay cao hon muc toi thieu vi password policy duoc tach tung nhom loi, email va fullName co them rule chat luong.
+Function **Register** dat **100%** theo pham vi testcase hien co.
 
 ---
 

@@ -43,18 +43,13 @@ Kiem tra API doi mat khau theo hanh vi dau vao/dau ra:
 
 ---
 
-## 4. Ma tran do bao phu testcase
+## 4. Do bao phu
 
-| Rule/Input can bao phu | Ky thuat | Testcase bao phu | So case | Ly do can co |
-| :--- | :--- | :--- | ---: | :--- |
-| Doi mat khau hop le | Positive/Happy path | C-001 | 1 | Xac nhan user co token hop le doi mat khau thanh cong. |
-| Old password validation | Equivalence Partitioning | C-002, C-005, C-011 | 3 | Bao phu old password rong, sai, va co khoang trang dau/cuoi. |
-| New password required/length | Boundary Value Analysis | C-003, C-006, C-007, C-008 | 4 | Bao phu new password rong, <8, =8, >64 ky tu. |
-| Confirm password | Equivalence Partitioning | C-004, C-009 | 2 | Bao phu confirm rong va confirm khong khop. |
-| Password business rule | Business Rule/Negative Validation | C-010, C-012 | 2 | Bao phu new password trung old password va co khoang trang dau/cuoi. |
-| Password complexity | Equivalence Partitioning | C-013, C-014, C-015, C-016 | 4 | Bao phu thieu chu hoa, thieu chu thuong, thieu so, thieu ky tu dac biet. |
+| Function/API | So testcase toi thieu de phu 100% | Testcase hien co trong CSV | Do bao phu hien tai | Ghi chu |
+| :--- | ---: | ---: | :---: | :--- |
+| Change Password | 16 | 16 | 16/16 = 100% | Bao phu old password, new password, confirm password, password policy va business rule |
 
-**Tong coverage hien tai:** 6 nhom rule, 16 testcase. Day la bo gan voi muc toi thieu can co cho Change Password vi moi nhom loi chinh da co it nhat mot testcase dai dien.
+Function **Change Password** dat **100%** theo pham vi testcase hien co.
 
 ---
 

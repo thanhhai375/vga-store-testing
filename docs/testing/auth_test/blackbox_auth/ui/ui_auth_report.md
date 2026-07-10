@@ -141,7 +141,21 @@ Day la cac testcase dung de phat hien diem FE chua xu ly tot. Neu hien tai fail,
 
 ---
 
-## 9. Ket luan
+## 9. Do bao phu
+
+| Function/UI flow | Tong rule/test condition can phu | So testcase toi thieu de phu 100% | Testcase hien co | Do bao phu hien tai | Ghi chu |
+| :--- | ---: | ---: | ---: | :---: | :--- |
+| Login UI | 10 | 10 | 10 | 10/10 = 100% | `UI-LG-001` den `UI-LG-010` |
+| Register UI | 19 | 19 | 19 | 19/19 = 100% | `UI-RG-001` den `UI-RG-019` |
+| Change Password UI | 8 | 8 | 8 | 8/8 = 100% | `UI-CP-001` den `UI-CP-008` |
+| Logout va Protected Route | 6 | 6 | 6 | 6/6 = 100% | `UI-SE-001` den `UI-SE-006` |
+| UX enhancement checklist | 5 | 5 | 5 | 5/5 = 100% | `UI-UX-001` den `UI-UX-005`, dung lam checklist cai thien UX |
+
+**Tong:** 48/48 testcase = 100%.
+
+---
+
+## 10. Ket luan
 
 Bo testcase nay phu hop voi UI black-box vi khong dua vao code noi bo hay gia dinh nguoi dung biet rule backend. Moi case deu xuat phat tu hanh vi that:
 
