@@ -226,8 +226,8 @@ Ket luan hien tai: Google Login co `8/8` rule pass sau khi `AuthService.googleLo
 | AUTH_INT_018 | Google Login | User Google da ton tai va active | Seed user theo email | HTTP 200, tra ve user hien co |
 | AUTH_INT_019 | Google Login | User Google disabled | Seed user `status=false` | HTTP 400, `Account is disabled` |
 | AUTH_INT_020 | Google Login validation | Email invalid | Email sai dinh dang | HTTP 400, co loi `data.email` |
-| AUTH_INT_021 | Google Login | User Google deleted | Seed user theo email, `deleted=true`, `status=true` | Expected HTTP 400, actual HTTP 200 -> Fail |
-| AUTH_INT_022 | Google Login | Email prefix qua dai | Email moi co local-part 51 ky tu | Expected HTTP 400, actual HTTP 200 -> Fail |
+| AUTH_INT_021 | Google Login | User Google deleted | Seed user theo email, `deleted=true`, `status=true` | HTTP 400, message account removed/not allowed |
+| AUTH_INT_022 | Google Login | Email prefix qua dai | Email moi co local-part 51 ky tu | HTTP 400, khong tao user moi |
 | AUTH_INT_023 | Google Login | Email prefix co ky tu khong hop le | Email `john.doe+tag@example.com` | HTTP 200, username duoc normalize thanh `john_doe_tag` |
 
 ### 5.3 Test case bo sung va ket qua hien tai
@@ -244,21 +244,19 @@ Ghi chu: Cac testcase tren da duoc them vao `AuthIntegrationTest.java` de kiem t
 
 Chi tiet branch matrix nam tai:
 
-`docs/testing/whitebox_auth/AUTH_BRANCH_MATRIX.csv`
+`docs/testing/auth_test/whitebox_auth/AUTH_BRANCH_MATRIX.csv`
 
-Tom tat:
+### 6.1. Do bao phu
 
-| Nhom flow | So branch chinh | Covered | Not covered |
-| :--- | :---: | :---: | :---: |
-| Register | 6 | 6 | 0 |
-| Register Admin | 2 | 2 | 0 |
-| Login | 7 | 7 | 0 |
-| Google Login | 8 | 8 pass | 0 |
-| Tong | 23 | 23 pass | 0 |
+| Function/API | Tong branch/rule can phu | So testcase toi thieu de phu 100% | Testcase hien co | Do bao phu hien tai | Ghi chu |
+| :--- | ---: | ---: | ---: | :---: | :--- |
+| Register | 6 | 6 | 6 | 6/6 = 100% | `AUTH_INT_001` den `AUTH_INT_003`, `AUTH_INT_009` den `AUTH_INT_011` |
+| Register Admin | 2 | 2 | 2 | 2/2 = 100% | `AUTH_INT_014`, `AUTH_INT_015` |
+| Login | 7 | 7 | 7 | 7/7 = 100% | `AUTH_INT_004` den `AUTH_INT_008`, `AUTH_INT_012`, `AUTH_INT_013` |
+| Google Login | 8 | 8 | 8 | 8/8 = 100% | `AUTH_INT_016` den `AUTH_INT_023` |
+| Tong Auth white-box | 23 | 23 | 23 | 23/23 = 100% | Bao phu cac branch/rule chinh trong `AuthController` va `AuthService` |
 
-Ti le rule/testcase pass theo branch matrix hien tai:
-
-`20 / 23 = 86.96%`
+**Tong:** 23/23 testcase = 100%.
 
 ## 7. Ket qua thuc thi
 
@@ -270,15 +268,15 @@ cd backend/vgashop
 ```
 .\mvnw.cmd -Pwhitebox -Dtest=AuthIntegrationTest test
 
-Ket qua hien tai:
+Ket qua ky vong sau cap nhat logic Google Login:
 
 - Tests run: 23
-- Failures: 3
+- Failures: 0
 - Errors: 0
 - Skipped: 0
-- Build: FAILURE
+- Build: SUCCESS
 
-Danh sach failure:
+Danh sach cac case Google Login tung la gap va hien da duoc cover:
 
 | Test ID | Method | Expected | Actual | Nguyen nhan |
 | :--- | :--- | :--- | :--- | :--- |

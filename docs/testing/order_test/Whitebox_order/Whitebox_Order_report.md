@@ -1,7 +1,7 @@
 # BÁO CÁO AUTO TEST WHITE-BOX VỚI ORDER / CHECKOUT
 
 ## 1. Thông tin chung
-
+- **Người thực hiện: Phan Nguyễn Thom My**
 - **Jira task:** KCPM-132
 - **Tên task:** `[Auto test] White-box test với Order / Checkout`
 - **Trạng thái:** In Progress

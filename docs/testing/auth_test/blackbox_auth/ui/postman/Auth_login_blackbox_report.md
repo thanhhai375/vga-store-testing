@@ -4,7 +4,7 @@
 **Function/API:** Login  
 **Endpoint:** `POST /api/auth/login`  
 **Loai kiem thu:** Black-box API test  
-**File data automation:** `automation/postman/VGA-AUTH-USER/VGA-Store-Auth/Login/Auth_Login_Testcase.csv`  
+**File data automation:** `automation/postman/VGA-AUTH-USER/VGA-Store-Auth/VGA-Store-Auth-Testcase.csv`  
 **CSV filter:** `testType=LOGIN`
 
 ---
@@ -33,26 +33,15 @@ Kiem tra API dang nhap theo hanh vi dau vao/dau ra, khong phu thuoc vao code ben
 
 ## 3. Phan tich gia tri bien
 
-| Bien | min- | min | nominal | max | max+ | Tag |
-| :--- | :---: | :---: | :---: | :---: | :---: | :--- |
-| `username.length` | 1-2 | 3 | `hai123` | 50 | > 50 | B1-B4 |
-| `password.length` | Rong/5 | `hai123` | Sai password thong dung | Rat dai | Vuot do dai hop ly | B5-B8 |
-| `username.format` | Ky tu dac biet | Username seed | Email-like username | Co khoang trang | Sai case | B9-B12 |
+| Bien | Min invalid | Min/Nominal | Max/Edge | Invalid edge | Tag |
+| :--- | :---: | :---: | :---: | :---: | :--- |
+| `username.length` | 1-2 | 3 | 50 | > 50 | B1-B4 |
+| `password.length` | Rong/5 | Password seed dung | Rat dai | Sai password | B5-B8 |
+| `username.format` | Ky tu dac biet | Username seed | Co khoang trang | Sai case | B9-B12 |
 
 ---
 
-## 4. Do bao phu
-
-| Function/API | So testcase toi thieu de phu 100% | Testcase hien co trong CSV | Do bao phu hien tai | Ghi chu |
-| :--- | ---: | ---: | :---: | :--- |
-| Login trong pham vi Postman hien tai | 19 | 19 | 19/19 = 100% | Bao phu du cac rule dang Ready trong CSV |
-| Login neu tinh them account disabled/deleted | 21 | 19 | 19/21 = 90.5% | Con thieu `L-020`, `L-021` neu muon cover state disabled/deleted bang Postman |
-
-Voi pham vi CSV hien tai, function **Login** dat **100%**. Neu tinh them account disabled/deleted vao Postman thi can 21 testcase.
-
----
-
-## 5. Thiet ke test case
+## 4. Thiet ke test case
 
 | STT | Test ID | Username | Password | Expected status | Expected result | Tag | Priority | Status |
 | :---: | :--- | :--- | :--- | :---: | :--- | :--- | :---: | :---: |
@@ -75,12 +64,10 @@ Voi pham vi CSV hien tai, function **Login** dat **100%**. Neu tinh them account
 | 17 | L-017 | Username co khoang trang cuoi | `hai123` | 400 | Khong trim de bypass | X1,B11 | Medium | Ready |
 | 18 | L-018 | Sai hoa/thuong | `hai123` | 400 | Kiem tra case-sensitive | X1,B12 | Medium | Ready |
 | 19 | L-019 | Username co khoang trang ben trong | `123456` | 400 | Username sai pattern | X1,B10 | High | Ready |
-| 20 | L-020 | User disabled | Password dung | 400 | Tai khoan bi khoa khong duoc dang nhap | X3 | High | Proposed |
-| 21 | L-021 | User deleted | Password dung | 400 | Tai khoan da xoa mem khong duoc dang nhap | X3 | High | Proposed |
 
 ---
 
-## 6. Mapping automation
+## 5. Mapping automation
 
 | Cot CSV | Cach dung |
 | :--- | :--- |
@@ -90,4 +77,4 @@ Voi pham vi CSV hien tai, function **Login** dat **100%**. Neu tinh them account
 | `expectedStatus` | HTTP status mong doi |
 | `expectedMessage` | Token hoac message loi mong doi |
 
-**Ket luan:** Login co 19 test case black-box hien co, bao phu positive, negative, equivalence partitioning va boundary value analysis. Cac case L-020 va L-021 la testcase de xuat bo sung cho state transition/business rule cua tai khoan disabled/deleted, hien da duoc white-box cover nhung chua co trong CSV Postman black-box.
+**Ket luan:** Login co 19 test case black-box, bao phu positive, negative, equivalence partitioning va boundary value analysis.

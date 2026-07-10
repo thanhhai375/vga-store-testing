@@ -44,20 +44,13 @@ Kiem tra API dang nhap bang Google theo hanh vi dau vao/dau ra, khong phu thuoc 
 
 ---
 
-## 4. Ma tran do bao phu testcase
+## 4. Do bao phu
 
-| Rule/Input can bao phu | Ky thuat | Testcase bao phu | So case | Ly do can co |
-| :--- | :--- | :--- | ---: | :--- |
-| Google login hop le | Positive/Happy path | G-001 | 1 | Xac nhan ho so Google hop le tra token. |
-| User da ton tai/dang nhap lap lai | State/Uniqueness | G-002, G-018 | 2 | Bao phu dang nhap bang email da co va khong tao duplicate user. |
-| Truong bat buoc | Equivalence Partitioning | G-003, G-004, G-005 | 3 | Tach rieng thieu email, thieu name va thieu ca hai de biet rule validate sai o dau. |
-| Email format/bien | Equivalence Partitioning + Boundary Value Analysis | G-006, G-007, G-010, G-011 | 4 | Bao phu email sai format, email dai hop le, plus notation va khoang trang dau/cuoi. |
-| Name length | Boundary Value Analysis | G-008, G-009 | 2 | Bao phu ten 1 ky tu va ten qua dai theo rule muc tieu. |
-| Name format/display name | Equivalence Partitioning | G-012, G-016, G-017 | 3 | Bao phu display name co ky tu dac biet, khoang trang dau/cuoi va khoang trang giua. |
-| Truong optional Google profile | Business Rule | G-013, G-014 | 2 | Dam bao API khong phu thuoc vao avatar hoac field optional. |
-| Trang thai user | State Transition | G-015 | 1 | Kiem tra hanh vi voi user disabled neu backend co rule vo hieu hoa. |
+| Function/API | So testcase toi thieu de phu 100% | Testcase hien co trong CSV | Do bao phu hien tai | Ghi chu |
+| :--- | ---: | ---: | :---: | :--- |
+| Google Login | 18 | 18 | 18/18 = 100% | Bao phu Google profile, email/name validation, optional field va state theo email |
 
-**Tong coverage hien tai:** 8 nhom rule, 18 testcase. Bo test nay tach rieng email, display name, optional fields va state cua user de khi fail co the xac dinh loi nam o validation, mapping Google profile hay duplicate account.
+Function **Google Login** dat **100%** theo pham vi testcase hien co.
 
 ---
 
