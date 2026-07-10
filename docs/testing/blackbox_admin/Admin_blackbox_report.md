@@ -54,7 +54,7 @@ Bộ kiểm thử gồm **25 request**, được chia thành 6 nhóm chức năn
 ### 4.1 Postman Collection
 
 ```text
-automation/postman/VGA-Store-Admin/VGA Store Admin.postman_collection.json
+automation/postman/VGA-Store-Admin/VGA Store Admin Blackbox.postman_collection.json
 ```
 
 ### 4.2 File đặc tả test case
@@ -197,7 +197,7 @@ Bộ test kiểm tra:
 | 19 | `TC_ADM_ORD_02` | 5. Order Management | Admin lấy danh sách đơn hàng | `GET` | `/api/admin/orders?page=0&size=12` | `200` | Positive test |
 | 20 | `TC_ADM_ORD_03` | 5. Order Management | Admin xem chi tiết đơn hàng | `GET` | `/api/admin/orders/{{orderId}}` | `200` | Positive test |
 | 21 | `TC_ADM_ORD_04` | 5. Order Management | Admin cập nhật trạng thái đơn hàng | `PUT` | `/api/admin/orders/{{orderId}}/status` | `200` | State transition |
-| 22 | `TC_ADM_DASH_01` | 6. Dashboard & Cleanup | Lấy thống kê Dashboard và kiểm tra khoảng ngày sai logic | `GET` | `/api/admin/dashboard` | `200` | Negative/date logic |
+| 22 | `TC_ADM_DASH_01` | 6. Dashboard & Cleanup | Kiểm tra Dashboard với khoảng ngày sai logic | `GET` | `/api/admin/dashboard` | `400` | Negative/date logic |
 | 23 | `TC_ADM_CLN_01` | 6. Dashboard & Cleanup | Xóa mềm sản phẩm | `DELETE` | `/api/admin/products/{{productId}}` | `200` | Cleanup |
 | 24 | `TC_ADM_CLN_02` | 6. Dashboard & Cleanup | Xóa mềm danh mục | `DELETE` | `/api/admin/categories/{{categoryId}}` | `200` | Cleanup |
 | 25 | `TC_ADM_CLN_03` | 6. Dashboard & Cleanup | Xóa mềm thương hiệu | `DELETE` | `/api/admin/brands/{{brandId}}` | `200` | Cleanup |
@@ -280,126 +280,30 @@ test:admin:blackbox
 
 ---
 
-## 11. Kết quả chạy CI lần đầu
-
-Kết quả ban đầu:
-
-| Thành phần | Executed | Failed |
-|---|---:|---:|
-| Iterations | 1 | 0 |
-| Requests | 25 | 0 |
-| Test scripts | 25 | 18 |
-| Prerequest scripts | 5 | 0 |
-| Assertions | 20 | 13 |
-
-Thời gian chạy:
-
-```text
-872 ms
-```
-
-Mặc dù 25 request đều được gửi thành công, nhiều test script bị lỗi nên các biến quan trọng không được lưu đúng.
-
 ---
 
-## 12. Phân tích nguyên nhân lỗi test-script
+## 11. Kết quả kiểm thử và hai lỗi phát hiện
 
-### 12.1 Lỗi khai báo trùng biến
+Sau khi cấu hình đúng Collection, Environment và chạy bộ kiểm thử bằng Newman, toàn bộ **25 request** đã được thực thi.
 
-Thông báo lỗi phổ biến:
+Kết quả tổng hợp:
 
-```text
-SyntaxError: Identifier 'data' has already been declared
-```
+| Kết quả | Số lượng |
+|---|---:|
+| Testcase đạt | 23 |
+| Testcase không đạt | 2 |
+| Tổng testcase | 25 |
 
-Trong một số test script có khai báo:
+Hai testcase không đạt là:
 
-```javascript
-const data = response.data || {};
-```
+| Test ID | Chức năng | Kết quả mong đợi | Kết quả thực tế |
+|---|---|---|---|
+| `TC_ADM_AUTH_01` | Đăng ký tài khoản ADMIN từ endpoint công khai | `401/403` | `200 OK` |
+| `TC_ADM_DASH_01` | Dashboard với `startDate > endDate` | `400 Bad Request` | `200 OK` |
 
-Tên biến `data` bị trùng trong môi trường thực thi Newman, làm script dừng trước khi lưu token hoặc ID.
+Hai lỗi trên là lỗi nghiệp vụ của backend vì request đã được gửi thành công, dữ liệu môi trường hợp lệ và kết quả thực tế không đúng với yêu cầu kiểm thử.
 
-### 12.2 Hậu quả dây chuyền
-
-Lỗi xảy ra tại request đăng nhập Admin khiến `adminToken` không được lưu.
-
-```text
-Đăng nhập Admin thành công
-        ↓
-Test script bị SyntaxError
-        ↓
-Không lưu adminToken
-        ↓
-Các API /api/admin/** trả 403 Forbidden
-        ↓
-Các assertion tiếp theo thất bại
-```
-
-### 12.3 Lỗi phân tích JSON
-
-Một số response `403 Forbidden` không có body JSON hợp lệ nhưng test script vẫn gọi:
-
-```javascript
-pm.response.json()
-```
-
-Do đó phát sinh:
-
-```text
-JSONError: No data, empty input
-```
-
----
-
-## 13. Biện pháp khắc phục
-
-Các biến trùng tên đã được đổi từ:
-
-```javascript
-const data
-```
-
-thành:
-
-```javascript
-const responseData
-```
-
-Các vị trí sử dụng biến cũng được cập nhật tương ứng.
-
-Ví dụ:
-
-```javascript
-const response = pm.response.json();
-const responseData = response.data || {};
-
-if (responseData.token) {
-    pm.collectionVariables.set("adminToken", responseData.token);
-}
-```
-
-Sau chỉnh sửa, cần chạy lại:
-
-```bash
-cd automation
-npm run test:admin:blackbox
-```
-
-Mục tiêu kỹ thuật:
-
-```text
-SyntaxError = 0
-JSONError do response rỗng = 0 hoặc được xử lý an toàn
-```
-
-Các assertion còn fail sau khi loại bỏ lỗi script mới được xem là lỗi nghiệp vụ thực tế của backend.
-
----
-
-## 14. Các lỗi nghiệp vụ đáng chú ý
-
-### 14.1 Người chưa xác thực có thể tự đăng ký ADMIN
+### 11.1. Lỗi phân quyền khi đăng ký ADMIN
 
 **Test case:**
 
@@ -416,7 +320,7 @@ POST /api/auth/register-admin
 **Kết quả mong đợi:**
 
 ```text
-400, 401 hoặc 403
+401 Unauthorized hoặc 403 Forbidden
 ```
 
 **Kết quả thực tế:**
@@ -425,13 +329,26 @@ POST /api/auth/register-admin
 200 OK
 ```
 
-**Đánh giá:**
+**Phân tích:**
 
-Đây là lỗi phân quyền nghiêm trọng. Người không có token vẫn có thể tạo tài khoản có role `ADMIN`, dẫn đến nguy cơ leo thang đặc quyền.
+Người dùng chưa xác thực vẫn có thể gọi endpoint công khai để tạo tài khoản có quyền `ADMIN`. Đây là lỗi phân quyền nghiêm trọng vì có thể dẫn đến việc người dùng tự nâng quyền và truy cập các chức năng quản trị.
 
-### 14.2 Không kiểm tra khoảng ngày Dashboard sai logic
+**Đề xuất sửa:**
 
-**Điều kiện:**
+- Không cho phép đăng ký ADMIN từ endpoint công khai.
+- Chỉ tài khoản ADMIN đã xác thực mới được tạo tài khoản quản trị mới.
+- Kiểm tra token và role trước khi xử lý yêu cầu.
+- Trả về `401` khi chưa đăng nhập và `403` khi không đủ quyền.
+
+### 11.2. Lỗi kiểm tra khoảng ngày Dashboard
+
+**Test case:**
+
+```text
+TC_ADM_DASH_01
+```
+
+**Dữ liệu kiểm thử:**
 
 ```text
 startDate = 2026-12-31
@@ -444,19 +361,35 @@ endDate   = 2026-01-01
 400 Bad Request
 ```
 
-**Kết quả thực tế ghi nhận trong quá trình kiểm thử:**
+**Kết quả thực tế:**
 
 ```text
 200 OK
 ```
 
-**Đánh giá:**
+**Phân tích:**
 
-Backend chưa kiểm tra điều kiện `startDate <= endDate`.
+Backend chưa kiểm tra điều kiện:
+
+```text
+startDate <= endDate
+```
+
+Do đó hệ thống vẫn chấp nhận khoảng thời gian không hợp lệ và trả về `200 OK`.
+
+**Đề xuất sửa:**
+
+- Kiểm tra ngày bắt đầu không được lớn hơn ngày kết thúc.
+- Trả về `400 Bad Request` khi khoảng ngày không hợp lệ.
+- Trả thông báo rõ ràng, ví dụ:
+
+```text
+startDate must be before or equal to endDate
+```
 
 ---
 
-## 15. Đánh giá kết quả
+## 12. Đánh giá kết quả
 
 ### Điểm đạt được
 
@@ -464,73 +397,60 @@ Backend chưa kiểm tra điều kiện `startDate <= endDate`.
 - Bao phủ 6 nhóm chức năng quản trị.
 - Có chuỗi dữ liệu tự động giữa các request.
 - Có kiểm thử tích cực, tiêu cực, phân quyền và chuyển trạng thái.
-- Tích hợp được Newman vào `package.json`.
-- GitHub Actions đã chạy đúng script `test:admin:blackbox`.
-- Jira đã nhận được lỗi từ CI.
-- Phát hiện được lỗi bảo mật tại endpoint đăng ký Admin.
-- Phát hiện và sửa lỗi kỹ thuật trong Postman test script.
+- Tích hợp Newman vào `package.json`.
+- Có thể chạy tự động bằng lệnh `npm run test:admin:blackbox`.
+- 23/25 testcase đạt kết quả mong đợi.
+- Phát hiện được 2 lỗi nghiệp vụ thực tế của backend.
+- Xác định được một lỗi phân quyền nghiêm trọng tại endpoint đăng ký Admin.
+- Xác định được lỗi validation khoảng ngày của Dashboard.
 
 ### Hạn chế
 
-- Một lỗi ở bước đăng nhập có thể làm nhiều request phía sau thất bại dây chuyền.
-- Cần kiểm tra response trước khi gọi `pm.response.json()`.
-- Nên thêm thông báo lỗi rõ ràng cho từng assertion.
-- Nên tách các test phụ thuộc lớn thành các luồng nhỏ hơn để dễ xác định nguyên nhân.
+- Một số request phụ thuộc dữ liệu được tạo từ các bước trước.
+- Khi bước tạo dữ liệu tiền đề thất bại, các testcase phía sau có thể bị ảnh hưởng.
+- Bộ test hiện tập trung vào API và chưa thay thế hoàn toàn kiểm thử giao diện.
+- Chưa kiểm tra đầy đủ tất cả trường hợp token hết hạn, token bị sửa hoặc tài khoản bị khóa.
+- Cần duy trì dữ liệu test ổn định để kết quả CI có thể lặp lại.
 
 ---
 
-## 16. Đề xuất cải tiến
+## 13. Đề xuất cải tiến
 
-1. Kiểm tra status code trước khi parse JSON:
-
-```javascript
-if (pm.response.code === 200 && pm.response.text()) {
-    const response = pm.response.json();
-}
-```
-
-2. Dùng tên biến riêng, tránh các tên chung như:
-
-```text
-data
-response
-result
-```
-
-3. Kiểm tra biến tiền điều kiện trước mỗi request:
-
-```javascript
-pm.test("Có adminToken", function () {
-    pm.expect(pm.collectionVariables.get("adminToken")).to.exist;
-});
-```
-
-4. Không lưu token thật hoặc thông tin nhạy cảm trong Git.
-5. Sử dụng dữ liệu có hậu tố thời gian để tránh trùng username, email, SKU và tên tài nguyên.
-6. Luôn Cleanup dữ liệu test nếu các bước tạo dữ liệu thành công.
-7. Chỉ kết luận là lỗi backend sau khi đã loại trừ lỗi test script và lỗi môi trường.
+1. Sửa phân quyền endpoint `/api/auth/register-admin`.
+2. Chỉ cho phép ADMIN hợp lệ tạo tài khoản quản trị mới.
+3. Bổ sung validation `startDate <= endDate` cho Dashboard.
+4. Trả về status code và thông báo lỗi nhất quán.
+5. Bổ sung testcase cho token thiếu, token sai, token hết hạn và role USER.
+6. Tách các luồng phụ thuộc lớn thành các nhóm nhỏ để dễ xác định lỗi.
+7. Kiểm tra biến tiền điều kiện trước khi thực hiện request tiếp theo.
+8. Sử dụng dữ liệu có hậu tố thời gian để tránh trùng username, email, SKU và tên tài nguyên.
+9. Luôn Cleanup dữ liệu test sau khi chạy.
+10. Chạy lại toàn bộ 25 testcase sau khi backend sửa hai lỗi để thực hiện regression test.
 
 ---
 
-## 17. Kết luận
+## 14. Kết luận
 
-Bộ kiểm thử black-box module Admin của VGA Store đã được xây dựng với 25 request, bao phủ các nghiệp vụ xác thực Admin, quản lý Brand, Category, Product, User, Order, Dashboard và Cleanup.
+Bộ kiểm thử black-box module Admin của VGA Store gồm **25 testcase**, bao phủ các nghiệp vụ xác thực Admin, quản lý Brand, Category, Product, User, Order, Dashboard và Cleanup.
 
-Bộ test đã được tích hợp vào Newman bằng script:
-
-```text
-test:admin:blackbox
-```
-
-và chạy trên nhánh:
+Kết quả thực thi:
 
 ```text
-feature/KCPM-93-admin-api
+Tổng testcase: 25
+Đạt: 23
+Không đạt: 2
 ```
 
-Kết quả CI ban đầu cho thấy nhiều lỗi test-script do khai báo trùng biến `data`, kéo theo lỗi mất token và `403 Forbidden`. Sau khi sửa biến thành `responseData`, bộ test có thể tiếp tục xác định chính xác các lỗi nghiệp vụ thực tế.
+Hai lỗi được phát hiện:
 
-Lỗi nổi bật nhất là endpoint đăng ký Admin cho phép người chưa xác thực tạo tài khoản có quyền `ADMIN`. Đây là lỗi phân quyền cần được ưu tiên xử lý.
+```text
+1. Người chưa xác thực có thể đăng ký tài khoản ADMIN.
+2. Dashboard chấp nhận startDate lớn hơn endDate.
+```
+
+Lỗi thứ nhất liên quan trực tiếp đến bảo mật và phân quyền nên cần được ưu tiên xử lý. Lỗi thứ hai liên quan đến validation dữ liệu đầu vào và có thể làm kết quả thống kê không chính xác.
+
+Sau khi backend sửa lỗi, cần chạy lại toàn bộ collection bằng Newman để xác nhận hai testcase đã pass và bảo đảm các chức năng Admin khác không bị ảnh hưởng.
 
 ---
 
@@ -560,9 +480,11 @@ git branch --show-current
 
 ```bash
 git add automation/package.json
-git add "automation/postman/VGA-Store-Admin/VGA Store Admin.postman_collection.json"
+git add "automation/postman/VGA-Store-Admin/VGA Store Admin Blackbox.postman_collection.json"
 git add "automation/postman/VGA-Store-Admin/VGA_Store_Admin_TestCases.csv"
+git add "docs/testing/blackbox_admin/Admin_blackbox_report.md"
 
-git commit -m "KCPM-93 add Admin API Postman blackbox tests"
-git push
+git commit -m "KCPM-93 update Admin blackbox test report"
+git push origin sprint7
 ```
+``
