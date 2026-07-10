@@ -1,0 +1,21 @@
+branchId,function,condition,testCase,expectedResult
+PAY-BR-001,createPayment,Order not found,WB-PAY-001,Throw not found error
+PAY-BR-002,createPayment,Order cancelled,WB-PAY-002,Reject payment creation
+PAY-BR-003,createPayment,Order already paid,WB-PAY-003,Reject duplicate payment
+PAY-BR-004,createPayment,Existing FAILED payment,WB-PAY-004,Allow new payment
+PAY-BR-005,createPayment,Payment method COD,WB-PAY-005,Create COD payment
+PAY-BR-006,createPayment,Payment method BANK_TRANSFER,WB-PAY-006,Create bank transfer payment
+PAY-BR-007,createPayment,Payment method VNPAY,WB-PAY-007,Create VNPay payment URL
+PAY-BR-008,createPayment,Payment method MOMO,WB-PAY-008,Create MoMo payment URL
+PAY-BR-009,updatePaymentStatus,Payment not found,WB-PAY-009,Throw not found error
+PAY-BR-010,updatePaymentStatus,Status SUCCESS,WB-PAY-010,Update payment and order paid
+PAY-BR-011,updatePaymentStatus,Status FAILED,WB-PAY-011,Update payment failed
+PAY-BR-012,updatePaymentStatus,Status PENDING,WB-PAY-012,Keep payment pending
+PAY-BR-013,updatePaymentStatus,Empty transactionCode,WB-PAY-013,Keep old transaction code
+PAY-BR-014,updatePaymentStatus,Null transactionCode,WB-PAY-014,Keep old transaction code
+PAY-BR-015,getPaymentByOrderId,Payment exists,WB-PAY-015,Return payment
+PAY-BR-016,getPaymentByOrderId,Payment not found,WB-PAY-016,Throw not found error
+PAY-BR-017,getPaymentById,Payment exists,WB-PAY-017,Return payment
+PAY-BR-018,getPaymentById,Payment not found,WB-PAY-018,Throw not found error
+PAY-BR-019,getMyPayments,Valid pagination,WB-PAY-019,Return paged payments
+PAY-BR-020,getPaymentsByStatus,Valid status,WB-PAY-020,Return payments by status
