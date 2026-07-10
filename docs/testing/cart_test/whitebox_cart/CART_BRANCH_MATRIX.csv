@@ -1,4 +1,4 @@
-﻿test_id,whitebox_condition,test_method,branch_or_path,expected_behavior,coverage_type
+test_id,whitebox_condition,test_method,branch_or_path,expected_behavior,coverage_type
 WB-CART-001,getMyCart: no existing cart -> create new cart,getMyCart_noExistingCart_createNewCart,find cart empty,save new cart,Statement/Branch
 WB-CART-002,addToCart: quantity <= 0 -> throw exception,addToCart_quantityZero_throwException,quantity <= 0,throw IllegalArgumentException,Branch
 WB-CART-003,addToCart: product not found -> throw exception,addToCart_productNotFound_throwException,product not found,throw ResourceNotFoundException,Branch
